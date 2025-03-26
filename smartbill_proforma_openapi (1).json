@@ -1,0 +1,141 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SmartBill API - Emitere Proform\u0103",
+    "version": "1.0.0",
+    "description": "Permite generarea de proforme prin SmartBill API din GPT personalizat."
+  },
+  "servers": [
+    {
+      "url": "https://ws.smartbill.ro/SBORO/api"
+    }
+  ],
+  "paths": {
+    "/estimate": {
+      "post": {
+        "summary": "Creare proform\u0103",
+        "description": "Creeaz\u0103 o proform\u0103 nou\u0103 \u00een contul SmartBill.",
+        "operationId": "createProforma",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProformaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Proforma a fost generat\u0103 cu succes"
+          },
+          "400": {
+            "description": "Date incorecte sau lips\u0103"
+          },
+          "401": {
+            "description": "Autentificare e\u0219uat\u0103 (Token gre\u0219it sau lips\u0103)"
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    },
+    "schemas": {
+      "ProformaRequest": {
+        "type": "object",
+        "properties": {
+          "seriesName": {
+            "type": "string",
+            "example": "PROF"
+          },
+          "number": {
+            "type": "integer",
+            "example": 123
+          },
+          "client": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "SC Exemplu SRL"
+              },
+              "cif": {
+                "type": "string",
+                "example": "RO12345678"
+              },
+              "regCom": {
+                "type": "string",
+                "example": "J29/1234/2024"
+              },
+              "address": {
+                "type": "string",
+                "example": "Str. Exemplu nr. 1"
+              },
+              "city": {
+                "type": "string",
+                "example": "Pite\u0219ti"
+              },
+              "country": {
+                "type": "string",
+                "example": "Romania"
+              },
+              "email": {
+                "type": "string",
+                "example": "client@example.ro"
+              }
+            }
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "\u021aigl\u0103 metalic\u0103"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "TM-01"
+                },
+                "quantity": {
+                  "type": "number",
+                  "example": 120
+                },
+                "price": {
+                  "type": "number",
+                  "example": 18.5
+                }
+              }
+            }
+          },
+          "currency": {
+            "type": "string",
+            "example": "RON"
+          },
+          "language": {
+            "type": "string",
+            "example": "ro"
+          }
+        },
+        "required": [
+          "seriesName",
+          "client",
+          "products"
+        ]
+      }
+    }
+  }
+}
