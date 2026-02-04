@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeAcoperis.ro | Sipca Calculator V22 Enterprise</title>
+
+    <!-- CORE ENGINE -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; min-height: 100vh; }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .animate-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        input:focus, select:focus { outline: none; ring: 2px; ring-color: #dc2626; }
+        .compact-table td, .compact-table th { padding: 8px 12px; }
+        .color-btn { transition: all 0.2s; }
+        .color-btn:hover { transform: scale(1.15); }
+        .color-btn.selected { ring: 3px; ring-offset: 2px; }
+        .unavailable-row { text-decoration: line-through; }
+        .glass { background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); }
+        .gradient-header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+    // ============================================
+    // ICONS LIBRARY
+    // ============================================
+    const Icon = ({ name, size = 16, className = "" }) => {
+        const icons = {
+            User: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+            Lock: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
+            Unlock: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></>,
+            Settings: <><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></>,
+            Trash2: <><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></>,
+            Printer: <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>,
+            MessageSquare: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+            Image: <><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>,
+            CheckCircle: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>,
+            AlertCircle: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
+            XCircle: <><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>,
+            Plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+            Minus: <line x1="5" y1="12" x2="19" y2="12"/>,
+            MapPin: <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></>,
+            Phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>,
+            Package: <><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>,
+            Layers: <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+            Calculator: <><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10.01"/><line x1="12" y1="10" x2="12" y2="10.01"/><line x1="16" y1="10" x2="16" y2="10.01"/><line x1="8" y1="14" x2="8" y2="14.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="16" y1="14" x2="16" y2="14.01"/><line x1="8" y1="18" x2="8" y2="18.01"/><line x1="12" y1="18" x2="12" y2="18.01"/><line x1="16" y1="18" x2="16" y2="18.01"/></>,
+            Ruler: <><path d="M21.21 15.89A1 1 0 0 0 22 15V6a1 1 0 0 0-.29-.71l-4-4A1 1 0 0 0 17 1H8a1 1 0 0 0-.71.29l-4 4A1 1 0 0 0 3 6v9a1 1 0 0 0 .79.98l7 1.5a1 1 0 0 0 .42 0l7-1.5z"/></>,
+            Zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>,
+            Award: <><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></>,
+            FileText: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,
+            Download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
+            RefreshCw: <><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></>,
+            Eye: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>,
+            EyeOff: <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></>,
+            ChevronDown: <polyline points="6 9 12 15 18 9"/>,
+            ChevronUp: <polyline points="18 15 12 9 6 15"/>,
+            ChevronRight: <polyline points="9 18 15 12 9 6"/>,
+            Check: <polyline points="20 6 9 17 4 12"/>,
+            X: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+            Info: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>,
+            Star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>,
+            Percent: <><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></>,
+            DollarSign: <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,
+            Palette: <><circle cx="13.5" cy="6.5" r="0.5"/><circle cx="17.5" cy="10.5" r="0.5"/><circle cx="8.5" cy="7.5" r="0.5"/><circle cx="6.5" cy="12.5" r="0.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/></>
+        };
+        return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
+    };
+
+    // ============================================
+    // HARD DATA - THE SINGLE SOURCE OF TRUTH
+    // ============================================
+
+    // Marjele Invest Tetto si moneda per furnizor
+    const PROVIDERS = {
+        'Caretta': { margin: 10.00, currency: 'RON', minLen: 0.5, maxLen: 6.0 },
+        'Bilka': { margin: 6.98, currency: 'EUR', exchange: 4.97, minLen: 0.5, maxLen: 2.5 },
+        'TPS': { margin: 8.50, currency: 'RON', minLen: 0.5, maxLen: 6.0 },
+        'Arkada': { margin: 10.00, currency: 'RON', minLen: 0.5, maxLen: 6.0 }
+    };
+
+    // Baza de date Modele (FIXA - Nu dispare nimic din lista)
+    const MODELS_DB = [
+        { id: 'y109', name: 'Y109', provider: 'Caretta', w_useful: 72, fixType: 'screw', screwsPerM: 6 },
+        { id: 'y112', name: 'Y112', provider: 'Caretta', w_useful: 90, fixType: 'screw', screwsPerM: 6 },
+        { id: 'y115', name: 'Y115', provider: 'Caretta', w_useful: 118, fixType: 'screw', screwsPerM: 6 },
+        { id: 'y118', name: 'Y118', provider: 'Caretta', w_useful: 118, fixType: 'screw', screwsPerM: 6 },
+        { id: 'sofia', name: 'Sofia', provider: 'Bilka', w_useful: 115, fixType: 'screw', screwsPerM: 6 },
+        { id: 'berna', name: 'Berna', provider: 'Bilka', w_useful: 105, fixType: 'screw', screwsPerM: 6 },
+        { id: 'oslo', name: 'Oslo', provider: 'Bilka', w_useful: 115, fixType: 'screw', screwsPerM: 6 },
+        { id: 'tisa', name: 'Tisa', provider: 'TPS', w_useful: 115, fixType: 'rivet', rivetsPerM: 8 },
+        { id: 'canadiana', name: 'Canadiana', provider: 'Arkada', w_useful: 107, fixType: 'screw', screwsPerM: 6 },
+        { id: 'indiana', name: 'Indiana', provider: 'Arkada', w_useful: 96, fixType: 'rivet', rivetsPerM: 8 }
+    ];
+
+    // Matricea de Preturi si Configurare (Reguli Stricte per Furnizor)
+    const CATALOG_DATA = {
+        'Caretta': {
+            '0.40': {
+                'Lucios': { price: 5.8, paintType: 'single', colors: ['3005', '3011', '8017', '9005'] }
+            },
+            '0.50': {
+                'Mat': { price: 7.5, paintType: 'single', colors: ['3005', '8017', '8019', '9005', '7024'] },
+                'Dublu Mat': { price: 9.8, paintType: 'double', colors: ['8017', '8019', '9005'] }
+            },
+            '0.60': {
+                'Mat': { price: 9.2, paintType: 'single', colors: ['8017', '9005'] },
+                'Dublu Mat': { price: 11.5, paintType: 'double', colors: ['8017', '9005'] }
+            }
+        },
+        'Bilka': {
+            '0.40': {
+                'Lucios': { price: 0.81, paintType: 'single', colors: ['3005', '3011', '8017', '9005'] }
+            },
+            '0.45': {
+                'Lucios': { price: 0.92, paintType: 'single', colors: ['8017', '3005'] },
+                'Mat': { price: 0.98, paintType: 'single', colors: ['8017', '8019', '7024'] }
+            },
+            '0.50': {
+                'Lucios': { price: 0.96, paintType: 'single', colors: ['3005', '8017'] },
+                'Mat': { price: 1.05, paintType: 'single', colors: ['3005', '8017', '8019', '9005', '7024'] },
+                'GrandeMat': { price: 1.15, paintType: 'single', colors: ['8017', '9005'] },
+                'Wood': { price: 1.24, paintType: 'single', colors: ['Stejar Auriu', 'Nuc'] },
+                'Dublu Mat': { price: 1.35, paintType: 'double', colors: ['8017', '9005'] }
+            },
+            '0.60': {
+                'Dublu Mat': { price: 1.52, paintType: 'double', colors: ['8017', '9005'] }
+            }
+        },
+        'TPS': {
+            '0.45': {
+                'Mat': { price: 6.22, paintType: 'single', colors: ['8017', '9005', '7024'] }
+            },
+            '0.50': {
+                'Mat': { price: 7.26, paintType: 'single', colors: ['8017', '9005', '7024'] },
+                'Dublu Mat': { price: 8.50, paintType: 'double', colors: ['8017', '9005'] }
+            }
+        },
+        'Arkada': {
+            '0.50': {
+                'Mat': { price: 5.82, paintType: 'single', colors: ['8017', '3005', '7024'] },
+                'Dublu Mat': { price: 7.31, paintType: 'double', colors: ['8017', '9005'] }
+            }
+        }
+    };
+
+    // Coduri HEX pentru culorile RAL
+    const RAL_COLORS = {
+        '3005': { hex: '#5E1224', name: 'Vișiniu' },
+        '3011': { hex: '#792423', name: 'Roșu Maro' },
+        '7024': { hex: '#45494E', name: 'Gri Grafit' },
+        '8017': { hex: '#44322D', name: 'Maro Ciocolată' },
+        '8019': { hex: '#3D3D3D', name: 'Gri Maro' },
+        '9005': { hex: '#0A0A0A', name: 'Negru Profund' },
+        'Stejar Auriu': { hex: '#C4A35A', name: 'Stejar Auriu', pattern: true },
+        'Nuc': { hex: '#5C4033', name: 'Nuc', pattern: true }
+    };
+
+    // Preturi Accesorii
+    const ACCESSORIES = {
+        screw: { label: 'Șuruburi Autoforante', unit: 'cutie (250 buc)', priceRON: 45, qtyPerBox: 250 },
+        rivet: { label: 'Pop-nituri 4.8x12', unit: 'buc', priceRON: 0.25, qtyPerBox: 1 }
+    };
+
+    // ============================================
+    // MAIN APPLICATION
+    // ============================================
+    const App = () => {
+        // --- AGENT & PARTNER STATE ---
+        const [agent, setAgent] = useState({
+            name: 'Daniel Neacșu',
+            phone: '0722 000 000',
+            company: 'PeAcoperis.ro',
+            email: 'contact@peacoperis.ro'
+        });
+        const [ghostMargins, setGhostMargins] = useState({
+            'Caretta': 0, 'Bilka': 0, 'TPS': 0, 'Arkada': 0
+        });
+        const [showAdminPanel, setShowAdminPanel] = useState(false);
+        const [showPartnerPanel, setShowPartnerPanel] = useState(false);
+        const [adminUnlocked, setAdminUnlocked] = useState(false);
+
+        // Admin settings
+        const [adminSettings, setAdminSettings] = useState({
+            showCostPrice: false,
+            defaultVAT: 19,
+            quoteValidity: 7,
+            companyLogo: ''
+        });
+
+        // --- CLIENT DATA ---
+        const [client, setClient] = useState({
+            name: '',
+            phone: '',
+            location: '',
+            email: '',
+            date: new Date().toLocaleDateString('ro-RO')
+        });
+
+        // --- CONFIGURATOR FILTERS (CASCADE) ---
+        const [filterPaintType, setFilterPaintType] = useState('any'); // any, single, double
+        const [filterThickness, setFilterThickness] = useState('');
+        const [filterFinish, setFilterFinish] = useState('');
+        const [filterColor, setFilterColor] = useState('');
+
+        // --- DIMENSIONS & CALCULATION MODE ---
+        const [calcMode, setCalcMode] = useState('segments'); // segments | direct
+        const [mountType, setMountType] = useState('vertical'); // vertical | horizontal
+        const [segments, setSegments] = useState([{ id: 1, length: 20, height: 1.65 }]);
+        const [gap, setGap] = useState(2); // cm
+        const [directQty, setDirectQty] = useState({ pcs: 100, length: 1.5 });
+
+        // --- ACCESSORIES ---
+        const [includeAccessories, setIncludeAccessories] = useState(true);
+
+        // --- SELECTED MODEL FOR QUOTE ---
+        const [selectedModel, setSelectedModel] = useState(null);
+
+        // --- UI STATE ---
+        const [sortOrder, setSortOrder] = useState('priceAsc');
+        const [expandedRows, setExpandedRows] = useState({});
+        const pdfRef = useRef(null);
+
+        // ============================================
+        // CASCADING FILTER LOGIC
+        // ============================================
+
+        // Grosimi disponibile (toate)
+        const availableThicknesses = useMemo(() => {
+            const thicks = new Set();
+            Object.values(CATALOG_DATA).forEach(provider => {
+                Object.keys(provider).forEach(t => thicks.add(t));
+            });
+            return Array.from(thicks).sort((a, b) => parseFloat(a) - parseFloat(b));
+        }, []);
+
+        // Finisaje disponibile (filtrate dupa paintType SI thickness)
+        const availableFinishes = useMemo(() => {
+            const finishes = new Set();
+            Object.values(CATALOG_DATA).forEach(provider => {
+                Object.entries(provider).forEach(([thickness, finishMap]) => {
+                    // Filtru grosime daca e selectata
+                    if (filterThickness && thickness !== filterThickness) return;
+
+                    Object.entries(finishMap).forEach(([finishName, spec]) => {
+                        // Filtru tip vopsire
+                        if (filterPaintType === 'double' && spec.paintType !== 'double') return;
+                        if (filterPaintType === 'single' && spec.paintType !== 'single') return;
+                        finishes.add(finishName);
+                    });
+                });
+            });
+            return Array.from(finishes).sort();
+        }, [filterPaintType, filterThickness]);
+
+        // Culori disponibile (filtrate dupa thickness + finish)
+        const availableColors = useMemo(() => {
+            if (!filterThickness || !filterFinish) return [];
+            const colors = new Set();
+            Object.values(CATALOG_DATA).forEach(provider => {
+                const spec = provider[filterThickness]?.[filterFinish];
+                if (spec) {
+                    spec.colors.forEach(c => colors.add(c));
+                }
+            });
+            return Array.from(colors);
+        }, [filterThickness, filterFinish]);
+
+        // Reset cascade when parent changes
+        useEffect(() => {
+            if (!availableFinishes.includes(filterFinish)) {
+                setFilterFinish('');
+                setFilterColor('');
+            }
+        }, [availableFinishes, filterFinish]);
+
+        useEffect(() => {
+            if (!availableColors.includes(filterColor)) {
+                setFilterColor('');
+            }
+        }, [availableColors, filterColor]);
+
+        // ============================================
+        // CALCULATION ENGINE
+        // ============================================
+        const processedResults = useMemo(() => {
+            const results = [];
+            const maxHeight = Math.max(...segments.map(s => s.height), directQty.length);
+
+            MODELS_DB.forEach(model => {
+                let status = 'available';
+                let failReasons = [];
+                let priceTotal = 0;
+                let costTotal = 0;
+                let details = [];
+                let totalPieces = 0;
+                let totalLength = 0;
+                let accessoriesData = { screws: 0, rivets: 0, screwBoxes: 0 };
+
+                const providerMeta = PROVIDERS[model.provider];
+                const providerData = CATALOG_DATA[model.provider];
+
+                // 1. Verificare configuratie existenta
+                const spec = providerData?.[filterThickness]?.[filterFinish];
+
+                if (!filterThickness || !filterFinish) {
+                    status = 'incomplete';
+                    failReasons.push('Selectează configurația');
+                } else if (!spec) {
+                    status = 'unavailable';
+                    failReasons.push(`Fără ${filterFinish} ${filterThickness}mm`);
+                } else if (filterColor && !spec.colors.includes(filterColor)) {
+                    status = 'unavailable';
+                    failReasons.push(`Fără culoare ${filterColor}`);
+                }
+
+                // 2. Verificare restrictii lungime (Bilka max 2.5m)
+                if (status === 'available' || status === 'incomplete') {
+                    if (calcMode === 'segments') {
+                        const tooLong = segments.some(s =>
+                            (mountType === 'vertical' && s.height > providerMeta.maxLen) ||
+                            (mountType === 'horizontal' && s.length > providerMeta.maxLen)
+                        );
+                        if (tooLong) {
+                            status = 'unavailable';
+                            failReasons.push(`Max ${providerMeta.maxLen}m lungime`);
+                        }
+                    } else {
+                        if (directQty.length > providerMeta.maxLen) {
+                            status = 'unavailable';
+                            failReasons.push(`Max ${providerMeta.maxLen}m lungime`);
+                        }
+                    }
+                }
+
+                // 3. Calcul daca e disponibil
+                if (status === 'available' && spec) {
+                    const widthMm = model.w_useful;
+                    const gapMm = gap * 10;
+
+                    // Pret baza (convertit in RON daca e EUR)
+                    let rawPrice = spec.price;
+                    if (providerMeta.currency === 'EUR') {
+                        rawPrice *= providerMeta.exchange;
+                    }
+
+                    // Pret cost (cu marja ITC)
+                    const costPrice = rawPrice * (1 + providerMeta.margin / 100);
+
+                    // Pret vanzare (cu ghost margin partener)
+                    const sellPrice = costPrice * (1 + (ghostMargins[model.provider] || 0) / 100);
+
+                    if (calcMode === 'direct') {
+                        // Mod cantitate directa
+                        totalPieces = parseInt(directQty.pcs) || 0;
+                        totalLength = parseFloat(directQty.length) || 0;
+                        priceTotal = totalPieces * sellPrice * totalLength;
+                        costTotal = totalPieces * costPrice * totalLength;
+                        details.push({
+                            label: `${totalPieces} buc x ${totalLength}m`,
+                            pcs: totalPieces,
+                            length: totalLength,
+                            priceUnit: sellPrice,
+                            priceTotal: priceTotal
+                        });
+                    } else {
+                        // Mod segmente
+                        segments.forEach((seg, idx) => {
+                            if (!seg.length || !seg.height) return;
+
+                            let pcs, len;
+                            if (mountType === 'vertical') {
+                                // Vertical: sipcile se monteaza vertical, calculam cate incap pe lungime
+                                pcs = Math.ceil((seg.length * 1000) / (widthMm + gapMm));
+                                len = seg.height;
+                            } else {
+                                // Orizontal: sipcile se monteaza orizontal, calculam cate incap pe inaltime
+                                pcs = Math.ceil((seg.height * 1000) / (widthMm + gapMm));
+                                len = seg.length;
+                            }
+
+                            const segCost = pcs * costPrice * len;
+                            const segPrice = pcs * sellPrice * len;
+                            totalPieces += pcs;
+                            totalLength += pcs * len;
+                            costTotal += segCost;
+                            priceTotal += segPrice;
+
+                            details.push({
+                                label: `Segment ${idx + 1}: ${seg.length}m x ${seg.height}m`,
+                                pcs: pcs,
+                                length: len,
+                                priceUnit: sellPrice * len,
+                                priceTotal: segPrice
+                            });
+                        });
+                    }
+
+                    // Calcul accesorii
+                    if (model.fixType === 'screw') {
+                        const totalScrews = Math.ceil(totalPieces * (model.screwsPerM || 6) * 2); // 2 randuri de prindere
+                        accessoriesData.screws = totalScrews;
+                        accessoriesData.screwBoxes = Math.ceil(totalScrews / 250);
+                    } else {
+                        const totalRivets = Math.ceil(totalPieces * (model.rivetsPerM || 8) * 2);
+                        accessoriesData.rivets = totalRivets;
+                    }
+                }
+
+                results.push({
+                    model,
+                    status,
+                    failReasons,
+                    priceTotal,
+                    costTotal,
+                    totalPieces,
+                    totalLength,
+                    details,
+                    accessories: accessoriesData,
+                    pricePerPiece: totalPieces > 0 ? priceTotal / totalPieces : 0
+                });
+            });
+
+            // Sortare
+            return results.sort((a, b) => {
+                // Disponibile sus, indisponibile jos
+                if (a.status === 'unavailable' && b.status !== 'unavailable') return 1;
+                if (a.status !== 'unavailable' && b.status === 'unavailable') return -1;
+                if (a.status === 'incomplete' && b.status === 'available') return 1;
+                if (a.status === 'available' && b.status === 'incomplete') return -1;
+
+                // Sortare pret
+                if (sortOrder === 'priceAsc') return a.priceTotal - b.priceTotal;
+                return b.priceTotal - a.priceTotal;
+            });
+        }, [filterThickness, filterFinish, filterColor, calcMode, mountType, segments, gap, directQty, ghostMargins, sortOrder]);
+
+        // Quick stats
+        const quickStats = useMemo(() => {
+            const available = processedResults.filter(r => r.status === 'available');
+            if (available.length === 0) return null;
+
+            const cheapest = available[0];
+            const totalPcs = cheapest?.totalPieces || 0;
+            const totalPrice = cheapest?.priceTotal || 0;
+
+            return {
+                modelCount: available.length,
+                cheapestModel: cheapest?.model.name,
+                cheapestProvider: cheapest?.model.provider,
+                totalPieces: totalPcs,
+                totalPrice: totalPrice,
+                pricePerPiece: totalPcs > 0 ? totalPrice / totalPcs : 0
+            };
+        }, [processedResults]);
+
+        // ============================================
+        // HANDLERS
+        // ============================================
+        const handleAdminAuth = () => {
+            const code = prompt("Introdu codul Admin:");
+            if (code === '1987') {
+                setAdminUnlocked(true);
+                setShowAdminPanel(true);
+            } else if (code) {
+                alert('Cod incorect!');
+            }
+        };
+
+        const addSegment = () => {
+            if (segments.length < 10) {
+                setSegments([...segments, { id: Date.now(), length: 0, height: 0 }]);
+            }
+        };
+
+        const removeSegment = (id) => {
+            if (segments.length > 1) {
+                setSegments(segments.filter(s => s.id !== id));
+            }
+        };
+
+        const updateSegment = (id, field, value) => {
+            setSegments(segments.map(s =>
+                s.id === id ? { ...s, [field]: parseFloat(value) || 0 } : s
+            ));
+        };
+
+        const toggleRowExpand = (modelId) => {
+            setExpandedRows(prev => ({ ...prev, [modelId]: !prev[modelId] }));
+        };
+
+        const selectForQuote = (result) => {
+            setSelectedModel(result);
+        };
+
+        const resetFilters = () => {
+            setFilterPaintType('any');
+            setFilterThickness('');
+            setFilterFinish('');
+            setFilterColor('');
+        };
+
+        // ============================================
+        // PDF GENERATION
+        // ============================================
+        const generatePDF = async () => {
+            if (!selectedModel) {
+                alert('Selectează un model pentru ofertă!');
+                return;
+            }
+
+            const element = pdfRef.current;
+            const opt = {
+                margin: 10,
+                filename: `Oferta_${client.name || 'Client'}_${new Date().toISOString().slice(0,10)}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            await html2pdf().set(opt).from(element).save();
+        };
+
+        // ============================================
+        // RENDER
+        // ============================================
+        return (
+            <div className="p-4 max-w-7xl mx-auto min-h-screen pb-20">
+                {/* ============ HEADER ============ */}
+                <header className="glass p-4 rounded-2xl shadow-lg border border-white/50 mb-6">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="h-14 w-14 gradient-header text-white flex items-center justify-center rounded-xl font-bold text-lg shadow-lg">
+                                {agent.company.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                                <h1 className="font-bold text-xl text-slate-800">{agent.company}</h1>
+                                <div className="text-xs text-slate-500 flex flex-wrap gap-3 mt-1">
+                                    <span className="flex items-center gap-1"><Icon name="User" size={12}/> {agent.name}</span>
+                                    <span className="flex items-center gap-1"><Icon name="Phone" size={12}/> {agent.phone}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 no-print">
+                            <button
+                                onClick={() => setShowPartnerPanel(!showPartnerPanel)}
+                                className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition ${showPartnerPanel ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                            >
+                                <Icon name="Percent" size={14}/> Config Partener
+                            </button>
+                            <button
+                                onClick={handleAdminAuth}
+                                className={`p-2 rounded-lg transition ${adminUnlocked ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400 hover:text-red-600'}`}
+                                title="Admin Panel"
+                            >
+                                <Icon name={adminUnlocked ? "Unlock" : "Lock"} size={18}/>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                {/* ============ PARTNER PANEL (Ghost Margin) ============ */}
+                {showPartnerPanel && (
+                    <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 rounded-2xl mb-6 animate-in shadow-xl no-print">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <Icon name="Settings"/> Configurare Partener / Revânzător
+                            </h3>
+                            <button onClick={() => setShowPartnerPanel(false)} className="text-slate-400 hover:text-white">
+                                <Icon name="X"/>
+                            </button>
+                        </div>
+
+                        {/* Agent Info */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nume Agent</label>
+                                <input
+                                    value={agent.name}
+                                    onChange={e => setAgent({...agent, name: e.target.value})}
+                                    className="w-full bg-slate-700 border-none p-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-red-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Telefon</label>
+                                <input
+                                    value={agent.phone}
+                                    onChange={e => setAgent({...agent, phone: e.target.value})}
+                                    className="w-full bg-slate-700 border-none p-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-red-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Firma</label>
+                                <input
+                                    value={agent.company}
+                                    onChange={e => setAgent({...agent, company: e.target.value})}
+                                    className="w-full bg-slate-700 border-none p-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-red-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Email</label>
+                                <input
+                                    value={agent.email}
+                                    onChange={e => setAgent({...agent, email: e.target.value})}
+                                    className="w-full bg-slate-700 border-none p-2 rounded-lg text-sm text-white focus:ring-2 focus:ring-red-500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Ghost Margins */}
+                        <div className="bg-slate-700/50 p-4 rounded-xl">
+                            <h4 className="text-sm font-bold text-yellow-400 mb-3 flex items-center gap-2">
+                                <Icon name="EyeOff" size={14}/> Adaos Propriu (Ghost Margin) - Invizibil pentru client
+                            </h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {Object.keys(PROVIDERS).map(p => (
+                                    <div key={p} className="bg-slate-900/50 p-3 rounded-lg">
+                                        <label className="text-[10px] uppercase font-bold text-slate-400 block mb-2">{p}</label>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                value={ghostMargins[p]}
+                                                onChange={e => setGhostMargins({...ghostMargins, [p]: parseFloat(e.target.value) || 0})}
+                                                className="w-full bg-slate-800 border-none rounded-lg p-2 text-center font-bold text-yellow-400 focus:ring-2 focus:ring-yellow-500"
+                                                min="0"
+                                                max="100"
+                                            />
+                                            <span className="text-yellow-400 font-bold">%</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ============ ADMIN PANEL ============ */}
+                {showAdminPanel && adminUnlocked && (
+                    <div className="bg-gradient-to-r from-red-900 to-red-800 text-white p-6 rounded-2xl mb-6 animate-in shadow-xl no-print">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <Icon name="Lock"/> Panou Administrator (Cod: 1987)
+                            </h3>
+                            <button onClick={() => setShowAdminPanel(false)} className="text-red-300 hover:text-white">
+                                <Icon name="X"/>
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-red-800/50 p-4 rounded-xl">
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={adminSettings.showCostPrice}
+                                        onChange={e => setAdminSettings({...adminSettings, showCostPrice: e.target.checked})}
+                                        className="w-5 h-5 rounded"
+                                    />
+                                    <span className="text-sm font-bold">Afișează Preț Cost în Tabel</span>
+                                </label>
+                            </div>
+                            <div className="bg-red-800/50 p-4 rounded-xl">
+                                <label className="text-[10px] uppercase font-bold text-red-300 block mb-2">TVA Default (%)</label>
+                                <input
+                                    type="number"
+                                    value={adminSettings.defaultVAT}
+                                    onChange={e => setAdminSettings({...adminSettings, defaultVAT: parseInt(e.target.value) || 19})}
+                                    className="w-full bg-red-900 border-none rounded-lg p-2 text-center font-bold"
+                                />
+                            </div>
+                            <div className="bg-red-800/50 p-4 rounded-xl">
+                                <label className="text-[10px] uppercase font-bold text-red-300 block mb-2">Valabilitate Ofertă (zile)</label>
+                                <input
+                                    type="number"
+                                    value={adminSettings.quoteValidity}
+                                    onChange={e => setAdminSettings({...adminSettings, quoteValidity: parseInt(e.target.value) || 7})}
+                                    className="w-full bg-red-900 border-none rounded-lg p-2 text-center font-bold"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* ============ LEFT PANEL - INPUTS ============ */}
+                    <div className="lg:col-span-4 space-y-4 no-print">
+
+                        {/* 1. DATE CLIENT */}
+                        <div className="glass p-5 rounded-2xl shadow-lg border border-white/50">
+                            <h3 className="font-bold text-red-600 mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
+                                <Icon name="User"/> 1. Date Client
+                            </h3>
+                            <div className="space-y-3">
+                                <input
+                                    value={client.name}
+                                    onChange={e => setClient({...client, name: e.target.value})}
+                                    className="w-full border border-slate-200 p-3 rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                    placeholder="Nume Client *"
+                                />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <input
+                                        value={client.phone}
+                                        onChange={e => setClient({...client, phone: e.target.value})}
+                                        className="w-full border border-slate-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-red-500"
+                                        placeholder="Telefon"
+                                    />
+                                    <input
+                                        value={client.email}
+                                        onChange={e => setClient({...client, email: e.target.value})}
+                                        className="w-full border border-slate-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-red-500"
+                                        placeholder="Email"
+                                    />
+                                </div>
+                                <input
+                                    value={client.location}
+                                    onChange={e => setClient({...client, location: e.target.value})}
+                                    className="w-full border border-slate-200 p-3 rounded-xl text-sm focus:ring-2 focus:ring-red-500"
+                                    placeholder="Localitate / Adresă"
+                                />
+                            </div>
+                        </div>
+
+                        {/* 2. CONFIGURARE PRODUS */}
+                        <div className="glass p-5 rounded-2xl shadow-lg border-2 border-red-200">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wider flex items-center gap-2">
+                                    <Icon name="Layers"/> 2. Configurare Produs
+                                </h3>
+                                <button onClick={resetFilters} className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1">
+                                    <Icon name="RefreshCw" size={12}/> Reset
+                                </button>
+                            </div>
+
+                            {/* Tip Vopsire */}
+                            <div className="mb-4">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Tip Vopsire</label>
+                                <div className="flex bg-slate-100 rounded-xl p-1">
+                                    {[
+                                        { value: 'any', label: 'Oricare' },
+                                        { value: 'single', label: 'O Parte' },
+                                        { value: 'double', label: 'Ambele Părți' }
+                                    ].map(opt => (
+                                        <button
+                                            key={opt.value}
+                                            onClick={() => setFilterPaintType(opt.value)}
+                                            className={`flex-1 py-2 px-3 text-xs rounded-lg font-bold transition ${
+                                                filterPaintType === opt.value
+                                                    ? 'bg-white shadow-md text-red-600'
+                                                    : 'text-slate-500 hover:text-slate-700'
+                                            }`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Grosime */}
+                            <div className="mb-4">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">
+                                    Grosime Tablă <span className="text-red-500">*</span>
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {availableThicknesses.map(t => (
+                                        <button
+                                            key={t}
+                                            onClick={() => setFilterThickness(t)}
+                                            className={`px-4 py-2 rounded-lg text-sm font-bold border-2 transition ${
+                                                filterThickness === t
+                                                    ? 'bg-red-600 text-white border-red-600'
+                                                    : 'bg-white text-slate-600 border-slate-200 hover:border-red-300'
+                                            }`}
+                                        >
+                                            {t} mm
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Finisaj */}
+                            <div className="mb-4">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">
+                                    Finisaj <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={filterFinish}
+                                    onChange={e => setFilterFinish(e.target.value)}
+                                    className="w-full border-2 border-slate-200 p-3 rounded-xl font-bold text-sm bg-white focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                    disabled={availableFinishes.length === 0}
+                                >
+                                    <option value="">Selectează finisaj...</option>
+                                    {availableFinishes.map(f => (
+                                        <option key={f} value={f}>{f}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Culoare - VIZUAL */}
+                            {availableColors.length > 0 && (
+                                <div className="mb-2">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">
+                                        <Icon name="Palette" size={12} className="inline mr-1"/> Culoare
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {availableColors.map(colorCode => {
+                                            const colorInfo = RAL_COLORS[colorCode] || { hex: '#888', name: colorCode };
+                                            return (
+                                                <button
+                                                    key={colorCode}
+                                                    onClick={() => setFilterColor(filterColor === colorCode ? '' : colorCode)}
+                                                    className={`color-btn relative group ${filterColor === colorCode ? 'ring-2 ring-red-500 ring-offset-2' : ''}`}
+                                                    title={`${colorCode} - ${colorInfo.name}`}
+                                                >
+                                                    <div
+                                                        className={`w-10 h-10 rounded-full border-2 ${filterColor === colorCode ? 'border-red-500' : 'border-slate-300'} shadow-md`}
+                                                        style={{
+                                                            background: colorInfo.pattern
+                                                                ? `linear-gradient(135deg, ${colorInfo.hex} 0%, ${colorInfo.hex}88 100%)`
+                                                                : colorInfo.hex
+                                                        }}
+                                                    />
+                                                    {filterColor === colorCode && (
+                                                        <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                                                            <Icon name="Check" size={10}/>
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-10">
+                                                        {colorCode}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    {filterColor && (
+                                        <div className="mt-2 text-xs text-slate-600 flex items-center gap-2">
+                                            <div
+                                                className="w-4 h-4 rounded-full border"
+                                                style={{ backgroundColor: RAL_COLORS[filterColor]?.hex }}
+                                            />
+                                            <span className="font-bold">{filterColor}</span>
+                                            <span className="text-slate-400">- {RAL_COLORS[filterColor]?.name}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 3. MONTAJ & DIMENSIUNI */}
+                        <div className="glass p-5 rounded-2xl shadow-lg border border-white/50">
+                            <h3 className="font-bold text-slate-800 mb-4 text-sm uppercase tracking-wider flex items-center gap-2">
+                                <Icon name="Ruler"/> 3. Montaj & Dimensiuni
+                            </h3>
+
+                            {/* Mod Calcul */}
+                            <div className="mb-4">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Mod Calcul</label>
+                                <div className="flex bg-slate-100 rounded-xl p-1">
+                                    <button
+                                        onClick={() => setCalcMode('segments')}
+                                        className={`flex-1 py-2 text-xs rounded-lg font-bold transition ${
+                                            calcMode === 'segments' ? 'bg-white shadow text-red-600' : 'text-slate-500'
+                                        }`}
+                                    >
+                                        Segmente Gard
+                                    </button>
+                                    <button
+                                        onClick={() => setCalcMode('direct')}
+                                        className={`flex-1 py-2 text-xs rounded-lg font-bold transition ${
+                                            calcMode === 'direct' ? 'bg-white shadow text-red-600' : 'text-slate-500'
+                                        }`}
+                                    >
+                                        Cantitate Directă
+                                    </button>
+                                </div>
+                            </div>
+
+                            {calcMode === 'segments' ? (
+                                <>
+                                    {/* Tip Montaj */}
+                                    <div className="mb-4">
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Orientare Șipcă</label>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setMountType('vertical')}
+                                                className={`flex-1 py-3 rounded-xl text-xs font-bold border-2 transition ${
+                                                    mountType === 'vertical'
+                                                        ? 'bg-red-50 border-red-500 text-red-600'
+                                                        : 'bg-white border-slate-200 text-slate-500'
+                                                }`}
+                                            >
+                                                ▮ Vertical
+                                            </button>
+                                            <button
+                                                onClick={() => setMountType('horizontal')}
+                                                className={`flex-1 py-3 rounded-xl text-xs font-bold border-2 transition ${
+                                                    mountType === 'horizontal'
+                                                        ? 'bg-red-50 border-red-500 text-red-600'
+                                                        : 'bg-white border-slate-200 text-slate-500'
+                                                }`}
+                                            >
+                                                ▬ Orizontal
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Gap */}
+                                    <div className="mb-4 bg-slate-50 p-3 rounded-xl">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs font-bold text-slate-600">Distanță între șipci (Gap)</span>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setGap(Math.max(0, gap - 0.5))}
+                                                    className="w-8 h-8 bg-white rounded-lg border shadow-sm font-bold text-slate-600 hover:bg-slate-50"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="w-16 text-center font-bold text-lg">{gap} cm</span>
+                                                <button
+                                                    onClick={() => setGap(gap + 0.5)}
+                                                    className="w-8 h-8 bg-white rounded-lg border shadow-sm font-bold text-slate-600 hover:bg-slate-50"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Segmente */}
+                                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                        {segments.map((seg, idx) => (
+                                            <div key={seg.id} className="flex gap-2 items-center bg-white p-3 border rounded-xl shadow-sm">
+                                                <span className="text-xs font-bold text-slate-400 w-6">{idx + 1}.</span>
+                                                <div className="flex-1">
+                                                    <label className="text-[8px] uppercase font-bold text-slate-400 block">Lungime (m)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={seg.length || ''}
+                                                        onChange={e => updateSegment(seg.id, 'length', e.target.value)}
+                                                        className="w-full text-sm font-bold text-slate-700 border-b border-slate-200 focus:border-red-500 outline-none py-1"
+                                                        placeholder="0"
+                                                        step="0.1"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 border-l pl-3">
+                                                    <label className="text-[8px] uppercase font-bold text-slate-400 block">Înălțime (m)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={seg.height || ''}
+                                                        onChange={e => updateSegment(seg.id, 'height', e.target.value)}
+                                                        className="w-full text-sm font-bold text-slate-700 border-b border-slate-200 focus:border-red-500 outline-none py-1"
+                                                        placeholder="0"
+                                                        step="0.05"
+                                                    />
+                                                </div>
+                                                {segments.length > 1 && (
+                                                    <button
+                                                        onClick={() => removeSegment(seg.id)}
+                                                        className="text-slate-300 hover:text-red-500 p-1"
+                                                    >
+                                                        <Icon name="Trash2" size={16}/>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {segments.length < 10 && (
+                                        <button
+                                            onClick={addSegment}
+                                            className="w-full mt-3 py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-400 text-xs font-bold hover:border-red-400 hover:text-red-500 flex items-center justify-center gap-2 transition"
+                                        >
+                                            <Icon name="Plus" size={14}/> Adaugă Segment
+                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                /* Mod Direct */
+                                <div className="space-y-4">
+                                    <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-xl">
+                                        <p className="text-xs text-yellow-700">
+                                            <Icon name="Info" size={12} className="inline mr-1"/>
+                                            Introdu direct cantitatea de șipci dacă știi exact ce ai nevoie.
+                                        </p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Nr. Bucăți</label>
+                                            <input
+                                                type="number"
+                                                value={directQty.pcs || ''}
+                                                onChange={e => setDirectQty({...directQty, pcs: parseInt(e.target.value) || 0})}
+                                                className="w-full border-2 border-slate-200 p-3 rounded-xl font-bold text-lg text-center focus:ring-2 focus:ring-red-500"
+                                                placeholder="100"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Lungime/buc (m)</label>
+                                            <input
+                                                type="number"
+                                                value={directQty.length || ''}
+                                                onChange={e => setDirectQty({...directQty, length: parseFloat(e.target.value) || 0})}
+                                                className="w-full border-2 border-slate-200 p-3 rounded-xl font-bold text-lg text-center focus:ring-2 focus:ring-red-500"
+                                                placeholder="1.5"
+                                                step="0.1"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Accesorii Toggle */}
+                            <div className="mt-4 pt-4 border-t">
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={includeAccessories}
+                                        onChange={e => setIncludeAccessories(e.target.checked)}
+                                        className="w-5 h-5 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                                    />
+                                    <span className="text-sm font-bold text-slate-600">Calculează și accesorii (șuruburi/nituri)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* QUICK RESULT CARD */}
+                        {quickStats && (
+                            <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white p-5 rounded-2xl shadow-xl animate-in">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Icon name="Zap" size={20}/>
+                                    <h3 className="font-bold">Rezultat Rapid</h3>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <div className="text-green-100 text-xs uppercase">Cel mai ieftin</div>
+                                        <div className="font-bold text-lg">{quickStats.cheapestModel}</div>
+                                        <div className="text-green-200 text-xs">{quickStats.cheapestProvider}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-green-100 text-xs uppercase">Total</div>
+                                        <div className="font-bold text-2xl">{quickStats.totalPrice.toFixed(2)} RON</div>
+                                        <div className="text-green-200 text-xs">{quickStats.totalPieces} bucăți</div>
+                                    </div>
+                                </div>
+                                <div className="mt-3 pt-3 border-t border-green-400/30 flex justify-between text-sm">
+                                    <span className="text-green-100">{quickStats.modelCount} modele disponibile</span>
+                                    <span className="font-bold">{quickStats.pricePerPiece.toFixed(2)} RON/buc</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ============ RIGHT PANEL - RESULTS ============ */}
+                    <div className="lg:col-span-8">
+                        <div className="glass rounded-2xl shadow-xl border border-white/50 flex flex-col h-full overflow-hidden">
+                            {/* Toolbar */}
+                            <div className="bg-slate-50 p-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 no-print">
+                                <div>
+                                    <h2 className="font-bold text-slate-800 text-lg">Lista Modele</h2>
+                                    <p className="text-xs text-slate-500">
+                                        {processedResults.filter(r => r.status === 'available').length} disponibile / {processedResults.length} total
+                                    </p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setSortOrder('priceAsc')}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition ${
+                                            sortOrder === 'priceAsc'
+                                                ? 'bg-red-50 text-red-600 border-red-200'
+                                                : 'bg-white text-slate-500 border-slate-200'
+                                        }`}
+                                    >
+                                        Preț ↑
+                                    </button>
+                                    <button
+                                        onClick={() => setSortOrder('priceDesc')}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition ${
+                                            sortOrder === 'priceDesc'
+                                                ? 'bg-red-50 text-red-600 border-red-200'
+                                                : 'bg-white text-slate-500 border-slate-200'
+                                        }`}
+                                    >
+                                        Preț ↓
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Results Table */}
+                            <div className="flex-1 overflow-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-slate-100 text-slate-500 text-xs uppercase font-bold sticky top-0 z-10">
+                                        <tr>
+                                            <th className="py-3 px-4">Model</th>
+                                            <th className="py-3 px-4">Status</th>
+                                            <th className="py-3 px-4 text-center">Cantitate</th>
+                                            {adminSettings.showCostPrice && adminUnlocked && (
+                                                <th className="py-3 px-4 text-right">Cost</th>
+                                            )}
+                                            <th className="py-3 px-4 text-right">Total (RON)</th>
+                                            <th className="py-3 px-4 text-center no-print">Acțiune</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {processedResults.map((res) => (
+                                            <React.Fragment key={res.model.id}>
+                                                <tr
+                                                    className={`group transition cursor-pointer ${
+                                                        res.status === 'unavailable'
+                                                            ? 'bg-slate-50/50'
+                                                            : res.status === 'incomplete'
+                                                                ? 'bg-yellow-50/50'
+                                                                : selectedModel?.model.id === res.model.id
+                                                                    ? 'bg-green-50'
+                                                                    : 'hover:bg-slate-50'
+                                                    }`}
+                                                    onClick={() => res.status === 'available' && toggleRowExpand(res.model.id)}
+                                                >
+                                                    <td className={`py-4 px-4 ${res.status === 'unavailable' ? 'opacity-50' : ''}`}>
+                                                        <div className={`font-bold text-slate-800 ${res.status === 'unavailable' ? 'line-through' : ''}`}>
+                                                            {res.model.name}
+                                                        </div>
+                                                        <div className="text-[10px] uppercase text-slate-400 font-bold flex items-center gap-2">
+                                                            {res.model.provider}
+                                                            <span className="text-slate-300">•</span>
+                                                            <span>{res.model.w_useful}mm</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-4">
+                                                        {res.status === 'available' ? (
+                                                            <div className="flex items-center gap-1 text-green-600 font-bold text-xs">
+                                                                <Icon name="CheckCircle" size={14}/> Disponibil
+                                                            </div>
+                                                        ) : res.status === 'incomplete' ? (
+                                                            <div className="flex items-center gap-1 text-yellow-600 font-bold text-xs">
+                                                                <Icon name="AlertCircle" size={14}/> Incomplet
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-red-500 text-xs">
+                                                                <div className="flex items-center gap-1 font-bold">
+                                                                    <Icon name="XCircle" size={14}/> INDISPONIBIL
+                                                                </div>
+                                                                <div className="text-[10px] text-red-400 mt-0.5">
+                                                                    {res.failReasons.join(', ')}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-4 px-4 text-center">
+                                                        {res.status === 'available' ? (
+                                                            <div>
+                                                                <div className="font-bold text-slate-800">{res.totalPieces} buc</div>
+                                                                <div className="text-[10px] text-slate-400">{res.totalLength.toFixed(1)} ml</div>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-slate-300">-</span>
+                                                        )}
+                                                    </td>
+                                                    {adminSettings.showCostPrice && adminUnlocked && (
+                                                        <td className="py-4 px-4 text-right">
+                                                            {res.status === 'available' ? (
+                                                                <div className="text-orange-600 font-mono text-sm">
+                                                                    {res.costTotal.toFixed(2)}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-slate-300">-</span>
+                                                            )}
+                                                        </td>
+                                                    )}
+                                                    <td className="py-4 px-4 text-right">
+                                                        {res.status === 'available' ? (
+                                                            <div>
+                                                                <div className="font-bold text-xl text-slate-900">
+                                                                    {res.priceTotal.toFixed(2)}
+                                                                </div>
+                                                                <div className="text-[10px] text-slate-400">
+                                                                    {res.pricePerPiece.toFixed(2)} /buc
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-slate-300 font-bold">0.00</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-4 px-4 text-center no-print">
+                                                        {res.status === 'available' && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    selectForQuote(res);
+                                                                }}
+                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                                                                    selectedModel?.model.id === res.model.id
+                                                                        ? 'bg-green-600 text-white'
+                                                                        : 'bg-red-600 text-white hover:bg-red-700'
+                                                                }`}
+                                                            >
+                                                                {selectedModel?.model.id === res.model.id ? '✓ Selectat' : 'Selectează'}
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+
+                                                {/* Expanded Details Row */}
+                                                {expandedRows[res.model.id] && res.status === 'available' && (
+                                                    <tr className="bg-slate-50 animate-in">
+                                                        <td colSpan={adminSettings.showCostPrice && adminUnlocked ? 6 : 5} className="px-4 py-3">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                {/* Detalii Segmente */}
+                                                                <div>
+                                                                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Detalii Calcul</h4>
+                                                                    <div className="space-y-1">
+                                                                        {res.details.map((d, i) => (
+                                                                            <div key={i} className="flex justify-between text-xs bg-white p-2 rounded">
+                                                                                <span className="text-slate-600">{d.label}</span>
+                                                                                <span className="font-mono">
+                                                                                    <span className="text-slate-500">{d.pcs} buc</span>
+                                                                                    <span className="mx-2 text-slate-300">→</span>
+                                                                                    <span className="font-bold">{d.priceTotal.toFixed(2)} RON</span>
+                                                                                </span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Accesorii */}
+                                                                {includeAccessories && (
+                                                                    <div>
+                                                                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Accesorii Necesare</h4>
+                                                                        <div className="bg-white p-3 rounded">
+                                                                            {res.model.fixType === 'screw' ? (
+                                                                                <div className="flex justify-between items-center">
+                                                                                    <div>
+                                                                                        <div className="font-bold text-slate-800">{ACCESSORIES.screw.label}</div>
+                                                                                        <div className="text-xs text-slate-500">
+                                                                                            {res.accessories.screws} buc necesare → {res.accessories.screwBoxes} cutii
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-right">
+                                                                                        <div className="font-bold text-slate-800">
+                                                                                            {(res.accessories.screwBoxes * ACCESSORIES.screw.priceRON).toFixed(2)} RON
+                                                                                        </div>
+                                                                                        <div className="text-[10px] text-slate-400">
+                                                                                            {ACCESSORIES.screw.priceRON} RON/cutie
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="flex justify-between items-center">
+                                                                                    <div>
+                                                                                        <div className="font-bold text-slate-800">{ACCESSORIES.rivet.label}</div>
+                                                                                        <div className="text-xs text-slate-500">
+                                                                                            {res.accessories.rivets} bucăți necesare
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-right">
+                                                                                        <div className="font-bold text-slate-800">
+                                                                                            {(res.accessories.rivets * ACCESSORIES.rivet.priceRON).toFixed(2)} RON
+                                                                                        </div>
+                                                                                        <div className="text-[10px] text-slate-400">
+                                                                                            {ACCESSORIES.rivet.priceRON} RON/buc
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </React.Fragment>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Footer Actions */}
+                            <div className="bg-slate-50 p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-3 no-print">
+                                <div className="text-xs text-slate-500">
+                                    {selectedModel ? (
+                                        <span className="text-green-600 font-bold">
+                                            ✓ Model selectat: {selectedModel.model.name} ({selectedModel.priceTotal.toFixed(2)} RON)
+                                        </span>
+                                    ) : (
+                                        'Selectează un model pentru a genera oferta'
+                                    )}
+                                </div>
+                                <div className="flex gap-3">
+                                    {client.phone && client.phone.length >= 10 && (
+                                        <a
+                                            href={`https://wa.me/4${client.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Bună ziua! Vă trimit oferta pentru șipcă metalică gard.`)}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="bg-green-600 text-white px-4 py-2.5 rounded-xl font-bold shadow-lg hover:bg-green-700 flex items-center gap-2 transition"
+                                        >
+                                            <Icon name="MessageSquare"/> WhatsApp
+                                        </a>
+                                    )}
+                                    <button
+                                        onClick={generatePDF}
+                                        disabled={!selectedModel}
+                                        className="bg-slate-800 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-slate-900 flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Icon name="Download"/> Descarcă PDF
+                                    </button>
+                                    <button
+                                        onClick={() => window.print()}
+                                        className="bg-white text-slate-600 px-4 py-2.5 rounded-xl font-bold border border-slate-200 hover:bg-slate-50 flex items-center gap-2 transition"
+                                    >
+                                        <Icon name="Printer"/> Print
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ============ PDF TEMPLATE (Hidden) ============ */}
+                {selectedModel && (
+                    <div ref={pdfRef} className="fixed -left-[9999px] w-[210mm] bg-white p-8 text-sm" style={{ fontFamily: 'Arial, sans-serif' }}>
+                        {/* PDF Header */}
+                        <div className="flex justify-between items-start mb-8 pb-4 border-b-2 border-red-600">
+                            <div>
+                                <h1 className="text-2xl font-bold text-red-600">{agent.company}</h1>
+                                <p className="text-slate-600">{agent.name}</p>
+                                <p className="text-slate-500 text-xs">{agent.phone} | {agent.email}</p>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-xs text-slate-400">OFERTĂ DE PREȚ</div>
+                                <div className="font-bold text-lg">#{Date.now().toString().slice(-8)}</div>
+                                <div className="text-xs text-slate-500">Data: {client.date}</div>
+                                <div className="text-xs text-slate-500">Valabil: {adminSettings.quoteValidity} zile</div>
+                            </div>
+                        </div>
+
+                        {/* Client Info */}
+                        <div className="mb-6 p-4 bg-slate-50 rounded">
+                            <h3 className="font-bold text-slate-700 mb-2">Date Client</h3>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div><span className="text-slate-500">Nume:</span> <strong>{client.name || '-'}</strong></div>
+                                <div><span className="text-slate-500">Telefon:</span> <strong>{client.phone || '-'}</strong></div>
+                                <div><span className="text-slate-500">Locație:</span> <strong>{client.location || '-'}</strong></div>
+                                <div><span className="text-slate-500">Email:</span> <strong>{client.email || '-'}</strong></div>
+                            </div>
+                        </div>
+
+                        {/* Product Details */}
+                        <div className="mb-6">
+                            <h3 className="font-bold text-slate-700 mb-3">Specificații Produs</h3>
+                            <table className="w-full border-collapse text-sm">
+                                <tbody>
+                                    <tr className="border-b">
+                                        <td className="py-2 text-slate-500">Model:</td>
+                                        <td className="py-2 font-bold">{selectedModel.model.name} ({selectedModel.model.provider})</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="py-2 text-slate-500">Grosime:</td>
+                                        <td className="py-2 font-bold">{filterThickness} mm</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="py-2 text-slate-500">Finisaj:</td>
+                                        <td className="py-2 font-bold">{filterFinish}</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="py-2 text-slate-500">Culoare:</td>
+                                        <td className="py-2 font-bold">{filterColor ? `RAL ${filterColor}` : 'La alegere'}</td>
+                                    </tr>
+                                    <tr className="border-b">
+                                        <td className="py-2 text-slate-500">Montaj:</td>
+                                        <td className="py-2 font-bold">{mountType === 'vertical' ? 'Vertical' : 'Orizontal'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Quantity Table */}
+                        <div className="mb-6">
+                            <h3 className="font-bold text-slate-700 mb-3">Detalii Cantitate</h3>
+                            <table className="w-full border-collapse text-sm">
+                                <thead>
+                                    <tr className="bg-slate-100">
+                                        <th className="py-2 px-3 text-left border">Descriere</th>
+                                        <th className="py-2 px-3 text-center border">Bucăți</th>
+                                        <th className="py-2 px-3 text-right border">Preț/buc</th>
+                                        <th className="py-2 px-3 text-right border">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {selectedModel.details.map((d, i) => (
+                                        <tr key={i}>
+                                            <td className="py-2 px-3 border">{d.label}</td>
+                                            <td className="py-2 px-3 text-center border">{d.pcs}</td>
+                                            <td className="py-2 px-3 text-right border">{d.priceUnit.toFixed(2)} RON</td>
+                                            <td className="py-2 px-3 text-right border font-bold">{d.priceTotal.toFixed(2)} RON</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr className="bg-slate-50 font-bold">
+                                        <td className="py-3 px-3 border" colSpan="2">TOTAL ȘIPCĂ</td>
+                                        <td className="py-3 px-3 text-center border">{selectedModel.totalPieces} buc</td>
+                                        <td className="py-3 px-3 text-right border text-lg">{selectedModel.priceTotal.toFixed(2)} RON</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        {/* Accessories */}
+                        {includeAccessories && (
+                            <div className="mb-6">
+                                <h3 className="font-bold text-slate-700 mb-3">Accesorii Recomandate</h3>
+                                <table className="w-full border-collapse text-sm">
+                                    <tbody>
+                                        {selectedModel.model.fixType === 'screw' ? (
+                                            <tr>
+                                                <td className="py-2 px-3 border">{ACCESSORIES.screw.label}</td>
+                                                <td className="py-2 px-3 text-center border">{selectedModel.accessories.screwBoxes} cutii (250 buc/cutie)</td>
+                                                <td className="py-2 px-3 text-right border font-bold">
+                                                    {(selectedModel.accessories.screwBoxes * ACCESSORIES.screw.priceRON).toFixed(2)} RON
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            <tr>
+                                                <td className="py-2 px-3 border">{ACCESSORIES.rivet.label}</td>
+                                                <td className="py-2 px-3 text-center border">{selectedModel.accessories.rivets} buc</td>
+                                                <td className="py-2 px-3 text-right border font-bold">
+                                                    {(selectedModel.accessories.rivets * ACCESSORIES.rivet.priceRON).toFixed(2)} RON
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* Grand Total */}
+                        <div className="bg-red-600 text-white p-4 rounded mb-6">
+                            <div className="flex justify-between items-center">
+                                <span className="text-lg font-bold">TOTAL GENERAL (fără TVA)</span>
+                                <span className="text-2xl font-bold">
+                                    {(selectedModel.priceTotal + (includeAccessories ? (
+                                        selectedModel.model.fixType === 'screw'
+                                            ? selectedModel.accessories.screwBoxes * ACCESSORIES.screw.priceRON
+                                            : selectedModel.accessories.rivets * ACCESSORIES.rivet.priceRON
+                                    ) : 0)).toFixed(2)} RON
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="text-xs text-slate-500 text-center border-t pt-4">
+                            <p>Această ofertă este valabilă {adminSettings.quoteValidity} zile de la data emiterii.</p>
+                            <p className="mt-1">Prețurile nu includ TVA și transport.</p>
+                            <p className="mt-2 font-bold text-slate-700">{agent.company} | {agent.phone} | {agent.email}</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+</script>
+
+</body>
+</html>
