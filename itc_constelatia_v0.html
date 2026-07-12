@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ITC · Constelația — v0 | PeAcoperis</title>
+<style>
+  :root{
+    --bg:#05070f; --bg2:#0a0f1e; --ink:#e8edff; --muted:#8b96b8; --line:#1b2340;
+    --panel:rgba(12,17,34,.82); --panelbrd:#232c4d;
+    --idea:#3b5a86;     /* albastru slab - idee */
+    --start:#22d3ee;    /* cyan - la inceput */
+    --grow:#34d399;     /* verde - creste */
+    --almost:#fbbf24;   /* chihlimbar - aproape */
+    --live:#fcd34d;     /* auriu - LIVE */
+    --dead:#4b5563;     /* gri - stinsa */
+    --synlive:#34d399; --syndead:#f87171;
+    --accent:#dc2626;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow:hidden}
+  #app{display:grid;grid-template-columns:1fr 340px;grid-template-rows:56px 1fr;height:100vh}
+  header{grid-column:1/3;display:flex;align-items:center;gap:16px;padding:0 18px;
+    border-bottom:1px solid var(--line);background:linear-gradient(90deg,#0a0f1e,#0d1430)}
+  header .brand{font-weight:700;letter-spacing:.5px}
+  header .brand b{color:var(--live)}
+  header .tag{font-size:11px;color:var(--muted);border:1px solid var(--panelbrd);
+    padding:2px 8px;border-radius:20px}
+  header .legend{margin-left:auto;display:flex;gap:14px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+  header .legend span{display:flex;align-items:center;gap:5px}
+  header .dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 8px currentColor}
+  /* SKY */
+  #sky{position:relative;overflow:hidden;background:
+    radial-gradient(1200px 700px at 30% 20%,#111a38 0%,transparent 60%),
+    radial-gradient(900px 600px at 80% 80%,#0e1730 0%,transparent 55%),var(--bg)}
+  #stars-bg{position:absolute;inset:0}
+  svg{position:absolute;inset:0;width:100%;height:100%}
+  .zone-label{fill:#5566a0;font-size:13px;font-weight:600;letter-spacing:3px;
+    text-transform:uppercase;opacity:.5}
+  .zone-ring{fill:none;stroke:#182142;stroke-dasharray:3 7;opacity:.5}
+  .synapse{stroke-width:2;fill:none}
+  .syn-live{stroke:var(--synlive);filter:drop-shadow(0 0 4px #34d39988);animation:flow 2.4s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-24}}
+  .syn-dead{stroke:var(--syndead);stroke-dasharray:5 6;opacity:.85}
+  .star{cursor:pointer}
+  .star .halo{transition:r .2s,opacity .2s}
+  .star:hover .halo{opacity:.9}
+  .star .core{transition:r .15s}
+  .star:hover .core{r:9}
+  .star.sel .ring{opacity:1}
+  .star .ring{opacity:0;stroke:#fff;fill:none;stroke-width:1.5}
+  .star text{fill:#c7d0f0;font-size:11px;pointer-events:none;text-shadow:0 1px 4px #000}
+  .pulse{animation:tw 3s ease-in-out infinite}
+  @keyframes tw{0%,100%{opacity:1}50%{opacity:.55}}
+  /* RIGHT PANEL */
+  #side{border-left:1px solid var(--line);background:var(--bg2);overflow-y:auto;padding:14px}
+  .card{background:var(--panel);border:1px solid var(--panelbrd);border-radius:12px;
+    padding:12px 13px;margin-bottom:12px}
+  .card h3{margin:0 0 8px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#a9b4dc}
+  .gate li{font-size:12px;color:#cdd5f2;margin:6px 0;padding-left:20px;position:relative;line-height:1.35}
+  .gate li:before{content:"◇";position:absolute;left:0;color:var(--almost)}
+  .rec{font-size:11px;color:var(--muted);border-top:1px dashed var(--panelbrd);margin-top:8px;padding-top:8px}
+  .rec b{color:var(--start)}
+  .seed{display:flex;align-items:center;gap:8px;font-size:12px;color:#b9c2e6;
+    padding:6px 8px;border:1px dashed #33406e;border-radius:8px;margin:6px 0;background:#0c1330}
+  .seed .s{width:8px;height:8px;border-radius:50%;background:var(--idea);flex:none;box-shadow:0 0 6px var(--idea)}
+  .act{font-size:12px;margin:8px 0;padding:8px 10px;border-radius:8px;background:#0c1330;border:1px solid #2a355f}
+  .act .n{color:var(--accent);font-weight:700;margin-right:6px}
+  .act .arrow{color:var(--syndead);font-weight:700}
+  .act small{display:block;color:var(--muted);margin-top:3px}
+  /* DETAIL OVERLAY */
+  #detail{position:absolute;left:14px;bottom:14px;width:340px;max-height:70%;overflow:auto;
+    background:var(--panel);border:1px solid var(--panelbrd);border-radius:14px;padding:16px;
+    backdrop-filter:blur(10px);display:none;box-shadow:0 20px 60px #000a}
+  #detail.on{display:block;animation:up .25s ease-out}
+  @keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  #detail .x{position:absolute;top:10px;right:12px;cursor:pointer;color:var(--muted);font-size:18px}
+  #detail h2{margin:0 6px 2px 0;font-size:18px;display:inline-block}
+  #detail .zone{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+  .badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;vertical-align:middle}
+  .pct-wrap{margin:12px 0 6px}
+  .pct-bar{height:8px;border-radius:6px;background:#182142;overflow:hidden}
+  .pct-fill{height:100%;border-radius:6px;transition:width .4s}
+  .pct-num{font-size:22px;font-weight:800;margin-right:8px}
+  .est{background:#7a2e2e;color:#ffd7d7}
+  .real{background:#1f5137;color:#c9ffe4}
+  .ms{list-style:none;padding:0;margin:10px 0 0}
+  .ms li{font-size:12px;color:#c7d0f0;padding:5px 0 5px 24px;position:relative;line-height:1.3}
+  .ms li.done:before{content:"✓";color:var(--grow);position:absolute;left:2px;font-weight:700}
+  .ms li.todo:before{content:"○";color:var(--muted);position:absolute;left:3px}
+  .ms li.todo{color:var(--muted)}
+  .kv{font-size:12px;margin:8px 0;line-height:1.4}
+  .kv b{color:#a9b4dc;display:block;font-size:10px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
+  .kv .exist{color:#c9ffe4}.kv .miss{color:#ffd7d7}.kv .next{color:var(--start)}
+  #detail a.notion{display:inline-block;margin-top:10px;font-size:12px;color:#93b4ff;text-decoration:none}
+  #detail a.notion:hover{text-decoration:underline}
+  .hint{position:absolute;top:64px;left:16px;font-size:11px;color:#54608f}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">ITC · <b>Constelația</b></div>
+    <span class="tag">v0 — imagine, nu motor</span>
+    <div class="legend">
+      <span><i class="dot" style="color:var(--idea);background:var(--idea)"></i>idee</span>
+      <span><i class="dot" style="color:var(--start);background:var(--start)"></i>început</span>
+      <span><i class="dot" style="color:var(--grow);background:var(--grow)"></i>crește</span>
+      <span><i class="dot" style="color:var(--almost);background:var(--almost)"></i>aproape</span>
+      <span><i class="dot" style="color:var(--live);background:var(--live)"></i>LIVE</span>
+      <span><i class="dot" style="color:var(--dead);background:var(--dead)"></i>stinsă</span>
+    </div>
+  </header>
+
+  <div id="sky">
+    <canvas id="stars-bg"></canvas>
+    <div class="hint">Click pe o stea → detalii · sinapsă verde = legată · roșie punctată = nelegată</div>
+    <svg id="svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice">
+      <g id="g-zones"></g>
+      <g id="g-syn"></g>
+      <g id="g-stars"></g>
+    </svg>
+    <div id="detail"></div>
+  </div>
+
+  <div id="side">
+    <div class="card">
+      <h3>⛩ Poarta — standardul</h3>
+      <ul class="gate">
+        <li>Rezolvă o durere reală, numită (cine plătește azi pentru ea?)</li>
+        <li>Se leagă de banii existenți (aproape de încasare, nu în vid)</li>
+        <li>Are un „done" măsurabil (milestone-uri, nu impresie)</li>
+        <li>Poate fi construită de sistemul actual (Airtable/SmartBill/Make/AI)</li>
+        <li>Merită față de ce sacrifici ca s-o faci (cost de oportunitate)</li>
+      </ul>
+      <div class="rec">Recomandarea mea: <b>AI pre-filtrează</b>, tu dai verdictul. Ideea trece poarta → devine stea. Pică → rămâne sămânță.</div>
+    </div>
+
+    <div class="card">
+      <h3>🌱 Semințe în așteptare</h3>
+      <div id="seeds"></div>
+      <div class="rec">Pe margine, nu pe cer. N-au trecut încă poarta.</div>
+    </div>
+
+    <div class="card">
+      <h3>🔗 Sinapse de legat — ordinea banilor</h3>
+      <div id="actions"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// MODEL DE DATE  — v0. Procentele REALE vin din milestones.
+// estimated:true  => steaua e marcată vizibil "estimat" (ghicit).
+// Când definim milestone-urile împreună, ștergem estimated și
+// completăm array-ul ms[]; procentul se calculează singur.
+// ============================================================
+const ZONES = {
+  sales:    {name:'Vânzări',    x:250, y:250},
+  measure:  {name:'Măsurători', x:640, y:180},
+  marketing:{name:'Marketing',  x:840, y:430},
+  legal:    {name:'Juridic',    x:560, y:560},
+  ops:      {name:'Operațiuni', x:230, y:530},
+  ai:       {name:'Sistem AI',  x:500, y:340},
+};
+
+// ms: [{t:'label', done:true|false}]  -> pct = done/total
+// estPct + estimated:true  -> procent ghicit, marcat ca atare
+const STARS = [
+  { id:'incasari', zone:'sales', name:'Mașina de Încasări', x:200, y:210,
+    live:true, ms:[
+      {t:'Trigger factură nouă (Airtable)',done:true},
+      {t:'Emitere automată SmartBill',done:true},
+      {t:'Sincronizare status plată',done:true},
+      {t:'Notificare la restanță',done:false},
+      {t:'Raport încasări zilnic',done:false},
+    ],
+    exist:'Fluxul Airtable → SmartBill emite automat. Statusul plății se întoarce în bază.',
+    miss:'Notificările de restanță și raportul zilnic.',
+    next:'Cârlig pe restanță > 7 zile → mesaj automat.',
+    notion:'' },
+
+  { id:'calc', zone:'sales', name:'Calculator Șipcă V22', x:320, y:300,
+    live:true, ms:[
+      {t:'Motor de preț enterprise',done:true},
+      {t:'Export PDF ofertă',done:true},
+      {t:'Culori & disponibilitate',done:true},
+      {t:'Salvare ofertă în Airtable',done:false},
+    ],
+    exist:'Există și rulează (calculator_sipca_v22_enterprise.html în repo).',
+    miss:'Nu scrie încă oferta înapoi în baza „Proiecte".',
+    next:'Buton „Salvează oferta" → record Airtable.',
+    notion:'' },
+
+  { id:'tetto', zone:'measure', name:'TETTO-RC', x:640, y:170,
+    estPct:65, estimated:true, ms:[],
+    exist:'Componenta de măsurare/config acoperiș.',
+    miss:'Definition of done — milestone-urile reale (le stabilim împreună).',
+    next:'Legătura către Contract HTML (sinapsă roșie acum).',
+    notion:'' },
+
+  { id:'airtable', zone:'ai', name:'Airtable (Hub date)', x:470, y:330,
+    live:true, ms:[
+      {t:'Baza „Proiecte" ca sursă unică',done:false},
+      {t:'Tabel clienți/oferte',done:true},
+      {t:'API către SmartBill',done:true},
+      {t:'API către Make',done:true},
+    ],
+    exist:'Hub-ul care leagă vânzările de facturare. Conectat la SmartBill și Make.',
+    miss:'Baza „Proiecte" (sursa care face constelația VIE) nu există încă.',
+    next:'Creăm baza „Proiecte" cu câmp milestones → alimentează harta.',
+    notion:'' },
+
+  { id:'smartbill', zone:'ops', name:'SmartBill', x:230, y:520,
+    live:true, ms:[
+      {t:'Emitere proformă/factură',done:true},
+      {t:'OpenAPI mapat (în repo)',done:true},
+      {t:'Sincronizare status',done:true},
+    ],
+    exist:'Facturarea. OpenAPI-ul e deja în repo. Legat de Mașina de Încasări.',
+    miss:'—',
+    next:'Stabil. Capătul banilor strălucește.',
+    notion:'' },
+
+  { id:'contract', zone:'legal', name:'Contract HTML', x:560, y:560,
+    estPct:10, estimated:true, ms:[],
+    exist:'Idee. Șablon de contract generat din date.',
+    miss:'Aproape tot — nu e legat de TETTO-RC (frontul are gaura aici).',
+    next:'Definește sursa datelor (din TETTO-RC) → generare HTML → semnare.',
+    notion:'' },
+];
+
+// Sinapse: live=true => verde pulsând ; live=false => roșie punctată
+const SYNAPSES = [
+  {from:'incasari', to:'airtable',  live:true},
+  {from:'airtable', to:'smartbill', live:true},
+  {from:'incasari', to:'smartbill', live:true},
+  {from:'calc',     to:'airtable',  live:false},
+  {from:'tetto',    to:'contract',  live:false},  // golul numit
+  {from:'tetto',    to:'airtable',  live:false},
+];
+
+const SEEDS = ['Protecția Marjei','Harta / Constelația (creierul extras)','Onboarding client automat'];
+
+const ACTIONS = [
+  {a:'TETTO-RC', b:'Contract HTML', why:'Frontul are gaura aici — capătul banilor strălucește, dar contractul nu se leagă.'},
+  {a:'Calculator Șipcă', b:'Airtable „Proiecte"', why:'Ofertele să scrie în baza-sursă, ca harta să fie VIE.'},
+  {a:'Airtable', b:'Baza „Proiecte" (nouă)', why:'Fără sursă + rutină de regenerare, cerul rămâne un tablou.'},
+];
+
+// ---------- color from pct ----------
+function pctOf(s){ if(s.ms&&s.ms.length){const d=s.ms.filter(m=>m.done).length;return Math.round(d/s.ms.length*100);} return s.estPct||0; }
+function colorOf(s){
+  if(s.dead) return getCSS('--dead');
+  const p=pctOf(s);
+  if(s.live && p>=95) return getCSS('--live');
+  if(p>=95) return getCSS('--live');
+  if(p>=70) return getCSS('--almost');
+  if(p>=25) return getCSS('--grow');
+  if(p>0)   return getCSS('--start');
+  return getCSS('--idea');
+}
+function getCSS(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+const byId=id=>STARS.find(s=>s.id===id);
+
+// ---------- background starfield ----------
+(function(){
+  const c=document.getElementById('stars-bg'),x=c.getContext('2d');
+  function fit(){c.width=c.offsetWidth;c.height=c.offsetHeight;draw();}
+  let pts=[];
+  function draw(){
+    pts=Array.from({length:160},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.3,a:Math.random()*.6+.15}));
+    x.clearRect(0,0,c.width,c.height);
+    pts.forEach(p=>{x.globalAlpha=p.a;x.fillStyle='#cdd8ff';x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill();});
+  }
+  window.addEventListener('resize',fit);fit();
+})();
+
+// ---------- render zones ----------
+const gz=document.getElementById('g-zones');
+Object.values(ZONES).forEach(z=>{
+  const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  ring.setAttribute('class','zone-ring');ring.setAttribute('cx',z.x);ring.setAttribute('cy',z.y);ring.setAttribute('r',115);
+  gz.appendChild(ring);
+  const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+  t.setAttribute('class','zone-label');t.setAttribute('x',z.x);t.setAttribute('y',z.y-125);t.setAttribute('text-anchor','middle');
+  t.textContent=z.name;gz.appendChild(t);
+});
+
+// ---------- render synapses ----------
+const gs=document.getElementById('g-syn');
+SYNAPSES.forEach(sy=>{
+  const A=byId(sy.from),B=byId(sy.to);if(!A||!B)return;
+  const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1',A.x);l.setAttribute('y1',A.y);l.setAttribute('x2',B.x);l.setAttribute('y2',B.y);
+  l.setAttribute('class','synapse '+(sy.live?'syn-live':'syn-dead'));
+  if(sy.live)l.setAttribute('stroke-dasharray','6 6');
+  gs.appendChild(l);
+});
+
+// ---------- render stars ----------
+const gst=document.getElementById('g-stars');
+STARS.forEach(s=>{
+  const col=colorOf(s), p=pctOf(s);
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('class','star pulse');g.dataset.id=s.id;
+  g.innerHTML=`
+    <circle class="halo" cx="${s.x}" cy="${s.y}" r="${14+p/8}" fill="${col}" opacity="0.18"/>
+    <circle class="ring" cx="${s.x}" cy="${s.y}" r="13"/>
+    <circle class="core" cx="${s.x}" cy="${s.y}" r="6.5" fill="${col}" style="filter:drop-shadow(0 0 7px ${col})"/>
+    <text x="${s.x}" y="${s.y+26}" text-anchor="middle">${s.name}${s.estimated?' ⚠':''}</text>`;
+  g.addEventListener('click',()=>openDetail(s.id));
+  gst.appendChild(g);
+});
+
+// ---------- seeds & actions ----------
+document.getElementById('seeds').innerHTML=SEEDS.map(s=>`<div class="seed"><i class="s"></i>${s}</div>`).join('');
+document.getElementById('actions').innerHTML=ACTIONS.map((a,i)=>
+  `<div class="act"><span class="n">${i+1}.</span>${a.a} <span class="arrow">⇢</span> ${a.b}<small>${a.why}</small></div>`).join('');
+
+// ---------- detail panel ----------
+function openDetail(id){
+  const s=byId(id);const p=pctOf(s);const col=colorOf(s);
+  document.querySelectorAll('.star').forEach(g=>g.classList.toggle('sel',g.dataset.id===id));
+  const badge=s.estimated
+    ? `<span class="badge est">⚠ ESTIMAT (${p}% ghicit)</span>`
+    : `<span class="badge real">✓ REAL (${s.ms.filter(m=>m.done).length}/${s.ms.length} pași)</span>`;
+  const msHtml=s.ms&&s.ms.length
+    ? `<ul class="ms">${s.ms.map(m=>`<li class="${m.done?'done':'todo'}">${m.t}</li>`).join('')}</ul>`
+    : `<div class="kv" style="color:var(--almost)">Fără milestone-uri definite — procentul e ghicit. Le stabilim împreună (definition of done).</div>`;
+  const d=document.getElementById('detail');
+  d.innerHTML=`
+    <span class="x" onclick="closeDetail()">✕</span>
+    <div class="zone">${ZONES[s.zone].name}</div>
+    <h2>${s.name}</h2> ${badge}
+    <div class="pct-wrap">
+      <span class="pct-num" style="color:${col}">${p}%</span>
+      <div class="pct-bar"><div class="pct-fill" style="width:${p}%;background:${col}"></div></div>
+    </div>
+    ${msHtml}
+    <div class="kv"><b>Ce există</b><span class="exist">${s.exist}</span></div>
+    <div class="kv"><b>Ce lipsește</b><span class="miss">${s.miss}</span></div>
+    <div class="kv"><b>Următorul pas</b><span class="next">${s.next}</span></div>
+    ${s.notion?`<a class="notion" href="${s.notion}" target="_blank">↗ Deschide în Notion</a>`:`<div class="kv" style="color:var(--muted);font-size:11px">Link Notion: — (se completează când baza „Proiecte" există)</div>`}`;
+  d.classList.add('on');
+}
+function closeDetail(){document.getElementById('detail').classList.remove('on');
+  document.querySelectorAll('.star').forEach(g=>g.classList.remove('sel'));}
+</script>
+</body>
+</html>
