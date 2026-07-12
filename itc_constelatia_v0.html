@@ -96,6 +96,21 @@
   #detail a.notion{display:inline-block;margin-top:10px;font-size:12px;color:#93b4ff;text-decoration:none}
   #detail a.notion:hover{text-decoration:underline}
   .hint{position:absolute;top:64px;left:16px;font-size:11px;color:#54608f}
+  /* LIFECYCLE */
+  .star.fresh .core{stroke:#8fd4ff;stroke-width:1.5;stroke-dasharray:2 2}
+  .star.trash{opacity:.35}
+  .star.trash .core{filter:none !important;stroke:#6b7280;stroke-width:1.5;stroke-dasharray:2 3}
+  .star.trash text{fill:#7b8398;font-style:italic}
+  .warnring{fill:none;stroke:#f59e0b;stroke-width:1.5;stroke-dasharray:3 4;opacity:.9;animation:tw 1.6s ease-in-out infinite}
+  .disc{fill:#f59e0b;font-size:9px;font-weight:700}
+  .syn-maybe{stroke:#8fd4ff;stroke-dasharray:2 6;opacity:.5;stroke-width:1.5}
+  .trashcard .ti{display:flex;justify-content:space-between;align-items:center;font-size:12px;
+    color:#9aa3c4;padding:6px 8px;border:1px dashed #3a3f55;border-radius:8px;margin:6px 0;background:#0d0f18}
+  .trashcard .cd{font-size:10px;color:#f59e0b;font-weight:700;white-space:nowrap;margin-left:8px}
+  .life h3{color:#c9a24a}
+  .life .row{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:#c7d0f0;margin:7px 0}
+  .life .row i{width:9px;height:9px;border-radius:50%;flex:none;margin-top:3px;box-shadow:0 0 6px currentColor}
+  .life .row small{color:var(--muted);display:block}
 </style>
 </head>
 <body>
@@ -115,7 +130,7 @@
 
   <div id="sky">
     <canvas id="stars-bg"></canvas>
-    <div class="hint">Click pe o stea → detalii · sinapsă verde = legată · roșie punctată = nelegată</div>
+    <div class="hint">Click pe o stea → detalii · verde = legată · roșie = nelegată · albastru punctat = legătură posibilă · 🗑 = în coș (inactivă)</div>
     <svg id="svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice">
       <g id="g-zones"></g>
       <g id="g-syn"></g>
@@ -135,6 +150,22 @@
         <li>Merită față de ce sacrifici ca s-o faci (cost de oportunitate)</li>
       </ul>
       <div class="rec">Recomandarea mea: <b>AI pre-filtrează</b>, tu dai verdictul. Ideea trece poarta → devine stea. Pică → rămâne sămânță.</div>
+    </div>
+
+    <div class="card life">
+      <h3>♻ Ciclul de viață — anti-maldăr</h3>
+      <div class="row"><i style="color:var(--start);background:var(--start)"></i>
+        <div><b style="color:#c7d0f0">Captură liberă.</b> Orice e proiect. Daniel vede un video → cineva îl catalogheză (ex. marketing) → intră în zonă cu <i>legături posibile</i> (albastru punctat).<small>Ideile prind viață ușor.</small></div></div>
+      <div class="row"><i style="color:var(--almost);background:var(--almost)"></i>
+        <div><b style="color:#c7d0f0">2 săpt. inactiv → avertisment.</b> Apare disclaimerul și steaua cade în coș.<small>🗑 countdown pe stea.</small></div></div>
+      <div class="row"><i style="color:var(--dead);background:var(--dead)"></i>
+        <div><b style="color:#c7d0f0">+1 săpt. în coș → dispare.</b> Dacă n-o atinge nimeni, timpul o curăță.<small>Atingi ideea oricând → iese din coș.</small></div></div>
+      <div class="rec">Nucleul (bani: Încasări, SmartBill, Airtable, Calc) e <b>ancorat</b> — nu se stinge la inactivitate.</div>
+    </div>
+
+    <div class="card trashcard">
+      <h3>🗑 Coș de gunoi — 7 zile</h3>
+      <div id="trash"></div>
     </div>
 
     <div class="card">
@@ -170,7 +201,7 @@ const ZONES = {
 // estPct + estimated:true  -> procent ghicit, marcat ca atare
 const STARS = [
   { id:'incasari', zone:'sales', name:'Mașina de Încasări', x:200, y:210,
-    live:true, ms:[
+    live:true, pinned:true, idle:1, ms:[
       {t:'Trigger factură nouă (Airtable)',done:true},
       {t:'Emitere automată SmartBill',done:true},
       {t:'Sincronizare status plată',done:true},
@@ -183,7 +214,7 @@ const STARS = [
     notion:'' },
 
   { id:'calc', zone:'sales', name:'Calculator Șipcă V22', x:320, y:300,
-    live:true, ms:[
+    live:true, pinned:true, idle:3, ms:[
       {t:'Motor de preț enterprise',done:true},
       {t:'Export PDF ofertă',done:true},
       {t:'Culori & disponibilitate',done:true},
@@ -195,14 +226,14 @@ const STARS = [
     notion:'' },
 
   { id:'tetto', zone:'measure', name:'TETTO-RC', x:640, y:170,
-    estPct:65, estimated:true, ms:[],
+    estPct:65, estimated:true, idle:5, ms:[],
     exist:'Componenta de măsurare/config acoperiș.',
     miss:'Definition of done — milestone-urile reale (le stabilim împreună).',
     next:'Legătura către Contract HTML (sinapsă roșie acum).',
     notion:'' },
 
   { id:'airtable', zone:'ai', name:'Airtable (Hub date)', x:470, y:330,
-    live:true, ms:[
+    live:true, pinned:true, idle:0, ms:[
       {t:'Baza „Proiecte" ca sursă unică',done:false},
       {t:'Tabel clienți/oferte',done:true},
       {t:'API către SmartBill',done:true},
@@ -214,7 +245,7 @@ const STARS = [
     notion:'' },
 
   { id:'smartbill', zone:'ops', name:'SmartBill', x:230, y:520,
-    live:true, ms:[
+    live:true, pinned:true, idle:2, ms:[
       {t:'Emitere proformă/factură',done:true},
       {t:'OpenAPI mapat (în repo)',done:true},
       {t:'Sincronizare status',done:true},
@@ -225,10 +256,32 @@ const STARS = [
     notion:'' },
 
   { id:'contract', zone:'legal', name:'Contract HTML', x:560, y:560,
-    estPct:10, estimated:true, ms:[],
+    estPct:10, estimated:true, idle:9, ms:[],
     exist:'Idee. Șablon de contract generat din date.',
     miss:'Aproape tot — nu e legat de TETTO-RC (frontul are gaura aici).',
     next:'Definește sursa datelor (din TETTO-RC) → generare HTML → semnare.',
+    notion:'' },
+
+  // --- CAPTURĂ LIBERĂ (fluxul lui Daniel) ---
+  { id:'video-daniel', zone:'marketing', name:'Video util (Daniel)', x:850, y:400,
+    estPct:0, estimated:true, idle:2, fresh:true, captured:'Daniel · acum 2 zile',
+    exist:'Idee proaspăt capturată: un video de pe internet, catalogat „marketing".',
+    miss:'Nu a trecut poarta. Are doar legături POSIBILE (albastru punctat), nu confirmate.',
+    next:'Cineva o validează → devine stea reală, SAU o ignoră → timpul o curăță.',
+    notion:'' },
+
+  { id:'reels', zone:'marketing', name:'Serie reels TikTok', x:790, y:470,
+    estPct:0, estimated:true, idle:16,
+    exist:'Idee lăsată în urmă. Capturată, apoi nimeni n-a atins-o.',
+    miss:'16 zile inactivă → a căzut în coșul de gunoi. Mai are câteva zile.',
+    next:'O reactivezi (o atingi) → iese din coș. O ignori → dispare la 21 zile.',
+    notion:'' },
+
+  { id:'qr-santier', zone:'ops', name:'QR pe șantier', x:130, y:600,
+    estPct:0, estimated:true, idle:13,
+    exist:'Idee de captură date pe teren prin cod QR.',
+    miss:'13 zile inactivă — mâine intră în avertisment (2 săpt).',
+    next:'Dacă merită, leag-o de Airtable înainte să pălească.',
     notion:'' },
 ];
 
@@ -240,7 +293,20 @@ const SYNAPSES = [
   {from:'calc',     to:'airtable',  live:false},
   {from:'tetto',    to:'contract',  live:false},  // golul numit
   {from:'tetto',    to:'airtable',  live:false},
+  // legături POSIBILE ale ideii capturate (albastru punctat)
+  {from:'video-daniel', to:'reels', maybe:true},
+  {from:'video-daniel', to:'calc',  maybe:true},
 ];
+
+// Ciclul de viață (anti-maldăr): zile de inactivitate
+const LIFE = { WARN:14, GONE:21 };  // 2 săpt → avertisment+coș · +1 săpt → dispare
+function lifeState(s){
+  if(s.pinned) return 'active';
+  const d=s.idle||0;
+  if(d>=LIFE.GONE) return 'gone';
+  if(d>=LIFE.WARN) return 'trash';   // în coș, countdown spre dispariție
+  return 'active';
+}
 
 const SEEDS = ['Protecția Marjei','Harta / Constelația (creierul extras)','Onboarding client automat'];
 
@@ -293,9 +359,11 @@ Object.values(ZONES).forEach(z=>{
 const gs=document.getElementById('g-syn');
 SYNAPSES.forEach(sy=>{
   const A=byId(sy.from),B=byId(sy.to);if(!A||!B)return;
+  if(lifeState(A)==='gone'||lifeState(B)==='gone')return;
   const l=document.createElementNS('http://www.w3.org/2000/svg','line');
   l.setAttribute('x1',A.x);l.setAttribute('y1',A.y);l.setAttribute('x2',B.x);l.setAttribute('y2',B.y);
-  l.setAttribute('class','synapse '+(sy.live?'syn-live':'syn-dead'));
+  const cls=sy.maybe?'syn-maybe':(sy.live?'syn-live':'syn-dead');
+  l.setAttribute('class','synapse '+cls);
   if(sy.live)l.setAttribute('stroke-dasharray','6 6');
   gs.appendChild(l);
 });
@@ -303,17 +371,36 @@ SYNAPSES.forEach(sy=>{
 // ---------- render stars ----------
 const gst=document.getElementById('g-stars');
 STARS.forEach(s=>{
+  const st=lifeState(s);
+  if(st==='gone')return;                 // dispărut: nu se mai afișează
   const col=colorOf(s), p=pctOf(s);
   const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-  g.setAttribute('class','star pulse');g.dataset.id=s.id;
+  let cls='star pulse';
+  if(s.fresh) cls+=' fresh';
+  if(st==='trash') cls+=' trash';
+  g.setAttribute('class',cls);g.dataset.id=s.id;
+  const left=LIFE.GONE-(s.idle||0);
+  const warn = st==='trash'
+    ? `<circle class="warnring" cx="${s.x}" cy="${s.y}" r="16"/>
+       <text class="disc" x="${s.x}" y="${s.y-20}" text-anchor="middle">🗑 mai ${left}z</text>` : '';
   g.innerHTML=`
     <circle class="halo" cx="${s.x}" cy="${s.y}" r="${14+p/8}" fill="${col}" opacity="0.18"/>
     <circle class="ring" cx="${s.x}" cy="${s.y}" r="13"/>
+    ${warn}
     <circle class="core" cx="${s.x}" cy="${s.y}" r="6.5" fill="${col}" style="filter:drop-shadow(0 0 7px ${col})"/>
-    <text x="${s.x}" y="${s.y+26}" text-anchor="middle">${s.name}${s.estimated?' ⚠':''}</text>`;
+    <text x="${s.x}" y="${s.y+26}" text-anchor="middle">${s.name}${s.estimated&&st!=='trash'?' ⚠':''}</text>`;
   g.addEventListener('click',()=>openDetail(s.id));
   gst.appendChild(g);
 });
+
+// ---------- trash bin ----------
+const trashed=STARS.filter(s=>lifeState(s)==='trash')
+  .sort((a,b)=>b.idle-a.idle);
+document.getElementById('trash').innerHTML = trashed.length
+  ? trashed.map(s=>`<div class="ti" onclick="openDetail('${s.id}')" style="cursor:pointer">
+      <span>${s.name} · inactiv ${s.idle}z</span>
+      <span class="cd">dispare în ${LIFE.GONE-s.idle}z</span></div>`).join('')
+  : `<div class="rec" style="border:none;margin:0;padding:2px 0">Gol. Nimic nu putrezește acum.</div>`;
 
 // ---------- seeds & actions ----------
 document.getElementById('seeds').innerHTML=SEEDS.map(s=>`<div class="seed"><i class="s"></i>${s}</div>`).join('');
@@ -330,6 +417,12 @@ function openDetail(id){
   const msHtml=s.ms&&s.ms.length
     ? `<ul class="ms">${s.ms.map(m=>`<li class="${m.done?'done':'todo'}">${m.t}</li>`).join('')}</ul>`
     : `<div class="kv" style="color:var(--almost)">Fără milestone-uri definite — procentul e ghicit. Le stabilim împreună (definition of done).</div>`;
+  const st=lifeState(s);
+  const lifeHtml = s.pinned
+    ? `<div class="kv"><b>Ciclu de viață</b><span style="color:var(--live)">⚓ Ancorat (nucleu bani) — imun la inactivitate.</span></div>`
+    : st==='trash'
+      ? `<div class="kv"><b>Ciclu de viață</b><span style="color:#f59e0b">🗑 În coș — inactiv ${s.idle}z. Dispare în ${LIFE.GONE-s.idle}z dacă n-o atingi.</span></div>`
+      : `<div class="kv"><b>Ciclu de viață</b><span style="color:#c7d0f0">Activ — inactiv ${s.idle||0}z${s.captured?` · capturat: ${s.captured}`:''}. Avertisment la ${LIFE.WARN}z.</span></div>`;
   const d=document.getElementById('detail');
   d.innerHTML=`
     <span class="x" onclick="closeDetail()">✕</span>
@@ -340,6 +433,7 @@ function openDetail(id){
       <div class="pct-bar"><div class="pct-fill" style="width:${p}%;background:${col}"></div></div>
     </div>
     ${msHtml}
+    ${lifeHtml}
     <div class="kv"><b>Ce există</b><span class="exist">${s.exist}</span></div>
     <div class="kv"><b>Ce lipsește</b><span class="miss">${s.miss}</span></div>
     <div class="kv"><b>Următorul pas</b><span class="next">${s.next}</span></div>
