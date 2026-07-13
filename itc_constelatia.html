@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05070f">
+<title>ITC · Constelația</title>
+<style>
+  :root{
+    --bg:#05070f; --ink:#eaf0ff; --muted:#8b96b8; --faint:#5b6690;
+    --panel:rgba(11,16,32,.86); --brd:#232c4d; --brd2:#33406e;
+    --idea:#3f6099; --start:#22d3ee; --grow:#34d399; --almost:#fbbf24; --live:#fcd34d; --dead:#4b5563;
+    --synlive:#34d399; --syndead:#f87171; --synmaybe:#7cc6ff;
+    --accent:#f43f5e; --gold:#fcd34d;
+    --sheet-max: 460px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;overflow-x:hidden;background:var(--bg);color:var(--ink);
+    font-family:'Segoe UI',system-ui,-apple-system,'Inter',sans-serif;
+    overscroll-behavior:none;-webkit-user-select:none;user-select:none;touch-action:none}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+
+  /* ---------- TOP BAR ---------- */
+  #top{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:10px;overflow:hidden;
+    padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;pointer-events:none}
+  #top>*{pointer-events:auto}
+  .wordmark{font-weight:800;letter-spacing:.4px;font-size:16px;display:flex;align-items:center;gap:7px;
+    text-shadow:0 2px 12px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
+  .persona{flex:none}
+  .wordmark .m{color:var(--gold)} .wordmark .spark{filter:drop-shadow(0 0 6px var(--gold))}
+  .health{margin-left:2px;display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);
+    background:var(--panel);border:1px solid var(--brd);border-radius:20px;padding:5px 10px;backdrop-filter:blur(10px)}
+  .health b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .health .hd{width:8px;height:8px;border-radius:50%;box-shadow:0 0 8px currentColor}
+  .persona{margin-left:auto;display:flex;background:var(--panel);border:1px solid var(--brd);
+    border-radius:22px;padding:3px;backdrop-filter:blur(10px)}
+  .persona button{border:0;background:transparent;color:var(--muted);font-weight:700;font-size:12px;
+    padding:6px 12px;border-radius:20px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:5px}
+  .persona button.on{background:linear-gradient(135deg,#1c2650,#0f1836);color:var(--ink);
+    box-shadow:inset 0 0 0 1px var(--brd2)}
+  body.dev .persona button.dev.on{background:linear-gradient(135deg,#0f2f2a,#0a231f);color:#7ff2d0;box-shadow:inset 0 0 0 1px #1f6f5c}
+
+  /* ---------- DEV HUD ---------- */
+  #hud{position:fixed;z-index:15;left:12px;top:calc(env(safe-area-inset-top) + 96px);
+    display:none;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;font-size:11px;
+    background:rgba(6,12,20,.82);border:1px solid #12402f;border-radius:12px;padding:10px 12px;
+    color:#a7f3d0;backdrop-filter:blur(8px);max-width:230px;box-shadow:0 8px 30px #000a}
+  body.dev #hud{display:block}
+  #hud .hrow{display:flex;justify-content:space-between;gap:14px;margin:2px 0;white-space:nowrap}
+  #hud .hk{color:#4f7f6e} #hud .hv{color:#9df5cf;font-variant-numeric:tabular-nums}
+  #hud .bar{height:3px;border-radius:2px;background:#0d2b22;margin:7px 0 3px;overflow:hidden}
+  #hud .bar i{display:block;height:100%;background:linear-gradient(90deg,#34d399,#22d3ee)}
+  #hud .htitle{color:#5eead4;font-weight:700;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;font-size:10px}
+  #hud button{margin-top:8px;width:100%;background:#0c2a22;border:1px solid #1f6f5c;color:#7ff2d0;
+    border-radius:8px;padding:5px;font-size:10px;font-family:inherit;cursor:pointer;letter-spacing:.5px}
+  #console{position:fixed;z-index:15;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 82px);
+    display:none;max-height:26vh;overflow:auto;background:rgba(4,8,14,.92);border:1px solid #12402f;
+    border-radius:12px;padding:8px 10px;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;line-height:1.5;
+    color:#8bd6bf;backdrop-filter:blur(8px)}
+  body.dev #console.on{display:block}
+  #console .t{color:#3d6b5c} #console .ev{color:#5eead4} #console b{color:#e7fff6}
+  @media(min-width:820px){ #console{left:auto;width:340px} }
+
+  /* ---------- BOTTOM TOOLBAR ---------- */
+  #dock{position:fixed;z-index:20;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100vw - 14px);
+    bottom:calc(env(safe-area-inset-bottom) + 12px);display:flex;gap:2px;
+    background:var(--panel);border:1px solid var(--brd);border-radius:999px;padding:5px;
+    backdrop-filter:blur(14px);box-shadow:0 10px 40px #000b}
+  #dock button{border:0;background:transparent;color:var(--muted);width:52px;height:44px;border-radius:999px;
+    cursor:pointer;font-size:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:.15s}
+  #dock button small{font-size:8.5px;letter-spacing:.3px}
+  #dock button:hover,#dock button.on{color:var(--ink);background:#182142}
+  #dock .sep{width:1px;background:var(--brd);margin:6px 2px;flex:none}
+
+  /* FAB */
+  #fab{position:fixed;z-index:20;right:16px;bottom:calc(env(safe-area-inset-bottom) + 78px);
+    width:56px;height:56px;border-radius:50%;border:0;cursor:pointer;
+    background:radial-gradient(circle at 35% 30%,#fde68a,#f59e0b);color:#3b1d00;font-size:28px;font-weight:700;
+    box-shadow:0 8px 26px #f59e0b55, 0 0 0 1px #fbbf24aa;transition:transform .15s}
+  #fab:active{transform:scale(.9)}
+  @media(min-width:820px){ #fab{right:auto;left:calc(50% + 200px)} }
+
+  /* ---------- SHEET ---------- */
+  #scrim{position:fixed;inset:0;z-index:24;background:rgba(2,4,10,.5);opacity:0;pointer-events:none;transition:.25s;backdrop-filter:blur(2px)}
+  #scrim.on{opacity:1;pointer-events:auto}
+  #sheet{position:fixed;z-index:25;left:0;right:0;bottom:0;transform:translateY(102%);
+    transition:transform .32s cubic-bezier(.22,1,.36,1);
+    background:linear-gradient(180deg,#0b1226,#070b18);border-top:1px solid var(--brd2);
+    border-radius:22px 22px 0 0;max-height:88vh;overflow:hidden;box-shadow:0 -20px 60px #000c;
+    padding-bottom:env(safe-area-inset-bottom)}
+  #sheet.on{transform:translateY(0)}
+  #sheet .grab{width:40px;height:4px;border-radius:4px;background:#33406e;margin:10px auto 4px}
+  #sheet .body{overflow-y:auto;max-height:calc(88vh - 26px);padding:6px 18px 24px;-webkit-overflow-scrolling:touch}
+  @media(min-width:820px){
+    #sheet{left:auto;right:16px;bottom:16px;width:var(--sheet-max);border-radius:20px;border:1px solid var(--brd2);
+      transform:translateY(120%);max-height:calc(100vh - 120px)}
+    #sheet.on{transform:translateY(0)}
+    #sheet .body{max-height:calc(100vh - 150px)}
+  }
+
+  /* sheet content */
+  .sh-head{display:flex;align-items:flex-start;gap:10px}
+  .sh-zone{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+  .sh-title{font-size:21px;font-weight:800;margin:1px 0 0;line-height:1.1}
+  .sh-x{margin-left:auto;font-size:15px;color:var(--muted);background:#141c38;border:1px solid var(--brd);
+    width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+  .badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:800;letter-spacing:.3px;display:inline-flex;align-items:center;gap:4px}
+  .b-est{background:#6d2933;color:#ffd7dd} .b-real{background:#1c4b34;color:#c9ffe4}
+  .b-live{background:#5a4711;color:#ffe9a6} .b-trash{background:#3a2140;color:#e8c4ff}
+  .pctrow{display:flex;align-items:center;gap:12px;margin:14px 0 4px}
+  .pctnum{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .pctbar{flex:1;height:9px;border-radius:6px;background:#141c38;overflow:hidden}
+  .pctfill{height:100%;border-radius:6px;transition:width .5s cubic-bezier(.22,1,.36,1)}
+  .ms{list-style:none;padding:0;margin:12px 0 0}
+  .ms li{font-size:13px;color:#cdd6f5;padding:7px 0 7px 26px;position:relative;line-height:1.35;cursor:pointer;border-bottom:1px solid #10162c}
+  .ms li:last-child{border-bottom:0}
+  .ms li.done{color:#a7f3d0}
+  .ms li.done:before{content:"✓";position:absolute;left:2px;color:var(--grow);font-weight:800}
+  .ms li.todo:before{content:"";position:absolute;left:5px;top:11px;width:11px;height:11px;border:1.5px solid #46507e;border-radius:50%}
+  .kv{margin:12px 0}
+  .kv b{display:block;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:#8f9bce;margin-bottom:3px}
+  .kv .exist{color:#c9ffe4}.kv .miss{color:#ffd0d6}.kv .next{color:#bfe6ff}
+  .kv p{margin:0;font-size:13.5px;line-height:1.45}
+  .life{display:flex;align-items:center;gap:8px;font-size:12.5px;margin:12px 0;padding:9px 11px;border-radius:11px;
+    background:#0c1330;border:1px solid var(--brd)}
+  .life .ic{font-size:16px}
+  .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .acts button{flex:1 1 auto;min-width:120px;border:1px solid var(--brd2);background:#111a36;color:#dbe3ff;
+    padding:11px;border-radius:12px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:6px}
+  .acts button:active{transform:scale(.97)}
+  .acts button.primary{background:linear-gradient(135deg,#1c7a54,#0f5138);border-color:#1f8f63;color:#e6fff4}
+  .acts button.warn{background:linear-gradient(135deg,#7a1f2c,#511019);border-color:#a03047;color:#ffdbe2}
+  .acts button.gold{background:linear-gradient(135deg,#7a5c11,#4a3800);border-color:#b98a1e;color:#ffe9a6}
+  .devbox{margin-top:14px;font-family:ui-monospace,Menlo,monospace;font-size:11px;background:#050a12;border:1px solid #12402f;
+    border-radius:10px;padding:10px;color:#8bd6bf;display:none;overflow-x:auto}
+  body.dev .devbox{display:block}
+  .devbox .dk{color:#4f7f6e}
+  .sh-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin:10px 0 0}
+
+  /* generic list sheet */
+  h4.sh-h{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#a9b4dc;margin:4px 0 10px;display:flex;align-items:center;gap:7px}
+  .row{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#cdd6f5;margin:11px 0;line-height:1.4}
+  .row .dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:3px;box-shadow:0 0 7px currentColor}
+  .row small{display:block;color:var(--muted);margin-top:1px}
+  .gate li{font-size:13px;color:#cdd6f5;margin:9px 0;padding-left:22px;position:relative;line-height:1.4}
+  .gate li:before{content:"◇";position:absolute;left:0;color:var(--almost)}
+  .act-item{display:flex;gap:11px;align-items:flex-start;padding:12px;border:1px solid var(--brd);border-radius:12px;
+    margin:9px 0;background:#0b1330;cursor:pointer;transition:.15s}
+  .act-item:active{transform:scale(.99);border-color:var(--brd2)}
+  .act-item .n{font-size:18px;font-weight:800;color:var(--accent);line-height:1}
+  .act-item .lk{font-size:13.5px;font-weight:700}.act-item .lk .ar{color:var(--syndead);margin:0 5px}
+  .act-item small{display:block;color:var(--muted);margin-top:3px;font-size:11.5px;line-height:1.4}
+  .trash-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px;border:1px dashed #3a2140;
+    border-radius:11px;margin:8px 0;background:#0d0a16;cursor:pointer}
+  .trash-item .cd{font-size:10.5px;font-weight:800;color:#c084fc;white-space:nowrap}
+  .seed{display:flex;align-items:center;gap:9px;font-size:13px;color:#c3cbee;padding:9px 11px;border:1px dashed var(--brd2);
+    border-radius:11px;margin:8px 0;background:#0c1330;cursor:pointer}
+  .seed .s{width:9px;height:9px;border-radius:50%;background:var(--idea);flex:none;box-shadow:0 0 7px var(--idea)}
+  .legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 14px;margin-top:4px}
+  .lg{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#cdd6f5}
+  .lg i{width:11px;height:11px;border-radius:50%;box-shadow:0 0 8px currentColor;flex:none}
+  .lg .ln{width:20px;height:0;border-top:2px solid;flex:none}
+  .field{margin:12px 0}
+  .field label{display:block;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8f9bce;margin-bottom:6px}
+  .field input,.field select{width:100%;background:#0a1024;border:1px solid var(--brd2);color:var(--ink);
+    border-radius:11px;padding:12px;font-size:15px;font-family:inherit;outline:none}
+  .field input:focus,.field select:focus{border-color:var(--start)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{font-size:12px;padding:8px 12px;border-radius:20px;border:1px solid var(--brd2);background:#0c1330;color:#c3cbee;cursor:pointer;transition:.15s}
+  .chip.on{background:#17224a;border-color:var(--start);color:#dff}
+
+  /* toast */
+  #toast{position:fixed;z-index:30;left:0;right:0;margin:0 auto;width:max-content;transform:translateY(-8px);
+    top:calc(env(safe-area-inset-top) + 60px);background:var(--panel);border:1px solid var(--brd2);
+    color:var(--ink);font-size:12.5px;padding:9px 15px;border-radius:20px;backdrop-filter:blur(10px);
+    opacity:0;pointer-events:none;transition:opacity .3s, transform .3s;box-shadow:0 8px 30px #000a;max-width:86vw;text-align:center}
+  #toast.on{opacity:1;transform:translateY(0)}
+
+  /* ---------- MOBILE top bar ---------- */
+  @media(max-width:560px){
+    html,body{overflow-x:hidden}
+    #top{gap:8px;padding:calc(env(safe-area-inset-top) + 9px) 10px 9px;max-width:100vw;flex-wrap:nowrap}
+    .wordmark{font-size:15px;flex:0 1 auto;min-width:0} .wordmark .spark{display:none}
+    /* health pulled onto its own row so the bar can never overflow */
+    .health{position:fixed;top:calc(env(safe-area-inset-top) + 50px);left:11px;padding:5px 10px;font-size:11px;z-index:20}
+    .health #hlabel{display:none}
+    /* persona pinned top-right on its own layer — immune to flex/clip */
+    .persona{position:fixed;top:calc(env(safe-area-inset-top) + 9px);right:10px;z-index:21;padding:2px}
+    .persona button{padding:7px 10px;font-size:11px;gap:4px}
+    .persona button:not(.on) .lbl{display:none}
+    #fab{width:52px;height:52px;font-size:25px}
+    #dock{gap:0;padding:5px 4px} #dock button{width:44px;height:42px} #dock button small{font-size:8px}
+    #dock .sep{margin:6px 1px}
+  }
+  @media(max-width:360px){ .wordmark{font-size:13px} }
+</style>
+</head>
+<body class="daniel">
+<canvas id="c"></canvas>
+
+<div id="top">
+  <div class="wordmark"><span class="spark">✦</span> ITC <span class="m">Constelația</span></div>
+  <div class="health" id="health"><span class="hd" id="hdot"></span><span id="hlabel">Drumul banilor</span> <b id="hval">–</b></div>
+  <div class="persona">
+    <button class="daniel on" data-persona="daniel"><span class="pi">🌱</span><span class="lbl">Daniel</span></button>
+    <button class="dev" data-persona="dev"><span class="pi">⌘</span><span class="lbl">Dev</span></button>
+  </div>
+</div>
+
+<div id="hud">
+  <div class="htitle">◉ live graph</div>
+  <div class="hrow"><span class="hk">noduri</span><span class="hv" id="m-nodes">0</span></div>
+  <div class="hrow"><span class="hk">sinapse (live/tot)</span><span class="hv" id="m-edges">0/0</span></div>
+  <div class="hrow"><span class="hk">componente</span><span class="hv" id="m-comp">0</span></div>
+  <div class="hrow"><span class="hk">orfani</span><span class="hv" id="m-orph">0</span></div>
+  <div class="hrow"><span class="hk">în coș</span><span class="hv" id="m-trash">0</span></div>
+  <div class="hrow"><span class="hk">integritate $</span><span class="hv" id="m-money">0%</span></div>
+  <div class="bar"><i id="m-moneybar" style="width:0"></i></div>
+  <div class="hrow"><span class="hk">sim α</span><span class="hv" id="m-alpha">0</span></div>
+  <div class="hrow"><span class="hk">fps</span><span class="hv" id="m-fps">0</span></div>
+  <div class="hrow"><span class="hk">zoom</span><span class="hv" id="m-zoom">1.0×</span></div>
+  <button id="btn-console">▚ console</button>
+</div>
+<div id="console"></div>
+
+<button id="fab" aria-label="Captură rapidă">＋</button>
+
+<div id="dock">
+  <button data-view="fit"><span>🌌</span><small>Cer</small></button>
+  <button data-view="filter"><span>◐</span><small>Filtre</small></button>
+  <div class="sep"></div>
+  <button data-view="gate"><span>⛩</span><small>Poartă</small></button>
+  <button data-view="actions"><span>🔗</span><small>Legături</small></button>
+  <button data-view="trash"><span>🗑</span><small>Coș</small></button>
+  <button data-view="guide"><span>❔</span><small>Ghid</small></button>
+</div>
+
+<div id="scrim"></div>
+<div id="sheet"><div class="grab"></div><div class="body" id="sheet-body"></div></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   ITC · Constelația — living force-directed map
+   Un singur cer. Fizică reală (gravitație de zonă + arcuri +
+   respingere). Persona Daniel/Dev. Ciclu de viață anti-maldăr.
+   ============================================================ */
+
+// -------------------- DATA MODEL --------------------
+const ZONES = {
+  ai:       {name:'Sistem AI',  wx:500, wy:500, hue:'#7cc6ff'},
+  sales:    {name:'Vânzări',    wx:500, wy:180, hue:'#34d399'},
+  measure:  {name:'Măsurători', wx:812, wy:398, hue:'#22d3ee'},
+  marketing:{name:'Marketing',  wx:694, wy:812, hue:'#f0abfc'},
+  legal:    {name:'Juridic',    wx:306, wy:812, hue:'#fbbf24'},
+  ops:      {name:'Operațiuni', wx:188, wy:398, hue:'#a5b4fc'},
+};
+
+// ms:[{t,done}] -> pct real ; estPct+estimated -> ghicit (marcat)
+// anchored: nucleu bani, imun la decay ; idle: zile inactivitate
+let STARS = [
+  { id:'incasari', zone:'sales', name:'Mașina de Încasări', anchored:true, live:true, idle:1,
+    ms:[{t:'Trigger factură nouă (Airtable)',done:true},{t:'Emitere automată SmartBill',done:true},
+        {t:'Sincronizare status plată',done:true},{t:'Notificare la restanță',done:false},{t:'Raport încasări zilnic',done:false}],
+    exist:'Fluxul Airtable → SmartBill emite automat. Statusul plății se întoarce în bază.',
+    miss:'Notificările de restanță și raportul zilnic.', next:'Cârlig pe restanță > 7 zile → mesaj automat.'},
+  { id:'calc', zone:'sales', name:'Calculator Șipcă V22', anchored:true, live:true, idle:3,
+    ms:[{t:'Motor de preț enterprise',done:true},{t:'Export PDF ofertă',done:true},
+        {t:'Culori & disponibilitate',done:true},{t:'Salvare ofertă în Airtable',done:false}],
+    exist:'Există și rulează (în repo). Motor de preț + PDF.',
+    miss:'Nu scrie încă oferta în baza „Proiecte".', next:'Buton „Salvează oferta" → record Airtable.'},
+  { id:'tetto', zone:'measure', name:'TETTO-RC', estPct:65, estimated:true, idle:5, ms:[],
+    exist:'Componenta de măsurare/config acoperiș.',
+    miss:'Definition of done — milestone-urile reale (le stabilim împreună).',
+    next:'Legătura către Contract HTML (sinapsă roșie acum).'},
+  { id:'airtable', zone:'ai', name:'Airtable · Hub', anchored:true, live:true, idle:0,
+    ms:[{t:'Baza „Proiecte" ca sursă unică',done:false},{t:'Tabel clienți/oferte',done:true},
+        {t:'API către SmartBill',done:true},{t:'API către Make',done:true}],
+    exist:'Hub-ul care leagă vânzările de facturare. Conectat la SmartBill și Make.',
+    miss:'Baza „Proiecte" (sursa care face harta VIE) nu există încă.',
+    next:'Creăm baza „Proiecte" cu câmp milestones → alimentează constelația.'},
+  { id:'smartbill', zone:'ops', name:'SmartBill', anchored:true, live:true, idle:2,
+    ms:[{t:'Emitere proformă/factură',done:true},{t:'OpenAPI mapat (în repo)',done:true},{t:'Sincronizare status',done:true}],
+    exist:'Facturarea. OpenAPI-ul e deja în repo. Legat de Mașina de Încasări.',
+    miss:'—', next:'Stabil. Capătul banilor strălucește.'},
+  { id:'contract', zone:'legal', name:'Contract HTML', estPct:10, estimated:true, idle:9, ms:[],
+    exist:'Idee. Șablon de contract generat din date.',
+    miss:'Aproape tot — nu e legat de TETTO-RC (frontul are gaura aici).',
+    next:'Sursă date (din TETTO-RC) → generare HTML → semnare.'},
+  { id:'video', zone:'marketing', name:'Video util', estPct:0, estimated:true, idle:2, fresh:true, captured:'Daniel · acum 2 zile', ms:[],
+    exist:'Idee proaspăt capturată: un video de pe internet, catalogat „marketing".',
+    miss:'Nu a trecut poarta. Are doar legături POSIBILE (albastru).',
+    next:'Cineva o validează → stea reală. O ignoră → timpul o curăță.'},
+  { id:'reels', zone:'marketing', name:'Serie reels', estPct:0, estimated:true, idle:16, ms:[],
+    exist:'Idee lăsată în urmă. Capturată, apoi neatinsă.',
+    miss:'16 zile inactivă → a căzut în coș.', next:'O atingi → iese din coș. O ignori → dispare la 21 zile.'},
+  { id:'qr', zone:'ops', name:'QR pe șantier', estPct:0, estimated:true, idle:13, ms:[],
+    exist:'Idee de captură date pe teren prin cod QR.',
+    miss:'13 zile inactivă — mâine intră în avertisment.', next:'Dacă merită, leag-o de Airtable înainte să pălească.'},
+];
+
+let SYNAPSES = [
+  {from:'incasari',to:'airtable',live:true},{from:'airtable',to:'smartbill',live:true},
+  {from:'incasari',to:'smartbill',live:true},{from:'calc',to:'airtable',live:false},
+  {from:'tetto',to:'contract',live:false},{from:'tetto',to:'airtable',live:false},
+  {from:'video',to:'reels',maybe:true},{from:'video',to:'calc',maybe:true},
+];
+
+const SEEDS = ['Protecția Marjei','Harta / Constelația (creierul extras)','Onboarding client automat'];
+const ACTIONS = [
+  {a:'tetto',b:'contract',why:'Frontul are gaura aici — capătul banilor strălucește, dar contractul nu se leagă.'},
+  {a:'calc',b:'airtable',why:'Ofertele să scrie în baza-sursă, ca harta să fie VIE.'},
+  {a:'airtable',b:'contract',why:'Contractul să tragă date reale din hub, nu din vid.'},
+];
+const LIFE = {WARN:14, GONE:21};
+
+// -------------------- HELPERS --------------------
+const byId = id => STARS.find(s=>s.id===id);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function pctOf(s){ if(s.ms&&s.ms.length){return Math.round(s.ms.filter(m=>m.done).length/s.ms.length*100);} return s.estPct||0; }
+function lifeState(s){ if(s.anchored)return 'active'; const d=s.idle||0; if(d>=LIFE.GONE)return 'gone'; if(d>=LIFE.WARN)return 'trash'; return 'active'; }
+function colorOf(s){
+  if(s.dead)return css('--dead'); const p=pctOf(s);
+  if((s.live&&p>=95)||p>=100)return css('--live');
+  if(p>=70)return css('--almost'); if(p>=25)return css('--grow'); if(p>0)return css('--start'); return css('--idea');
+}
+const maturLabel = p => p>=100?'LIVE': p>=70?'aproape': p>=25?'crește': p>0?'la început':'idee';
+
+// -------------------- CANVAS / CAMERA --------------------
+const cv = document.getElementById('c'); const ctx = cv.getContext('2d');
+let DPR=1, W=0, H=0;
+const cam = {x:0,y:0,zoom:1};           // screen = world*zoom + (x,y)
+const w2s = (wx,wy)=>[wx*cam.zoom+cam.x, wy*cam.zoom+cam.y];
+const s2w = (sx,sy)=>[(sx-cam.x)/cam.zoom,(sy-cam.y)/cam.zoom];
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2.5);
+  W=window.innerWidth; H=window.innerHeight;
+  cv.width=W*DPR; cv.height=H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+function fit(animated){
+  const pad=90, topPad=140;
+  const zx=(W-pad*2)/1000, zy=(H-topPad-140)/1000;
+  const z=Math.min(zx,zy);
+  const tx=(W-1000*z)/2, ty=topPad+((H-topPad-140)-1000*z)/2;
+  if(animated){ tweenCam(tx,ty,z); } else { cam.x=tx;cam.y=ty;cam.zoom=z; }
+}
+let camTween=null;
+function tweenCam(tx,ty,tz){ camTween={x0:cam.x,y0:cam.y,z0:cam.zoom,x1:tx,y1:ty,z1:tz,t:0}; }
+function focusNode(n,zoom){
+  const z=zoom||Math.max(cam.zoom,1.15);
+  tweenCam(W/2 - n.x*z, (H*0.42) - n.y*z, z);
+}
+
+// -------------------- STARFIELD --------------------
+const bgStars=[]; function seedBg(){ bgStars.length=0; for(let i=0;i<220;i++){bgStars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.4,a:Math.random()*.6+.12,tw:Math.random()*6.28});} }
+
+// -------------------- PHYSICS --------------------
+STARS.forEach(s=>{ const z=ZONES[s.zone]; s.x=z.wx+(Math.random()-.5)*80; s.y=z.wy+(Math.random()-.5)*80; s.vx=0; s.vy=0; });
+let alpha=1;
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function physics(dt){
+  const active = STARS.filter(s=>lifeState(s)!=='gone');
+  // repulsion (O(n^2), n small)
+  for(let i=0;i<active.length;i++){ const a=active[i];
+    for(let j=i+1;j<active.length;j++){ const b=active[j];
+      let dx=a.x-b.x, dy=a.y-b.y, d2=dx*dx+dy*dy||1; const d=Math.sqrt(d2);
+      const rep=9000/d2; const fx=dx/d*rep, fy=dy/d*rep;
+      a.vx+=fx*alpha; a.vy+=fy*alpha; b.vx-=fx*alpha; b.vy-=fy*alpha;
+    }
+  }
+  // springs (synapses)
+  SYNAPSES.forEach(sy=>{ const a=byId(sy.from),b=byId(sy.to); if(!a||!b)return;
+    if(lifeState(a)==='gone'||lifeState(b)==='gone')return;
+    const rest=sy.live?150:(sy.maybe?230:200); const k=sy.live?0.010:0.005;
+    let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1; const f=(d-rest)*k;
+    const fx=dx/d*f,fy=dy/d*f; a.vx+=fx*alpha;a.vy+=fy*alpha;b.vx-=fx*alpha;b.vy-=fy*alpha;
+  });
+  // zone gravity + integrate
+  active.forEach(s=>{ const z=ZONES[s.zone]; const g=s.anchored?0.020:0.011;
+    s.vx+=(z.wx-s.x)*g*alpha; s.vy+=(z.wy-s.y)*g*alpha;
+    // mild center cohesion
+    s.vx+=(500-s.x)*0.0008*alpha; s.vy+=(500-s.y)*0.0008*alpha;
+    if(s===dragNode) return;
+    s.vx*=0.86; s.vy*=0.86;
+    s.x+=s.vx; s.y+=s.vy;
+  });
+  alpha=Math.max(alpha*0.985, 0.02);
+}
+
+// -------------------- GRAPH METRICS --------------------
+function metrics(){
+  const active=STARS.filter(s=>lifeState(s)!=='gone');
+  const live=SYNAPSES.filter(sy=>sy.live && byId(sy.from)&&byId(sy.to) && lifeState(byId(sy.from))!=='gone'&&lifeState(byId(sy.to))!=='gone');
+  const totalReal=SYNAPSES.filter(sy=>!sy.maybe);
+  // connected components over live graph
+  const adj={}; active.forEach(s=>adj[s.id]=[]);
+  live.forEach(sy=>{ if(adj[sy.from]&&adj[sy.to]){adj[sy.from].push(sy.to);adj[sy.to].push(sy.from);} });
+  const seen=new Set(); let comp=0;
+  active.forEach(s=>{ if(seen.has(s.id))return; comp++; const st=[s.id];
+    while(st.length){const id=st.pop(); if(seen.has(id))continue; seen.add(id); (adj[id]||[]).forEach(n=>{if(!seen.has(n))st.push(n);});}
+  });
+  const orphans=active.filter(s=>(adj[s.id]||[]).length===0);
+  // money path integrity: are incasari/airtable/smartbill mutually live-connected?
+  const need=[['incasari','airtable'],['airtable','smartbill'],['incasari','smartbill']];
+  const has=p=>live.some(sy=>(sy.from===p[0]&&sy.to===p[1])||(sy.from===p[1]&&sy.to===p[0]));
+  const moneyOk=need.filter(has).length; const money=Math.round(moneyOk/need.length*100);
+  const trash=STARS.filter(s=>lifeState(s)==='trash');
+  return {active,live,totalReal,comp,orphans,money,trash};
+}
+
+// -------------------- RENDER --------------------
+let tGlobal=0, lastFrame=performance.now(), fps=60, frames=0, fpsT=0;
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // background gradient
+  const g=ctx.createRadialGradient(W*0.3,H*0.25,0,W*0.3,H*0.25,Math.max(W,H));
+  g.addColorStop(0,'#111c3a'); g.addColorStop(.55,'#0a1024'); g.addColorStop(1,'#05070f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // starfield with parallax
+  const px=(cam.x%W)*0.04, py=(cam.y%H)*0.04;
+  bgStars.forEach(st=>{ const x=((st.x*W+px)%W+W)%W, y=((st.y*H+py)%H+H)%H;
+    const tw=REDUCED?1:(0.6+0.4*Math.sin(tGlobal*2+st.tw));
+    ctx.globalAlpha=st.a*tw; ctx.fillStyle='#cdd8ff'; ctx.beginPath(); ctx.arc(x,y,st.r,0,6.29); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+
+  // zone wells + labels
+  Object.values(ZONES).forEach(z=>{ const [sx,sy]=w2s(z.wx,z.wy); const R=115*cam.zoom;
+    const gg=ctx.createRadialGradient(sx,sy,0,sx,sy,R);
+    gg.addColorStop(0,z.hue+'14'); gg.addColorStop(1,'transparent');
+    ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(sx,sy,R,0,6.29); ctx.fill();
+    ctx.font='700 '+Math.max(10,11)+'px Segoe UI'; ctx.fillStyle='rgba(120,140,200,.42)';
+    ctx.textAlign='center'; ctx.letterSpacing='3px';
+    ctx.fillText(z.name.toUpperCase(), sx, sy-R-6);
+  });
+  ctx.letterSpacing='0px';
+
+  const focusSet = activeHighlight();
+  const labels=[];   // decluttered label pass after nodes
+
+  // synapses
+  SYNAPSES.forEach(sy=>{ const a=byId(sy.from),b=byId(sy.to); if(!a||!b)return;
+    if(lifeState(a)==='gone'||lifeState(b)==='gone')return;
+    const [ax,ay]=w2s(a.x,a.y),[bx,by]=w2s(b.x,b.y);
+    const dim = focusSet && !(focusSet.has(a.id)&&focusSet.has(b.id));
+    ctx.save(); ctx.globalAlpha = dim?0.12:1;
+    if(sy.maybe){ ctx.strokeStyle=css('--synmaybe'); ctx.setLineDash([2,8]); ctx.lineWidth=1.4; ctx.globalAlpha*=.6; }
+    else if(sy.live){ ctx.strokeStyle=css('--synlive'); ctx.setLineDash([]); ctx.lineWidth=2.2;
+      ctx.shadowColor=css('--synlive'); ctx.shadowBlur=8; }
+    else { ctx.strokeStyle=css('--syndead'); ctx.setLineDash([5,6]); ctx.lineWidth=2; }
+    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); ctx.restore();
+    // flowing energy particles on live money synapses
+    if(sy.live && !dim && !REDUCED){ const n=3; for(let i=0;i<n;i++){
+      const t=((tGlobal*0.35 + i/n)%1); const x=ax+(bx-ax)*t, y=ay+(by-ay)*t;
+      ctx.globalAlpha=0.9*(1-Math.abs(0.5-t)*1.2); ctx.fillStyle='#d1ffe9';
+      ctx.beginPath(); ctx.arc(x,y,2.4,0,6.29); ctx.fill(); }
+      ctx.globalAlpha=1; }
+  });
+
+  // stars
+  STARS.forEach(s=>{ const st=lifeState(s); if(st==='gone')return;
+    const [sx,sy]=w2s(s.x,s.y); const p=pctOf(s); const col=colorOf(s);
+    const dim = focusSet && !focusSet.has(s.id);
+    const isSel = selNode===s;
+    const baseR=(6+p/22)*Math.min(cam.zoom,1.6);
+    const bob = REDUCED?0:Math.sin(tGlobal*1.3+s.x*0.03)*1.2;
+    const cy=sy+bob;
+    ctx.save(); if(dim)ctx.globalAlpha=0.28;
+    // halo
+    const hr=(14+p/6)*Math.min(cam.zoom,1.6);
+    const hg=ctx.createRadialGradient(sx,cy,0,sx,cy,hr);
+    hg.addColorStop(0,col+ (st==='trash'?'20':'55')); hg.addColorStop(1,'transparent');
+    ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(sx,cy,hr,0,6.29); ctx.fill();
+    // LIVE corona
+    if(p>=100 && !REDUCED){ ctx.globalAlpha=(dim?0.28:1)*(0.4+0.3*Math.sin(tGlobal*3));
+      ctx.strokeStyle=col; ctx.lineWidth=1.4; ctx.beginPath(); ctx.arc(sx,cy,baseR+5+Math.sin(tGlobal*3)*2,0,6.29); ctx.stroke(); ctx.globalAlpha=dim?0.28:1; }
+    // trash countdown ring
+    if(st==='trash'){ const left=(LIFE.GONE-s.idle)/(LIFE.GONE-LIFE.WARN);
+      ctx.strokeStyle='#c084fc'; ctx.lineWidth=2; ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.arc(sx,cy,baseR+7,-1.57,-1.57+6.29*left); ctx.stroke(); ctx.setLineDash([]); }
+    // selection ring
+    if(isSel){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(sx,cy,baseR+9,0,6.29); ctx.stroke(); }
+    // core
+    ctx.shadowColor=col; ctx.shadowBlur= st==='trash'?0:12;
+    ctx.fillStyle= st==='trash'? '#6b7280' : col; ctx.beginPath(); ctx.arc(sx,cy,baseR,0,6.29); ctx.fill();
+    ctx.shadowBlur=0;
+    if(s.fresh){ ctx.strokeStyle='#bfe6ff'; ctx.lineWidth=1.3; ctx.setLineDash([2,2]); ctx.beginPath(); ctx.arc(sx,cy,baseR+3,0,6.29); ctx.stroke(); ctx.setLineDash([]); }
+    ctx.restore();
+    // collect label; declutter zoomed-out (show core/selected/trash only)
+    const important = isSel||s.anchored||st==='trash';
+    if((!dim||isSel) && (important||cam.zoom>0.72)){
+      let lbl = st==='trash' ? '🗑 '+s.name+' · '+(LIFE.GONE-s.idle)+'z'
+        : s.name+(s.estimated?' ⚠':'')+(document.body.classList.contains('dev')?' ·'+s.id:'');
+      labels.push({cx:sx, cy, r:baseR, text:lbl, important, bold:isSel||s.anchored,
+        color: st==='trash'?'#a58bc4':(dim?'#8892b5':'#e3ebff')});
+    }
+  });
+
+  // ---- label placement with collision avoidance ----
+  const placed=[];
+  labels.sort((a,b)=>(b.important-a.important));
+  labels.forEach(L=>{
+    ctx.font=(L.bold?'700 ':'500 ')+'12px Segoe UI'; const w=ctx.measureText(L.text).width;
+    const cands=[ L.cy+L.r+15, L.cy-L.r-9 ]; // below, then above
+    let y=null;
+    for(const cy of cands){ const rect={x:L.cx-w/2-5,y:cy-11,w:w+10,h:16};
+      if(!placed.some(p=>rect.x<p.x+p.w&&rect.x+rect.w>p.x&&rect.y<p.y+p.h&&rect.y+rect.h>p.y)){ y=cy; placed.push(rect); break; } }
+    if(y===null){ if(!L.important) return; y=L.cy+L.r+15; placed.push({x:L.cx-w/2-5,y:y-11,w:w+10,h:16}); }
+    // pill bg for readability
+    ctx.fillStyle='rgba(6,10,20,.55)'; roundRect(L.cx-w/2-5,y-10,w+10,15,7); ctx.fill();
+    ctx.font=(L.bold?'700 ':'500 ')+'12px Segoe UI'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle=L.color; ctx.fillText(L.text,L.cx,y-1); ctx.textBaseline='alphabetic';
+  });
+}
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function neighborSet(s){ const set=new Set([s.id]); SYNAPSES.forEach(sy=>{ if(lifeState(byId(sy.from)||{})==='gone')return;
+  if(sy.from===s.id)set.add(sy.to); if(sy.to===s.id)set.add(sy.from); }); return set; }
+// Ce se aprinde pe cer: selecția are prioritate; altfel filtrele.
+function activeHighlight(){
+  if(selNode) return neighborSet(selNode);
+  let set=null;
+  if(filter.zone!=='all') set=new Set(STARS.filter(s=>s.zone===filter.zone&&lifeState(s)!=='gone').map(s=>s.id));
+  if(filter.hl!=='none'){ const hs=new Set();
+    if(filter.hl==='trash') STARS.filter(s=>lifeState(s)==='trash').forEach(s=>hs.add(s.id));
+    if(filter.hl==='live')  STARS.filter(s=>{const p=pctOf(s);return (s.live&&p>=95)||p>=100;}).forEach(s=>hs.add(s.id));
+    if(filter.hl==='gaps')  SYNAPSES.filter(sy=>!sy.live&&!sy.maybe).forEach(sy=>{hs.add(sy.from);hs.add(sy.to);});
+    set = set ? new Set([...set].filter(x=>hs.has(x))) : hs;
+  }
+  return set;
+}
+
+// -------------------- MAIN LOOP --------------------
+function loop(now){
+  const dt=Math.min(now-lastFrame,50); lastFrame=now; tGlobal+=dt/1000;
+  frames++; fpsT+=dt; if(fpsT>=500){ fps=Math.round(frames/(fpsT/1000)); frames=0; fpsT=0; if(document.body.classList.contains('dev'))updateHud(); }
+  if(camTween){ camTween.t=Math.min(camTween.t+dt/420,1); const e=1-Math.pow(1-camTween.t,3);
+    cam.x=camTween.x0+(camTween.x1-camTween.x0)*e; cam.y=camTween.y0+(camTween.y1-camTween.y0)*e; cam.zoom=camTween.z0+(camTween.z1-camTween.z0)*e;
+    if(camTween.t>=1)camTween=null; }
+  physics(dt); draw(); requestAnimationFrame(loop);
+}
+
+// -------------------- HEALTH + HUD --------------------
+function updateHealth(){ const m=metrics();
+  document.getElementById('hval').textContent=m.money+'%';
+  const c = m.money>=100?css('--grow'):m.money>=50?css('--almost'):css('--syndead');
+  const dot=document.getElementById('hdot'); dot.style.background=c; dot.style.color=c;
+}
+function updateHud(){ const m=metrics();
+  set('m-nodes',m.active.length); set('m-edges',m.live.length+'/'+m.totalReal.length);
+  set('m-comp',m.comp); set('m-orph',m.orphans.length); set('m-trash',m.trash.length);
+  set('m-money',m.money+'%'); document.getElementById('m-moneybar').style.width=m.money+'%';
+  set('m-alpha',alpha.toFixed(3)); set('m-fps',fps); set('m-zoom',cam.zoom.toFixed(2)+'×');
+}
+const set=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
+function logEv(html){ const c=document.getElementById('console'); const now=new Date().toLocaleTimeString('ro',{hour12:false});
+  c.insertAdjacentHTML('afterbegin','<div><span class="t">'+now+'</span> <span class="ev">'+html+'</span></div>');
+  while(c.children.length>60)c.lastChild.remove(); }
+
+// -------------------- INTERACTION --------------------
+const pointers=new Map(); let dragNode=null, panning=false, pinchPrev=null, downT=0, downPos=null, moved=0, selNode=null;
+function hitTest(sx,sy){ let best=null,bd=1e9;
+  for(const s of STARS){ if(lifeState(s)==='gone')continue; const [x,y]=w2s(s.x,s.y);
+    const r=(6+pctOf(s)/22)*Math.min(cam.zoom,1.6)+14; const d=Math.hypot(x-sx,y-sy); if(d<r&&d<bd){bd=d;best=s;} }
+  return best;
+}
+cv.addEventListener('pointerdown',e=>{ cv.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY}); downT=performance.now(); downPos={x:e.clientX,y:e.clientY}; moved=0;
+  if(pointers.size===1){ const n=hitTest(e.clientX,e.clientY);
+    if(n){ dragNode=n; alpha=Math.max(alpha,.5); } else { panning=true; } }
+  else if(pointers.size===2){ dragNode=null; panning=false; pinchPrev=pinchData(); }
+});
+cv.addEventListener('pointermove',e=>{ if(!pointers.has(e.pointerId))return;
+  const prev=pointers.get(e.pointerId); const dx=e.clientX-prev.x, dy=e.clientY-prev.y;
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY}); moved+=Math.abs(dx)+Math.abs(dy);
+  if(pointers.size===2){ const pd=pinchData(); if(pinchPrev){
+      zoomAt(pd.mx,pd.my, cam.zoom*(pd.dist/pinchPrev.dist));
+      cam.x+=pd.mx-pinchPrev.mx; cam.y+=pd.my-pinchPrev.my; }
+    pinchPrev=pd; return; }
+  if(dragNode){ const [wx,wy]=s2w(e.clientX,e.clientY); dragNode.x=wx; dragNode.y=wy; dragNode.vx=0; dragNode.vy=0; alpha=Math.max(alpha,.4); }
+  else if(panning){ cam.x+=dx; cam.y+=dy; }
+});
+function endPointer(e){ pointers.delete(e.pointerId);
+  if(pointers.size<2)pinchPrev=null;
+  const dt=performance.now()-downT;
+  if(dragNode && moved<8 && dt<300){ selectStar(dragNode); }
+  else if(panning && moved<8 && dt<300){ // tap empty -> deselect
+    const n=downPos?hitTest(downPos.x,downPos.y):null; if(n)selectStar(n); else { selNode=null; closeSheet(); } }
+  if(dragNode && moved>=8){ alpha=Math.max(alpha,.4); dragNode.vx=0; dragNode.vy=0; }
+  dragNode=null; if(pointers.size===0)panning=false;
+}
+cv.addEventListener('pointerup',endPointer); cv.addEventListener('pointercancel',endPointer);
+cv.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.clientX,e.clientY, cam.zoom*(e.deltaY<0?1.12:0.89)); },{passive:false});
+function pinchData(){ const p=[...pointers.values()]; return {dist:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y),mx:(p[0].x+p[1].x)/2,my:(p[0].y+p[1].y)/2}; }
+function zoomAt(sx,sy,nz){ nz=Math.max(0.35,Math.min(3.2,nz)); const [wx,wy]=s2w(sx,sy); cam.zoom=nz; cam.x=sx-wx*nz; cam.y=sy-wy*nz; }
+
+// -------------------- SHEETS --------------------
+const sheet=document.getElementById('sheet'), scrim=document.getElementById('scrim'), body=document.getElementById('sheet-body');
+function openSheet(html){ body.innerHTML=html; sheet.classList.add('on'); scrim.classList.add('on'); }
+function closeSheet(){ sheet.classList.remove('on'); scrim.classList.remove('on'); document.querySelectorAll('#dock button').forEach(b=>b.classList.remove('on')); }
+scrim.addEventListener('click',()=>{ selNode=null; closeSheet(); });
+// drag sheet down to close (touch)
+let shStart=null;
+sheet.addEventListener('pointerdown',e=>{ if(e.target.closest('.body')&&body.scrollTop>0)return; shStart={y:e.clientY,t:sheet.style.transform}; });
+sheet.addEventListener('pointermove',e=>{ if(!shStart)return; const dy=e.clientY-shStart.y; if(dy>0)sheet.style.transform='translateY('+dy+'px)'; });
+sheet.addEventListener('pointerup',e=>{ if(!shStart)return; const dy=e.clientY-shStart.y; sheet.style.transform=''; if(dy>110){selNode=null;closeSheet();} shStart=null; });
+
+function selectStar(s){ selNode=s; alpha=Math.max(alpha,.35); focusNode(s); openDetail(s);
+  logEv('select <b>'+s.id+'</b> · '+pctOf(s)+'% · '+lifeState(s)); }
+
+function openDetail(s){
+  const p=pctOf(s),col=colorOf(s),st=lifeState(s);
+  const badge = st==='trash' ? '<span class="badge b-trash">🗑 ÎN COȘ</span>'
+    : s.estimated ? '<span class="badge b-est">⚠ ESTIMAT · '+p+'% ghicit</span>'
+    : (p>=100||(s.live&&p>=95)) ? '<span class="badge b-live">★ LIVE</span>'
+    : '<span class="badge b-real">✓ REAL · '+s.ms.filter(m=>m.done).length+'/'+s.ms.length+' pași</span>';
+  const ms = s.ms&&s.ms.length
+    ? '<ul class="ms">'+s.ms.map((m,i)=>'<li class="'+(m.done?'done':'todo')+'" data-ms="'+i+'">'+m.t+'</li>').join('')+'</ul>'
+    : '<div class="sh-note" style="color:var(--almost)">Fără milestone-uri definite — procentul e ghicit. Le stabilim împreună (definition of done).</div>';
+  const lifeH = s.anchored
+    ? '<div class="life"><span class="ic">⚓</span><div><b style="color:var(--live)">Ancorat</b> — nucleu bani, imun la inactivitate.</div></div>'
+    : st==='trash'
+      ? '<div class="life" style="border-color:#3a2140"><span class="ic">🗑</span><div>În coș — inactiv '+s.idle+'z. <b style="color:#c084fc">Dispare în '+(LIFE.GONE-s.idle)+'z</b> dacă n-o atingi.</div></div>'
+      : '<div class="life"><span class="ic">⏳</span><div>Activ — inactiv <b>'+(s.idle||0)+'z</b>'+(s.captured?' · capturat: '+s.captured:'')+'. Avertisment la '+LIFE.WARN+'z.</div></div>';
+  const acts = [
+    '<button class="primary" data-act="touch">✓ Atins acum</button>',
+    st==='trash' ? '<button class="gold" data-act="recover">♻ Recuperează</button>' : '',
+    '<button data-act="focus">◎ Evidențiază rețeaua</button>',
+    (s.estimated&&st!=='trash') ? '<button class="gold" data-act="promote">⛩ Promovează</button>' : '',
+    '<button class="warn" data-act="delete">🗑 În coș</button>',
+  ].filter(Boolean).join('');
+  const dev = '<div class="devbox"><span class="dk">id</span>: '+s.id+'  <span class="dk">zone</span>: '+s.zone
+    +'  <span class="dk">state</span>: '+st+'<br><span class="dk">degree</span>: '+neighborDeg(s)
+    +'  <span class="dk">pct</span>: '+p+(s.estimated?' (est)':'')+'  <span class="dk">idle</span>: '+(s.idle||0)+'d'
+    +'  <span class="dk">anchored</span>: '+(!!s.anchored)+'<br><span class="dk">pos</span>: ['+Math.round(s.x)+','+Math.round(s.y)+']</div>';
+  openDetail._s=s;
+  openSheet(
+    '<div class="sh-head"><div><div class="sh-zone">'+ZONES[s.zone].name+' · '+maturLabel(p)+'</div>'
+    +'<div class="sh-title">'+s.name+'</div><div style="margin-top:7px">'+badge+'</div></div>'
+    +'<div class="sh-x" data-x>✕</div></div>'
+    +'<div class="pctrow"><div class="pctnum" style="color:'+col+'">'+p+'%</div>'
+    +'<div class="pctbar"><div class="pctfill" style="width:'+p+'%;background:'+col+'"></div></div></div>'
+    +ms+lifeH
+    +'<div class="kv"><b>Ce există</b><p class="exist">'+s.exist+'</p></div>'
+    +'<div class="kv"><b>Ce lipsește</b><p class="miss">'+s.miss+'</p></div>'
+    +'<div class="kv"><b>Următorul pas</b><p class="next">'+s.next+'</p></div>'
+    +'<div class="acts">'+acts+'</div>'+dev
+    +'<div class="sh-note">Link Notion: — (se completează când baza „Proiecte" există)</div>'
+  );
+}
+function neighborDeg(s){ return SYNAPSES.filter(sy=>(sy.from===s.id||sy.to===s.id)&&!sy.maybe).length; }
+
+// sheet delegated actions
+body.addEventListener('click',e=>{
+  const s=openDetail._s;
+  if(e.target.closest('[data-x]')){ selNode=null; closeSheet(); return; }
+  const li=e.target.closest('[data-ms]'); if(li&&s){ const i=+li.dataset.ms; s.ms[i].done=!s.ms[i].done; s.idle=0; alpha=Math.max(alpha,.4); updateHealth(); logEv('milestone <b>'+s.id+'</b> → '+pctOf(s)+'%'); openDetail(s); return; }
+  const act=e.target.closest('[data-act]'); if(act&&s){ doAct(act.dataset.act,s); }
+  const jump=e.target.closest('[data-jump]'); if(jump){ const t=byId(jump.dataset.jump); if(t){selectStar(t);} }
+  const gap=e.target.closest('[data-gap]'); if(gap){ showGap(gap.dataset.gap); }
+});
+function doAct(a,s){
+  if(a==='touch'){ s.idle=0; toast('⏱ Ceas resetat — '+s.name+' e „atinsă acum"'); logEv('touch <b>'+s.id+'</b> idle→0'); updateHealth(); openDetail(s); }
+  if(a==='recover'){ s.idle=0; toast('♻ '+s.name+' recuperată din coș'); logEv('recover <b>'+s.id+'</b>'); updateHealth(); openDetail(s); }
+  if(a==='focus'){ selNode=s; focusNode(s,1.4); closeSheet(); toast('◎ Rețeaua lui '+s.name); }
+  if(a==='promote'){ openGate(s); }
+  if(a==='delete'){ s.idle=LIFE.WARN; alpha=Math.max(alpha,.4); toast('🗑 '+s.name+' mutată în coș (7 zile)'); logEv('trash <b>'+s.id+'</b>'); updateHealth(); openDetail(s); }
+}
+
+// -------------------- DOCK VIEWS --------------------
+document.getElementById('dock').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
+  const v=b.dataset.view; document.querySelectorAll('#dock button').forEach(x=>x.classList.toggle('on',x===b&&v!=='fit'));
+  if(v==='fit'){ selNode=null; filter.zone='all'; filter.hl='none'; closeSheet(); fit(true); toast('🌌 Imaginea de ansamblu'); b.classList.remove('on'); return; }
+  if(v==='gate')openGate(); if(v==='actions')openActions(); if(v==='trash')openTrash(); if(v==='guide')openGuide(); if(v==='filter')openFilter();
+});
+function openGate(s){ openSheet(
+  '<div class="sh-head"><div><div class="sh-zone">Guvernanță</div><div class="sh-title">⛩ Poarta</div></div><div class="sh-x" data-x>✕</div></div>'
+  +(s?'<div class="life" style="border-color:#b98a1e"><span class="ic">⛩</span><div>Promovezi <b>'+s.name+'</b>: din <i>stea slabă</i> → <b style="color:var(--live)">confirmată/finanțată</b>? Trece cele 5 criterii.</div></div>':'')
+  +'<div class="sh-note">Intrarea e <b style="color:var(--start)">liberă</b> — orice devine stea slabă. Cele 5 criterii sunt <b>checkpoint de promovare</b>, nu barieră la intrare.</div>'
+  +'<ul class="gate"><li>Rezolvă o durere reală, numită (cine plătește azi?)</li><li>Se leagă de banii existenți (aproape de încasare)</li>'
+  +'<li>Are un „done" măsurabil (milestone-uri, nu impresie)</li><li>Poate fi construită de sistemul actual (Airtable/SmartBill/Make/AI)</li>'
+  +'<li>Merită față de ce sacrifici (cost de oportunitate)</li></ul>'
+  +'<div class="sh-note"><b>AI pre-filtrează</b>, tu dai verdictul. Poarta filtrează <b>banii</b>; timpul filtrează <b>existența</b>.</div>'
+  +(s?'<div class="acts"><button class="primary" data-act="confirm-'+s.id+'">✓ Promovează la confirmată</button></div>':'')
+);
+  if(s){ body.querySelector('[data-act]')?.addEventListener('click',()=>{ s.estimated=false; s.live=true; if(!s.ms.length)s.ms=[{t:'Definire milestones',done:false}]; s.idle=0; toast('★ '+s.name+' promovată'); logEv('promote <b>'+s.id+'</b>'); updateHealth(); selectStar(s); }); }
+}
+function openActions(){ openSheet(
+  '<div class="sh-head"><div><div class="sh-zone">Ordinea banilor</div><div class="sh-title">🔗 Sinapse de legat</div></div><div class="sh-x" data-x>✕</div></div>'
+  +'<div class="sh-note">Payload de acțiune. Atinge o legătură → sar la ea pe cer și o evidențiez.</div>'
+  +ACTIONS.map((a,i)=>{ const A=byId(a.a),B=byId(a.b); return '<div class="act-item" data-gap="'+a.a+'|'+a.b+'"><span class="n">'+(i+1)+'</span><div>'
+    +'<div class="lk">'+(A?A.name:a.a)+'<span class="ar">⇢</span>'+(B?B.name:a.b)+'</div><small>'+a.why+'</small></div></div>'; }).join('')
+);}
+function showGap(pair){ const [a,b]=pair.split('|'); const A=byId(a),B=byId(b); if(!A||!B)return;
+  selNode=A; closeSheet(); const mx=(A.x+B.x)/2,my=(A.y+B.y)/2; tweenCam(W/2-mx*1.3,H*0.44-my*1.3,1.3);
+  toast('🔗 Golul: '+A.name+' ⇢ '+B.name); logEv('inspect gap <b>'+a+'⇢'+b+'</b>');
+}
+function openTrash(){ const t=STARS.filter(s=>lifeState(s)==='trash').sort((x,y)=>y.idle-x.idle);
+  openSheet('<div class="sh-head"><div><div class="sh-zone">Anti-maldăr</div><div class="sh-title">🗑 Coș de gunoi · 7 zile</div></div><div class="sh-x" data-x>✕</div></div>'
+  +'<div class="sh-note">Idei inactive 2 săpt. Mai stau o săptămână aici — le atingi → ies. Le ignori → dispar.</div>'
+  +(t.length? t.map(s=>'<div class="trash-item" data-jump="'+s.id+'"><span>'+s.name+' · inactiv '+s.idle+'z</span><span class="cd">dispare în '+(LIFE.GONE-s.idle)+'z</span></div>').join('')
+    : '<div class="sh-note">Gol. Nimic nu putrezește acum. ✨</div>')
+  +'<h4 class="sh-h" style="margin-top:18px">🌱 Semințe (n-au trecut poarta)</h4>'
+  +SEEDS.map(s=>'<div class="seed"><span class="s"></span>'+s+'</div>').join('')
+);}
+function openGuide(){ openSheet(
+  '<div class="sh-head"><div><div class="sh-zone">Cum citești cerul</div><div class="sh-title">❔ Ghid rapid</div></div><div class="sh-x" data-x>✕</div></div>'
+  +'<h4 class="sh-h">Maturitate = culoare</h4><div class="legend-grid">'
+  +[['--idea','idee'],['--start','la început'],['--grow','crește'],['--almost','aproape'],['--live','LIVE'],['--dead','stinsă']]
+    .map(x=>'<div class="lg"><i style="background:'+css(x[0])+';color:'+css(x[0])+'"></i>'+x[1]+'</div>').join('')+'</div>'
+  +'<h4 class="sh-h" style="margin-top:16px">Sinapse</h4><div class="legend-grid">'
+  +'<div class="lg"><span class="ln" style="border-color:'+css('--synlive')+'"></span>legată (bani curg)</div>'
+  +'<div class="lg"><span class="ln" style="border-color:'+css('--syndead')+';border-style:dashed"></span>nelegată (gol)</div>'
+  +'<div class="lg"><span class="ln" style="border-color:'+css('--synmaybe')+';border-style:dotted"></span>posibilă</div></div>'
+  +'<h4 class="sh-h" style="margin-top:16px">Gesturi</h4>'
+  +'<div class="row"><span class="dot" style="background:#7cc6ff;color:#7cc6ff"></span><div><b>Atinge</b> o stea → detalii & acțiuni.</div></div>'
+  +'<div class="row"><span class="dot" style="background:#34d399;color:#34d399"></span><div><b>Trage</b> o stea → rețeaua reacționează (fizică reală).</div></div>'
+  +'<div class="row"><span class="dot" style="background:#fbbf24;color:#fbbf24"></span><div><b>Ciupește</b> pentru zoom · trage fundalul pentru pan.</div></div>'
+  +'<div class="row"><span class="dot" style="background:#f0abfc;color:#f0abfc"></span><div><b>＋</b> jos → capturezi o idee nouă (fluxul Daniel).</div></div>'
+  +'<h4 class="sh-h" style="margin-top:16px">⌘ Ce înseamnă metricile Dev</h4>'
+  +'<div class="row"><span class="dot" style="background:#5eead4;color:#5eead4"></span><div><b>Componente conexe.</b> Câte „insule" separate ai. Ideal = <b>1</b> (tot cerul e legat). 3 insule = trei lumi care nu-și vorbesc.<small>Se calculează cu o parcurgere de graf (flood-fill) pe sinapsele verzi.</small></div></div>'
+  +'<div class="row"><span class="dot" style="background:#f87171;color:#f87171"></span><div><b>Orfani.</b> Stele fără nicio legătură reală. Frumoase, dar singure — nu produc nimic conectat.</div></div>'
+  +'<div class="row"><span class="dot" style="background:#34d399;color:#34d399"></span><div><b>Integritate $.</b> Cât din triunghiul banilor (Încasări–Airtable–SmartBill) e efectiv legat. <b>100%</b> = banii curg fără gaură.</div></div>'
+  +'<div class="row"><span class="dot" style="background:#fbbf24;color:#fbbf24"></span><div><b>sim α (alpha).</b> „Energia" simulării fizice. Când tragi o stea urcă; apoi scade spre 0 = cerul s-a liniștit. Exact ca în layout-urile D3.</div></div>'
+  +'<div class="sh-note">Astea nu-s decor: sunt aceleași concepte pe care le folosesc bibliotecile serioase de grafuri (D3-force, vis.js). Aici le vezi lucrând, live.</div>'
+);}
+function openFilter(){ openSheet(
+  '<div class="sh-head"><div><div class="sh-zone">Vezi doar ce contează</div><div class="sh-title">◐ Filtre</div></div><div class="sh-x" data-x>✕</div></div>'
+  +'<div class="field"><label>Zonă</label><div class="chips" id="fz">'
+  +'<span class="chip '+(filter.zone==='all'?'on':'')+'" data-fz="all">Toate</span>'
+  +Object.entries(ZONES).map(([k,z])=>'<span class="chip '+(filter.zone===k?'on':'')+'" data-fz="'+k+'">'+z.name+'</span>').join('')+'</div></div>'
+  +'<div class="field"><label>Evidențiază</label><div class="chips" id="fh">'
+  +[['none','—'],['gaps','Doar golurile (roșii)'],['trash','Doar coșul'],['live','Doar LIVE']].map(x=>'<span class="chip '+(filter.hl===x[0]?'on':'')+'" data-fh="'+x[0]+'">'+x[1]+'</span>').join('')+'</div></div>'
+  +'<div class="sh-note">Filtrele evidențiază pe cer — nu ascund. Un singur cer, mereu.</div>'
+);}
+const filter={zone:'all',hl:'none'};
+body.addEventListener('click',e=>{ const z=e.target.closest('[data-fz]'); if(z){filter.zone=z.dataset.fz; openFilter(); applyFilter(); }
+  const h=e.target.closest('[data-fh]'); if(h){filter.hl=h.dataset.fh; openFilter(); applyFilter(); } });
+function applyFilter(){ // implemented via selNode-like highlight: reuse focusSet by faking selection to a synthetic set
+  logEv('filter zone=<b>'+filter.zone+'</b> hl=<b>'+filter.hl+'</b>');
+  toast('◐ Filtru: '+ (filter.zone==='all'?'toate zonele':ZONES[filter.zone].name) + (filter.hl!=='none'?' · '+filter.hl:''));
+  // simple camera nudge to zone
+  if(filter.zone!=='all'){ const z=ZONES[filter.zone]; tweenCam(W/2-z.wx*1.25,H*0.44-z.wy*1.25,1.25); }
+}
+
+// -------------------- CAPTURE (Daniel flow) --------------------
+document.getElementById('fab').addEventListener('click',()=>{ const zoneChips=Object.entries(ZONES).map(([k,z],i)=>'<span class="chip '+(i===0?'on':'')+'" data-cz="'+k+'">'+z.name+'</span>').join('');
+  openSheet('<div class="sh-head"><div><div class="sh-zone">Captură liberă · fluxul Daniel</div><div class="sh-title">＋ Idee nouă</div></div><div class="sh-x" data-x>✕</div></div>'
+  +'<div class="sh-note">Orice e proiect. Aruncă ideea → devine stea slabă în zona ei, cu legături posibile. Timpul o curăță dacă nimeni n-o atinge.</div>'
+  +'<div class="field"><label>Ce ai văzut / ce idee?</label><input id="cap-name" placeholder="ex: Video util despre montaj" autocomplete="off"></div>'
+  +'<div class="field"><label>Zonă</label><div class="chips" id="cap-zone">'+zoneChips+'</div></div>'
+  +'<div class="acts"><button class="primary" id="cap-go">✦ Aprinde steaua</button></div>');
+  let cz='ai'; body.querySelector('#cap-zone').addEventListener('click',ev=>{ const c=ev.target.closest('[data-cz]'); if(!c)return; cz=c.dataset.cz; body.querySelectorAll('#cap-zone .chip').forEach(x=>x.classList.toggle('on',x===c)); });
+  cz=Object.keys(ZONES)[0];
+  body.querySelector('#cap-go').addEventListener('click',()=>{ const nm=(body.querySelector('#cap-name').value||'').trim()||'Idee fără nume';
+    const id='idea'+(Date.now()%100000); const z=ZONES[cz];
+    const star={id,zone:cz,name:nm,estPct:0,estimated:true,idle:0,fresh:true,captured:'tu · acum',ms:[],
+      exist:'Idee proaspăt capturată.',miss:'Nu a trecut poarta. Doar potențial.',next:'Validează → stea reală, sau las-o și timpul o curăță.',
+      x:z.wx+(Math.random()-.5)*60,y:z.wy+(Math.random()-.5)*60,vx:0,vy:0};
+    STARS.push(star); alpha=1; updateHealth(); toast('✦ „'+nm+'" a apărut în '+z.name); logEv('capture <b>'+id+'</b> in '+cz);
+    selectStar(star);
+  });
+});
+
+// -------------------- PERSONA --------------------
+document.querySelector('.persona').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
+  const p=b.dataset.persona; document.body.classList.toggle('dev',p==='dev'); document.body.classList.toggle('daniel',p!=='dev');
+  document.querySelectorAll('.persona button').forEach(x=>x.classList.toggle('on',x===b));
+  if(p==='dev'){ updateHud(); toast('⌘ Dev — graful live, FPS, componente conexe'); logEv('persona → <b>dev</b>'); }
+  else{ document.getElementById('console').classList.remove('on'); toast('🌱 Daniel — simplu & ghidat'); }
+  if(openDetail._s && sheet.classList.contains('on'))openDetail(openDetail._s);
+});
+document.getElementById('btn-console').addEventListener('click',()=>{ document.getElementById('console').classList.toggle('on'); });
+
+// keyboard (dev/desktop)
+window.addEventListener('keydown',e=>{ if(e.key==='f'){fit(true);} if(e.key==='d'){document.querySelector('.persona button.dev').click();}
+  if(e.key==='Escape'){selNode=null;closeSheet();} });
+
+// -------------------- TOAST --------------------
+let toastT; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),2200); }
+
+// -------------------- BOOT --------------------
+window.addEventListener('resize',()=>{ resize(); });
+resize(); seedBg(); fit(false); updateHealth(); requestAnimationFrame(loop);
+setTimeout(()=>toast('Trage · ciupește · atinge o stea'),700);
+</script>
+</body>
+</html>
