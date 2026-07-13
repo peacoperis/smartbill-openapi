@@ -18,7 +18,7 @@
   html,body{margin:0;height:100%;overflow:hidden;overflow-x:hidden;background:var(--bg);color:var(--ink);
     font-family:'Segoe UI',system-ui,-apple-system,'Inter',sans-serif;
     overscroll-behavior:none;-webkit-user-select:none;user-select:none;touch-action:none}
-  canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 
   /* ---------- TOP BAR ---------- */
   #top{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:10px;overflow:hidden;
@@ -72,6 +72,16 @@
   #dock button:hover,#dock button.on{color:var(--ink);background:#182142}
   #dock .sep{width:1px;background:var(--brd);margin:6px 2px;flex:none}
 
+  /* ZOOM control */
+  #zoomctl{position:fixed;z-index:20;right:16px;bottom:calc(env(safe-area-inset-bottom) + 150px);
+    display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--brd);
+    border-radius:24px;padding:4px;backdrop-filter:blur(12px);box-shadow:0 8px 26px #000a}
+  #zoomctl button{width:42px;height:42px;border:0;background:transparent;color:var(--ink);
+    font-size:22px;font-weight:400;cursor:pointer;border-radius:50%;line-height:1;transition:.12s;
+    display:flex;align-items:center;justify-content:center}
+  #zoomctl button:active{background:#1c2650;transform:scale(.92)}
+  #zoomctl button[data-z=fit]{font-size:18px;color:var(--muted);border-top:1px solid var(--brd);border-bottom:1px solid var(--brd);border-radius:0;margin:2px 0}
+  @media(min-width:820px){ #zoomctl{right:auto;left:calc(50% + 200px)} }
   /* FAB */
   #fab{position:fixed;z-index:20;right:16px;bottom:calc(env(safe-area-inset-bottom) + 78px);
     width:56px;height:56px;border-radius:50%;border:0;cursor:pointer;
@@ -223,6 +233,12 @@
 </div>
 <div id="console"></div>
 
+<div id="zoomctl">
+  <button data-z="in" aria-label="Zoom in">＋</button>
+  <button data-z="fit" aria-label="Încadrează">⊙</button>
+  <button data-z="out" aria-label="Zoom out">－</button>
+</div>
+
 <button id="fab" aria-label="Captură rapidă">＋</button>
 
 <div id="dock">
@@ -333,10 +349,17 @@ let DPR=1, W=0, H=0;
 const cam = {x:0,y:0,zoom:1};           // screen = world*zoom + (x,y)
 const w2s = (wx,wy)=>[wx*cam.zoom+cam.x, wy*cam.zoom+cam.y];
 const s2w = (sx,sy)=>[(sx-cam.x)/cam.zoom,(sy-cam.y)/cam.zoom];
+// Robust size: some in-app preview webviews report innerWidth=0 at boot,
+// so read the canvas's own laid-out size with fallbacks.
+function currentSize(){
+  const w = cv.clientWidth || document.documentElement.clientWidth || window.innerWidth || 0;
+  const h = cv.clientHeight || document.documentElement.clientHeight || window.innerHeight || 0;
+  return [w,h];
+}
 function resize(){
   DPR=Math.min(window.devicePixelRatio||1,2.5);
-  W=window.innerWidth; H=window.innerHeight;
-  cv.width=W*DPR; cv.height=H*DPR;
+  const [w,h]=currentSize(); W=w; H=h;
+  cv.width=Math.max(1,W*DPR); cv.height=Math.max(1,H*DPR);
   ctx.setTransform(DPR,0,0,DPR,0,0);
 }
 function fit(animated){
@@ -426,16 +449,18 @@ function draw(){
   });
   ctx.globalAlpha=1;
 
-  // zone wells + labels
-  Object.values(ZONES).forEach(z=>{ const [sx,sy]=w2s(z.wx,z.wy); const R=115*cam.zoom;
+  // zone territories: glow + dashed boundary + colored label (clear delimitation)
+  Object.values(ZONES).forEach(z=>{ const [sx,sy]=w2s(z.wx,z.wy); const R=118*cam.zoom;
     const gg=ctx.createRadialGradient(sx,sy,0,sx,sy,R);
-    gg.addColorStop(0,z.hue+'14'); gg.addColorStop(1,'transparent');
+    gg.addColorStop(0,z.hue+'18'); gg.addColorStop(.7,z.hue+'0a'); gg.addColorStop(1,'transparent');
     ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(sx,sy,R,0,6.29); ctx.fill();
-    ctx.font='700 '+Math.max(10,11)+'px Segoe UI'; ctx.fillStyle='rgba(120,140,200,.42)';
-    ctx.textAlign='center'; ctx.letterSpacing='3px';
-    ctx.fillText(z.name.toUpperCase(), sx, sy-R-6);
+    ctx.strokeStyle=z.hue+'30'; ctx.setLineDash([2,9]); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(sx,sy,R,0,6.29); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font='700 11px Segoe UI'; ctx.fillStyle=z.hue+'aa';
+    ctx.textAlign='center'; try{ctx.letterSpacing='3px';}catch(e){}
+    ctx.fillText(z.name.toUpperCase(), sx, sy-R-7);
+    try{ctx.letterSpacing='0px';}catch(e){}
   });
-  ctx.letterSpacing='0px';
 
   const focusSet = activeHighlight();
   const labels=[];   // decluttered label pass after nodes
@@ -534,6 +559,9 @@ function activeHighlight(){
 
 // -------------------- MAIN LOOP --------------------
 function loop(now){
+  // self-heal: if the webview reports a new/first valid size, resize & refit
+  const [cw,ch]=currentSize();
+  if((cw&&ch)&&(cw!==W||ch!==H)){ const wasInvalid=(!W||!H); resize(); if(wasInvalid) fit(false); }
   const dt=Math.min(now-lastFrame,50); lastFrame=now; tGlobal+=dt/1000;
   frames++; fpsT+=dt; if(fpsT>=500){ fps=Math.round(frames/(fpsT/1000)); frames=0; fpsT=0; if(document.body.classList.contains('dev'))updateHud(); }
   if(camTween){ camTween.t=Math.min(camTween.t+dt/420,1); const e=1-Math.pow(1-camTween.t,3);
@@ -560,7 +588,7 @@ function logEv(html){ const c=document.getElementById('console'); const now=new 
   while(c.children.length>60)c.lastChild.remove(); }
 
 // -------------------- INTERACTION --------------------
-const pointers=new Map(); let dragNode=null, panning=false, pinchPrev=null, downT=0, downPos=null, moved=0, selNode=null;
+const pointers=new Map(); let dragNode=null, panning=false, pinchPrev=null, downT=0, downPos=null, moved=0, selNode=null, lastTap=0, lastTapPos=null;
 function hitTest(sx,sy){ let best=null,bd=1e9;
   for(const s of STARS){ if(lifeState(s)==='gone')continue; const [x,y]=w2s(s.x,s.y);
     const r=(6+pctOf(s)/22)*Math.min(cam.zoom,1.6)+14; const d=Math.hypot(x-sx,y-sy); if(d<r&&d<bd){bd=d;best=s;} }
@@ -584,12 +612,15 @@ cv.addEventListener('pointermove',e=>{ if(!pointers.has(e.pointerId))return;
 });
 function endPointer(e){ pointers.delete(e.pointerId);
   if(pointers.size<2)pinchPrev=null;
-  const dt=performance.now()-downT;
-  if(dragNode && moved<8 && dt<300){ selectStar(dragNode); }
-  else if(panning && moved<8 && dt<300){ // tap empty -> deselect
-    const n=downPos?hitTest(downPos.x,downPos.y):null; if(n)selectStar(n); else { selNode=null; closeSheet(); } }
+  const dt=performance.now()-downT; const isTap = moved<8 && dt<300;
   if(dragNode && moved>=8){ alpha=Math.max(alpha,.4); dragNode.vx=0; dragNode.vy=0; }
   dragNode=null; if(pointers.size===0)panning=false;
+  if(!isTap) return;
+  const tx=downPos?downPos.x:W/2, ty=downPos?downPos.y:H/2, now=performance.now();
+  const dbl = (now-lastTap<320) && lastTapPos && Math.hypot(tx-lastTapPos.x,ty-lastTapPos.y)<44;
+  lastTap=now; lastTapPos={x:tx,y:ty};
+  if(dbl){ zoomAt(tx,ty, cam.zoom*1.7); lastTap=0; logEv('double-tap zoom → '+ (cam.zoom).toFixed(2)+'×'); return; }
+  const n=hitTest(tx,ty); if(n)selectStar(n); else { selNode=null; closeSheet(); }
 }
 cv.addEventListener('pointerup',endPointer); cv.addEventListener('pointercancel',endPointer);
 cv.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.clientX,e.clientY, cam.zoom*(e.deltaY<0?1.12:0.89)); },{passive:false});
@@ -774,8 +805,17 @@ document.querySelector('.persona').addEventListener('click',e=>{ const b=e.targe
 });
 document.getElementById('btn-console').addEventListener('click',()=>{ document.getElementById('console').classList.toggle('on'); });
 
+// zoom buttons (reliable everywhere; webview previews often swallow pinch)
+document.getElementById('zoomctl').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
+  const cx=W/2, cy=H*0.45;
+  if(b.dataset.z==='in') zoomAt(cx,cy,cam.zoom*1.35);
+  else if(b.dataset.z==='out') zoomAt(cx,cy,cam.zoom*0.74);
+  else { selNode=null; fit(true); }
+});
+
 // keyboard (dev/desktop)
 window.addEventListener('keydown',e=>{ if(e.key==='f'){fit(true);} if(e.key==='d'){document.querySelector('.persona button.dev').click();}
+  if(e.key==='+'||e.key==='='){zoomAt(W/2,H*0.45,cam.zoom*1.2);} if(e.key==='-'){zoomAt(W/2,H*0.45,cam.zoom*0.83);}
   if(e.key==='Escape'){selNode=null;closeSheet();} });
 
 // -------------------- TOAST --------------------
@@ -783,8 +823,12 @@ let toastT; function toast(m){ const t=document.getElementById('toast'); t.textC
 
 // -------------------- BOOT --------------------
 window.addEventListener('resize',()=>{ resize(); });
+window.addEventListener('orientationchange',()=>{ setTimeout(()=>{resize();fit(true);},250); });
+// belt-and-suspenders: refit once the webview settles its dimensions
+window.addEventListener('load',()=>{ resize(); fit(false); });
+[120,400,900].forEach(ms=>setTimeout(()=>{ const [w,h]=currentSize(); if(w&&h&&(w!==W||h!==H)){resize();fit(false);} },ms));
 resize(); seedBg(); fit(false); updateHealth(); requestAnimationFrame(loop);
-setTimeout(()=>toast('Trage · ciupește · atinge o stea'),700);
+setTimeout(()=>toast('Trage · ciupește · dublu-tap sau ＋ / － pentru zoom'),700);
 </script>
 </body>
 </html>
