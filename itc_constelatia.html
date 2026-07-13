@@ -316,18 +316,37 @@ let STARS = [
     miss:'13 zile inactivă — mâine intră în avertisment.', next:'Dacă merită, leag-o de Airtable înainte să pălească.'},
 ];
 
+// Sinapse DIRECȚIONATE = conducte vii. from → to = direcția fluxului.
+// steps[] = stadiile conexiunii (ca milestone-urile, dar pe legătură).
+// flow = ce curge prin ea. Bucla banilor: Airtable→Încasări→SmartBill→Airtable.
 let SYNAPSES = [
-  {from:'incasari',to:'airtable',live:true},{from:'airtable',to:'smartbill',live:true},
-  {from:'incasari',to:'smartbill',live:true},{from:'calc',to:'airtable',live:false},
-  {from:'tetto',to:'contract',live:false},{from:'tetto',to:'airtable',live:false},
-  {from:'video',to:'reels',maybe:true},{from:'video',to:'calc',maybe:true},
+  {from:'airtable',to:'incasari',live:true,label:'Trigger factură',flow:'factură nouă detectată în bază',
+    steps:[{t:'Webhook Airtable → sistem',done:true},{t:'Filtrare status „de emis"',done:true}]},
+  {from:'incasari',to:'smartbill',live:true,label:'Emitere automată',flow:'datele facturii → SmartBill',
+    steps:[{t:'Mapare câmpuri factură',done:true},{t:'Apel API emitere',done:true},{t:'Retur nr. factură',done:true}]},
+  {from:'smartbill',to:'airtable',live:true,label:'Status plată',flow:'plătit / restant → înapoi în bază',
+    steps:[{t:'Webhook SmartBill',done:true},{t:'Update status în Airtable',done:true}]},
+  {from:'calc',to:'airtable',live:false,label:'Oferta → Bază',flow:'preț, client, produse',
+    steps:[{t:'Câmp „Oferte" în Airtable',done:true},{t:'Buton „Salvează oferta" în Calc',done:false},
+           {t:'Mapare câmpuri (preț/client/produse)',done:false},{t:'Test end-to-end',done:false}]},
+  {from:'tetto',to:'contract',live:false,label:'Măsurători → Contract',flow:'dimensiuni, material, preț',
+    steps:[{t:'Export date din TETTO-RC',done:true},{t:'Șablon contract HTML',done:false},
+           {t:'Injectare date în șablon',done:false},{t:'Semnare / trimitere',done:false}]},
+  {from:'tetto',to:'airtable',live:false,label:'Proiect → Hub',flow:'proiectul, ca record în bază',
+    steps:[{t:'Definire câmpuri proiect',done:false},{t:'Sync TETTO-RC → Airtable',done:false}]},
+  {from:'video',to:'calc',maybe:true,label:'Inspiră o funcție?',flow:'idee → funcție nouă în Calc'},
+  {from:'video',to:'reels',maybe:true,label:'Alimentează conținut?',flow:'idee → serie de reels'},
 ];
+function connProg(sy){ if(sy.steps&&sy.steps.length)return sy.steps.filter(s=>s.done).length/sy.steps.length; return sy.live?1:0; }
+function connState(sy){ if(sy.maybe)return 'possible'; const p=connProg(sy); if(sy.live&&p>=1)return 'flowing'; if(p>0)return 'building'; return 'planned'; }
+function connColor(sy){ const st=connState(sy); return st==='flowing'?css('--synlive'): st==='building'?css('--almost'): st==='possible'?css('--synmaybe'): css('--syndead'); }
+const connId=sy=>sy.from+'>'+sy.to;
 
 const SEEDS = ['Protecția Marjei','Harta / Constelația (creierul extras)','Onboarding client automat'];
 const ACTIONS = [
-  {a:'tetto',b:'contract',why:'Frontul are gaura aici — capătul banilor strălucește, dar contractul nu se leagă.'},
+  {a:'tetto',b:'contract',why:'Golul numit — capătul banilor strălucește, dar contractul nu se leagă.'},
   {a:'calc',b:'airtable',why:'Ofertele să scrie în baza-sursă, ca harta să fie VIE.'},
-  {a:'airtable',b:'contract',why:'Contractul să tragă date reale din hub, nu din vid.'},
+  {a:'tetto',b:'airtable',why:'Proiectul de măsurare să existe ca record în hub.'},
 ];
 const LIFE = {WARN:14, GONE:21};
 
@@ -465,23 +484,51 @@ function draw(){
   const focusSet = activeHighlight();
   const labels=[];   // decluttered label pass after nodes
 
-  // synapses
+  // synapses = directed progress-pipes
   SYNAPSES.forEach(sy=>{ const a=byId(sy.from),b=byId(sy.to); if(!a||!b)return;
     if(lifeState(a)==='gone'||lifeState(b)==='gone')return;
-    const [ax,ay]=w2s(a.x,a.y),[bx,by]=w2s(b.x,b.y);
+    let [ax,ay]=w2s(a.x,a.y),[bx,by]=w2s(b.x,b.y);
     const dim = focusSet && !(focusSet.has(a.id)&&focusSet.has(b.id));
+    const sel = selConn===sy;
+    const col = connColor(sy), prog = connProg(sy), st = connState(sy);
+    const ang = Math.atan2(by-ay,bx-ax);
+    const rB=(6+pctOf(b)/22)*Math.min(cam.zoom,1.6);
+    // trim endpoints to node edges so the pipe sits between the stars
+    const rA=(6+pctOf(a)/22)*Math.min(cam.zoom,1.6);
+    ax+=Math.cos(ang)*(rA+2); ay+=Math.sin(ang)*(rA+2); bx-=Math.cos(ang)*(rB+3); by-=Math.sin(ang)*(rB+3);
+    const mx=ax+(bx-ax)*prog, my=ay+(by-ay)*prog;   // frontier point
     ctx.save(); ctx.globalAlpha = dim?0.12:1;
-    if(sy.maybe){ ctx.strokeStyle=css('--synmaybe'); ctx.setLineDash([2,8]); ctx.lineWidth=1.4; ctx.globalAlpha*=.6; }
-    else if(sy.live){ ctx.strokeStyle=css('--synlive'); ctx.setLineDash([]); ctx.lineWidth=2.2;
-      ctx.shadowColor=css('--synlive'); ctx.shadowBlur=8; }
-    else { ctx.strokeStyle=css('--syndead'); ctx.setLineDash([5,6]); ctx.lineWidth=2; }
-    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); ctx.restore();
-    // flowing energy particles on live money synapses
-    if(sy.live && !dim && !REDUCED){ const n=3; for(let i=0;i<n;i++){
-      const t=((tGlobal*0.35 + i/n)%1); const x=ax+(bx-ax)*t, y=ay+(by-ay)*t;
-      ctx.globalAlpha=0.9*(1-Math.abs(0.5-t)*1.2); ctx.fillStyle='#d1ffe9';
-      ctx.beginPath(); ctx.arc(x,y,2.4,0,6.29); ctx.fill(); }
+    if(sy.maybe){
+      ctx.strokeStyle=col; ctx.setLineDash([2,8]); ctx.lineWidth=sel?2.4:1.5; ctx.globalAlpha*=(sel?1:.6);
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+    } else {
+      // 1) whole conduit, dim
+      ctx.strokeStyle=col; ctx.globalAlpha=(dim?0.12:1)*0.22; ctx.setLineDash([4,7]); ctx.lineWidth=sel?3:2;
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+      // 2) built portion, bright + glow
+      if(prog>0){ ctx.globalAlpha=dim?0.16:1; ctx.setLineDash([]); ctx.lineWidth=sel?3.4:2.4;
+        ctx.shadowColor=col; ctx.shadowBlur=sel?14:8; ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(mx,my); ctx.stroke(); ctx.shadowBlur=0; }
+      // 3) frontier marker (where built meets unbuilt)
+      if(prog>0 && prog<1 && !dim){ ctx.globalAlpha=1; ctx.fillStyle=col;
+        ctx.beginPath(); ctx.arc(mx,my,sel?4:3,0,6.29); ctx.fill();
+        ctx.strokeStyle='#0a0f1e'; ctx.lineWidth=1.5; ctx.stroke(); }
+    }
+    ctx.restore();
+    // 4) arrowhead at destination (direction of flow)
+    if(!dim){ ctx.globalAlpha=1; const asz=sel?9:7;
+      ctx.save(); ctx.translate(bx,by); ctx.rotate(ang); ctx.fillStyle=col; ctx.globalAlpha=sy.maybe?0.6:1;
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-asz,-asz*0.55); ctx.lineTo(-asz,asz*0.55); ctx.closePath(); ctx.fill(); ctx.restore(); ctx.globalAlpha=1; }
+    // 5) flowing energy on the BUILT portion (direction-aware)
+    if((st==='flowing'||st==='building') && !dim && !REDUCED){ const n=3; for(let i=0;i<n;i++){
+      const t=((tGlobal*0.4 + i/n)%1); const x=ax+(mx-ax)*t, y=ay+(my-ay)*t;
+      ctx.globalAlpha=0.9*(1-Math.abs(0.5-t)*1.1); ctx.fillStyle= st==='flowing'?'#d1ffe9':'#fff0c8';
+      ctx.beginPath(); ctx.arc(x,y,sel?3:2.3,0,6.29); ctx.fill(); }
       ctx.globalAlpha=1; }
+    // 6) connection label (only when zoomed/selected; declutters vs node labels)
+    if(!dim && (sel || cam.zoom>0.98)){ const cxm=(ax+bx)/2, cym=(ay+by)/2;
+      const pct=Math.round(prog*100);
+      labels.push({cx:cxm, cy:cym-6, r:0, text:(sy.maybe?'? ':'')+sy.label+(sy.maybe?'':' · '+pct+'%'),
+        important:sel, bold:sel, color: sel?'#fff':col, conn:true}); }
   });
 
   // stars
@@ -545,6 +592,7 @@ function neighborSet(s){ const set=new Set([s.id]); SYNAPSES.forEach(sy=>{ if(li
   if(sy.from===s.id)set.add(sy.to); if(sy.to===s.id)set.add(sy.from); }); return set; }
 // Ce se aprinde pe cer: selecția are prioritate; altfel filtrele.
 function activeHighlight(){
+  if(selConn) return new Set([selConn.from, selConn.to]);
   if(selNode) return neighborSet(selNode);
   let set=null;
   if(filter.zone!=='all') set=new Set(STARS.filter(s=>s.zone===filter.zone&&lifeState(s)!=='gone').map(s=>s.id));
@@ -588,10 +636,18 @@ function logEv(html){ const c=document.getElementById('console'); const now=new 
   while(c.children.length>60)c.lastChild.remove(); }
 
 // -------------------- INTERACTION --------------------
-const pointers=new Map(); let dragNode=null, panning=false, pinchPrev=null, downT=0, downPos=null, moved=0, selNode=null, lastTap=0, lastTapPos=null;
+const pointers=new Map(); let dragNode=null, panning=false, pinchPrev=null, downT=0, downPos=null, moved=0, selNode=null, selConn=null, lastTap=0, lastTapPos=null;
 function hitTest(sx,sy){ let best=null,bd=1e9;
   for(const s of STARS){ if(lifeState(s)==='gone')continue; const [x,y]=w2s(s.x,s.y);
     const r=(6+pctOf(s)/22)*Math.min(cam.zoom,1.6)+14; const d=Math.hypot(x-sx,y-sy); if(d<r&&d<bd){bd=d;best=s;} }
+  return best;
+}
+function segDist(px,py,x1,y1,x2,y2){ const dx=x2-x1,dy=y2-y1,L=dx*dx+dy*dy||1;
+  let t=((px-x1)*dx+(py-y1)*dy)/L; t=Math.max(0,Math.min(1,t)); return Math.hypot(px-(x1+t*dx),py-(y1+t*dy)); }
+function hitTestConn(sx,sy){ let best=null,bd=16;
+  for(const c of SYNAPSES){ const a=byId(c.from),b=byId(c.to); if(!a||!b)continue;
+    if(lifeState(a)==='gone'||lifeState(b)==='gone')continue;
+    const [ax,ay]=w2s(a.x,a.y),[bx,by]=w2s(b.x,b.y); const d=segDist(sx,sy,ax,ay,bx,by); if(d<bd){bd=d;best=c;} }
   return best;
 }
 cv.addEventListener('pointerdown',e=>{ cv.setPointerCapture(e.pointerId);
@@ -620,7 +676,11 @@ function endPointer(e){ pointers.delete(e.pointerId);
   const dbl = (now-lastTap<320) && lastTapPos && Math.hypot(tx-lastTapPos.x,ty-lastTapPos.y)<44;
   lastTap=now; lastTapPos={x:tx,y:ty};
   if(dbl){ zoomAt(tx,ty, cam.zoom*1.7); lastTap=0; logEv('double-tap zoom → '+ (cam.zoom).toFixed(2)+'×'); return; }
-  const n=hitTest(tx,ty); if(n)selectStar(n); else { selNode=null; closeSheet(); }
+  const n=hitTest(tx,ty);
+  if(n){ selectStar(n); return; }
+  const c=hitTestConn(tx,ty);
+  if(c){ selectConn(c); return; }
+  selNode=null; selConn=null; closeSheet();
 }
 cv.addEventListener('pointerup',endPointer); cv.addEventListener('pointercancel',endPointer);
 cv.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.clientX,e.clientY, cam.zoom*(e.deltaY<0?1.12:0.89)); },{passive:false});
@@ -631,15 +691,43 @@ function zoomAt(sx,sy,nz){ nz=Math.max(0.35,Math.min(3.2,nz)); const [wx,wy]=s2w
 const sheet=document.getElementById('sheet'), scrim=document.getElementById('scrim'), body=document.getElementById('sheet-body');
 function openSheet(html){ body.innerHTML=html; sheet.classList.add('on'); scrim.classList.add('on'); }
 function closeSheet(){ sheet.classList.remove('on'); scrim.classList.remove('on'); document.querySelectorAll('#dock button').forEach(b=>b.classList.remove('on')); }
-scrim.addEventListener('click',()=>{ selNode=null; closeSheet(); });
+scrim.addEventListener('click',()=>{ selNode=null; selConn=null; closeSheet(); });
 // drag sheet down to close (touch)
 let shStart=null;
 sheet.addEventListener('pointerdown',e=>{ if(e.target.closest('.body')&&body.scrollTop>0)return; shStart={y:e.clientY,t:sheet.style.transform}; });
 sheet.addEventListener('pointermove',e=>{ if(!shStart)return; const dy=e.clientY-shStart.y; if(dy>0)sheet.style.transform='translateY('+dy+'px)'; });
 sheet.addEventListener('pointerup',e=>{ if(!shStart)return; const dy=e.clientY-shStart.y; sheet.style.transform=''; if(dy>110){selNode=null;closeSheet();} shStart=null; });
 
-function selectStar(s){ selNode=s; alpha=Math.max(alpha,.35); focusNode(s); openDetail(s);
+function selectStar(s){ selConn=null; selNode=s; alpha=Math.max(alpha,.35); focusNode(s); openDetail(s);
   logEv('select <b>'+s.id+'</b> · '+pctOf(s)+'% · '+lifeState(s)); }
+function selectConn(sy){ selNode=null; selConn=sy; const a=byId(sy.from),b=byId(sy.to);
+  const mx=(a.x+b.x)/2,my=(a.y+b.y)/2; tweenCam(W/2-mx*Math.max(cam.zoom,1.15), H*0.4-my*Math.max(cam.zoom,1.15), Math.max(cam.zoom,1.15));
+  openConn(sy); logEv('select conn <b>'+connId(sy)+'</b> · '+Math.round(connProg(sy)*100)+'%'); }
+
+const CONN_STATE_LBL={flowing:'★ CURGE',building:'⚙ ÎN CONSTRUCȚIE',possible:'? POSIBILĂ',planned:'✕ NECONSTRUITĂ'};
+function openConn(sy){ const a=byId(sy.from),b=byId(sy.to); const p=Math.round(connProg(sy)*100); const col=connColor(sy); const st=connState(sy);
+  const badgeCls = st==='flowing'?'b-real': st==='building'?'b-est': st==='possible'?'b-trash':'b-est';
+  const steps = sy.steps&&sy.steps.length
+    ? '<ul class="ms">'+sy.steps.map((m,i)=>'<li class="'+(m.done?'done':'todo')+'" data-cs="'+i+'">'+m.t+'</li>').join('')+'</ul>'
+    : '<div class="sh-note" style="color:var(--synmaybe)">Legătură posibilă — încă neconfirmată. Nu are stadii definite.</div>';
+  const nextStep = sy.steps ? (sy.steps.find(m=>!m.done)||{}).t : null;
+  const dev='<div class="devbox"><span class="dk">edge</span>: '+connId(sy)+'  <span class="dk">state</span>: '+st
+    +'  <span class="dk">prog</span>: '+p+'%<br><span class="dk">flow</span>: '+(sy.flow||'—')+'</div>';
+  openConn._c=sy;
+  openSheet(
+    '<div class="sh-head"><div><div class="sh-zone">Conexiune · '+ZONES[a.zone].name+' → '+ZONES[b.zone].name+'</div>'
+    +'<div class="sh-title">'+a.name+' <span style="color:'+col+'">→</span> '+b.name+'</div>'
+    +'<div style="margin-top:7px"><span class="badge '+badgeCls+'">'+CONN_STATE_LBL[st]+'</span></div></div>'
+    +'<div class="sh-x" data-x>✕</div></div>'
+    +'<div class="pctrow"><div class="pctnum" style="color:'+col+'">'+p+'%</div>'
+    +'<div class="pctbar"><div class="pctfill" style="width:'+p+'%;background:'+col+'"></div></div></div>'
+    +'<div class="kv"><b>Ce curge prin ea</b><p style="color:#dbe7ff">'+(sy.flow||'—')+'</p></div>'
+    +'<div class="kv"><b>Stadiul conexiunii — pașii de urmat</b></div>'+steps
+    +(nextStep?'<div class="kv" style="margin-top:12px"><b>Următorul pas</b><p class="next">'+nextStep+'</p></div>':'')
+    +'<div class="acts"><button data-cj="'+a.id+'">◄ '+a.name+'</button><button data-cj="'+b.id+'">'+b.name+' ►</button></div>'
+    +dev
+  );
+}
 
 function openDetail(s){
   const p=pctOf(s),col=colorOf(s),st=lifeState(s);
@@ -686,7 +774,13 @@ function neighborDeg(s){ return SYNAPSES.filter(sy=>(sy.from===s.id||sy.to===s.i
 // sheet delegated actions
 body.addEventListener('click',e=>{
   const s=openDetail._s;
-  if(e.target.closest('[data-x]')){ selNode=null; closeSheet(); return; }
+  if(e.target.closest('[data-x]')){ selNode=null; selConn=null; closeSheet(); return; }
+  // connection: toggle a stage
+  const cs=e.target.closest('[data-cs]'); if(cs&&openConn._c){ const c=openConn._c; const i=+cs.dataset.cs; c.steps[i].done=!c.steps[i].done;
+    if(c.steps.every(x=>x.done))c.live=true; else if(connState(c)==='planned')c.live=false; alpha=Math.max(alpha,.3); updateHealth();
+    logEv('conn step <b>'+connId(c)+'</b> → '+Math.round(connProg(c)*100)+'%'); openConn(c); return; }
+  // connection: jump to endpoint
+  const cj=e.target.closest('[data-cj]'); if(cj){ const t=byId(cj.dataset.cj); if(t){selectStar(t);} return; }
   const li=e.target.closest('[data-ms]'); if(li&&s){ const i=+li.dataset.ms; s.ms[i].done=!s.ms[i].done; s.idle=0; alpha=Math.max(alpha,.4); updateHealth(); logEv('milestone <b>'+s.id+'</b> → '+pctOf(s)+'%'); openDetail(s); return; }
   const act=e.target.closest('[data-act]'); if(act&&s){ doAct(act.dataset.act,s); }
   const jump=e.target.closest('[data-jump]'); if(jump){ const t=byId(jump.dataset.jump); if(t){selectStar(t);} }
@@ -703,7 +797,7 @@ function doAct(a,s){
 // -------------------- DOCK VIEWS --------------------
 document.getElementById('dock').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
   const v=b.dataset.view; document.querySelectorAll('#dock button').forEach(x=>x.classList.toggle('on',x===b&&v!=='fit'));
-  if(v==='fit'){ selNode=null; filter.zone='all'; filter.hl='none'; closeSheet(); fit(true); toast('🌌 Imaginea de ansamblu'); b.classList.remove('on'); return; }
+  if(v==='fit'){ selNode=null; selConn=null; filter.zone='all'; filter.hl='none'; closeSheet(); fit(true); toast('🌌 Imaginea de ansamblu'); b.classList.remove('on'); return; }
   if(v==='gate')openGate(); if(v==='actions')openActions(); if(v==='trash')openTrash(); if(v==='guide')openGuide(); if(v==='filter')openFilter();
 });
 function openGate(s){ openSheet(
@@ -724,9 +818,10 @@ function openActions(){ openSheet(
   +ACTIONS.map((a,i)=>{ const A=byId(a.a),B=byId(a.b); return '<div class="act-item" data-gap="'+a.a+'|'+a.b+'"><span class="n">'+(i+1)+'</span><div>'
     +'<div class="lk">'+(A?A.name:a.a)+'<span class="ar">⇢</span>'+(B?B.name:a.b)+'</div><small>'+a.why+'</small></div></div>'; }).join('')
 );}
-function showGap(pair){ const [a,b]=pair.split('|'); const A=byId(a),B=byId(b); if(!A||!B)return;
-  selNode=A; closeSheet(); const mx=(A.x+B.x)/2,my=(A.y+B.y)/2; tweenCam(W/2-mx*1.3,H*0.44-my*1.3,1.3);
-  toast('🔗 Golul: '+A.name+' ⇢ '+B.name); logEv('inspect gap <b>'+a+'⇢'+b+'</b>');
+function showGap(pair){ const [a,b]=pair.split('|');
+  const sy=SYNAPSES.find(s=>(s.from===a&&s.to===b)||(s.from===b&&s.to===a));
+  if(sy){ selectConn(sy); toast('🔗 '+byId(sy.from).name+' → '+byId(sy.to).name); return; }
+  const A=byId(a),B=byId(b); if(A){ selectStar(A); }
 }
 function openTrash(){ const t=STARS.filter(s=>lifeState(s)==='trash').sort((x,y)=>y.idle-x.idle);
   openSheet('<div class="sh-head"><div><div class="sh-zone">Anti-maldăr</div><div class="sh-title">🗑 Coș de gunoi · 7 zile</div></div><div class="sh-x" data-x>✕</div></div>'
@@ -741,9 +836,14 @@ function openGuide(){ openSheet(
   +'<h4 class="sh-h">Maturitate = culoare</h4><div class="legend-grid">'
   +[['--idea','idee'],['--start','la început'],['--grow','crește'],['--almost','aproape'],['--live','LIVE'],['--dead','stinsă']]
     .map(x=>'<div class="lg"><i style="background:'+css(x[0])+';color:'+css(x[0])+'"></i>'+x[1]+'</div>').join('')+'</div>'
-  +'<h4 class="sh-h" style="margin-top:16px">Sinapse</h4><div class="legend-grid">'
-  +'<div class="lg"><span class="ln" style="border-color:'+css('--synlive')+'"></span>legată (bani curg)</div>'
-  +'<div class="lg"><span class="ln" style="border-color:'+css('--syndead')+';border-style:dashed"></span>nelegată (gol)</div>'
+  +'<h4 class="sh-h" style="margin-top:16px">Conexiunile = conducte vii</h4>'
+  +'<div class="row"><span class="dot" style="background:'+css('--synlive')+';color:'+css('--synlive')+'"></span><div><b>Săgeata = direcția.</b> Arată încotro curge (ex: bucla banilor Airtable → Încasări → SmartBill → Airtable se învârte).</div></div>'
+  +'<div class="row"><span class="dot" style="background:'+css('--almost')+';color:'+css('--almost')+'"></span><div><b>Porțiunea aprinsă = cât e construit.</b> Restul, punctat, e neconstruit. Un punct marchează frontiera.</div></div>'
+  +'<div class="row"><span class="dot" style="background:'+css('--synmaybe')+';color:'+css('--synmaybe')+'"></span><div><b>Atinge o legătură</b> → vezi ce curge prin ea și <b>pașii de construit</b>, exact ca la un proiect.</div></div>'
+  +'<div class="legend-grid" style="margin-top:8px">'
+  +'<div class="lg"><span class="ln" style="border-color:'+css('--synlive')+'"></span>curge (gata)</div>'
+  +'<div class="lg"><span class="ln" style="border-color:'+css('--almost')+'"></span>în construcție</div>'
+  +'<div class="lg"><span class="ln" style="border-color:'+css('--syndead')+';border-style:dashed"></span>neconstruită</div>'
   +'<div class="lg"><span class="ln" style="border-color:'+css('--synmaybe')+';border-style:dotted"></span>posibilă</div></div>'
   +'<h4 class="sh-h" style="margin-top:16px">Gesturi</h4>'
   +'<div class="row"><span class="dot" style="background:#7cc6ff;color:#7cc6ff"></span><div><b>Atinge</b> o stea → detalii & acțiuni.</div></div>'
@@ -801,7 +901,7 @@ document.querySelector('.persona').addEventListener('click',e=>{ const b=e.targe
   document.querySelectorAll('.persona button').forEach(x=>x.classList.toggle('on',x===b));
   if(p==='dev'){ updateHud(); toast('⌘ Dev — graful live, FPS, componente conexe'); logEv('persona → <b>dev</b>'); }
   else{ document.getElementById('console').classList.remove('on'); toast('🌱 Daniel — simplu & ghidat'); }
-  if(openDetail._s && sheet.classList.contains('on'))openDetail(openDetail._s);
+  if(sheet.classList.contains('on')){ if(selConn)openConn(selConn); else if(selNode)openDetail(selNode); }
 });
 document.getElementById('btn-console').addEventListener('click',()=>{ document.getElementById('console').classList.toggle('on'); });
 
