@@ -14,6 +14,45 @@ fundamentul pentru toate skill-urile și agenții viitori.
 
 ---
 
+## Secțiunea 0 — Cum lucrează Daniel (profilul operatorului)
+
+Nu e psihanaliza, e manualul de utilizare: cum să lucrez EU cu TINE ca să iasă
+treaba. Răspunde la fel de telegrafic ca peste tot.
+
+1. Când iei o decizie importantă, ce cântărește mai greu?
+   - [ ] cifrele
+   - [ ] instinctul / experiența
+   - [ ] părerea cuiva de încredere
+   - [ ] le amân până nu se mai poate
+
+2. În ce moment al zilei gândești cel mai limpede?
+   R:
+
+3. Ce tip de sarcină amâni sistematic? (aia care stă mereu pe fundul listei)
+   R:
+
+4. Ce te stresează cel mai tare în firmă, sincer?
+   R:
+
+5. Cum vrei să-ți livrez informația? (bifează tot ce se aplică)
+   - [ ] scurt, doar concluzia, detaliile la cerere
+   - [ ] pas cu pas, cu explicații
+   - [ ] vizual (tabele, dashboard-uri)
+   - [ ] întrebări punctuale, nu texte lungi
+
+6. La ce ești tu cel mai bun în firmă? (3 cuvinte)
+   R:
+
+7. Ce ți-ar plăcea să nu mai faci niciodată? (3 cuvinte)
+   R:
+
+8. Când greșești, cum preferi să ți se spună?
+   - [ ] direct, fără menajamente
+   - [ ] cu context și variante de rezolvare
+   - [ ] în scris, să procesez singur
+
+---
+
 ## Secțiunea 1 — Firma pe scurt (încălzire, 5 min)
 
 1. Ce vinde firma, în maximum 5 cuvinte?
@@ -177,10 +216,56 @@ Calendar, Jotform, Make. Care din ele NU se mai folosește de fapt?
 
 ---
 
+## Secțiunea 8 — Percepția în cifre (REGULĂ STRICTĂ: din burtă!)
+
+⚠️ NU verifica nicăieri înainte să răspunzi. Nu deschide SmartBill, nu deschide
+Excel. Scopul secțiunii e să măsurăm exact diferența dintre ce crezi tu și ce
+spun datele — dacă te uiți în cifre întâi, distrugem măsurătoarea. Săpatul în
+date e treaba lui Claude, după.
+
+Estimările tale pentru ultimii 2 ani:
+
+1. Cifra de afaceri anuală, aproximativ:
+   R: 2024:            2025:
+
+2. Cel mai mare client — cât % din vânzări crezi că reprezintă?
+   R:
+
+3. Primii 3 clienți, împreună — cât % din vânzări?
+   R:
+
+4. Produsul/serviciul care aduce cei mai mulți bani:
+   R:
+
+5. Produsul/serviciul care crezi că aduce cel mai mic profit (sau chiar pierdere):
+   R:
+
+6. Valoarea medie a unei facturi:
+   R:
+
+7. Luna cea mai bună și luna cea mai slabă a anului:
+   R: bună:            slabă:
+
+8. Din 10 oferte trimise, câte se transformă în comandă?
+   R:
+
+9. Cât % din facturi se încasează cu întârziere?
+   R:
+
+10. Cheltuiala care crezi că a crescut cel mai mult în ultimii 2 ani:
+    R:
+
+---
+
 ## Ce urmează după completare
 
 1. Îmi dai chestionarul completat (îl lipești în conversație sau îmi spui că
    e salvat aici, în fișier).
-2. Eu îl transform în `profil-itc.md` — memoria firmei.
-3. Detaliem prin întrebări punctuale DOAR unde ai pus `*`.
-4. Construim primul skill pe procesul pe care l-ai pus pe locul 1 la Secțiunea 7.
+2. Eu îl transform în `profil-itc.md` (memoria firmei) + `profil-daniel.md`
+   (manualul operatorului, din Secțiunea 0).
+3. Eu scot cifrele reale pe ultimii 2 ani (din uneltele conectate; dacă API-ul
+   nu ajunge, îți cer exporturile din SmartBill — ~10 min pentru tine).
+4. Raportul decalajelor: Secțiunea 8 (ce credeai) față în față cu datele
+   (adevărul). Golurile mari = primele priorități reale.
+5. Detaliem prin întrebări punctuale DOAR unde ai pus `*`.
+6. Construim primul skill pe prioritatea rezultată din Secțiunea 7 + raport.
