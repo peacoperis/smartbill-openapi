@@ -26,6 +26,7 @@ C.C și C.K **nu vorbesc direct** — comunică doar prin baza de date Notion �
 
 | Fișier | Pentru cine | Ce e |
 |---|---|---|
+| `CAND-DELEGHEZ.md` | C.C | **Poarta de delegare** — regula CÂND e nevoie reală vs. abuz (esențial) |
 | `PROTOCOL.md` | ambii | Regulile complete: mașina de stări, format sarcină, citire țintită, siguranță |
 | `schema-notion.md` | referință | Structura exactă a bazei Notion (coloane + valori) |
 | `sablon-sarcina.md` | C.C | Șablonul de „pachet de sarcină" (copy-paste) |
@@ -41,3 +42,7 @@ C.C și C.K **nu vorbesc direct** — comunică doar prin baza de date Notion �
 4. Gata — de acum, când C.C se blochează, sarcina apare singură în `📥 De făcut (pentru C.K)`, C.K o rezolvă, iar C.C continuă.
 
 > **Securitate:** parolele/credentialele NU se scriu niciodată în Notion. În sarcină se pune doar „folosește contul X"; login-ul efectiv îl face C.K local, pe PC-ul tău.
+
+## Cum știe C.C *când* să delege (fără să-i spui tu)
+
+Regula stă în **`CLAUDE.md`** (rădăcina repo-ului) — fișierul pe care C.C îl citește automat la fiecare sesiune. Acolo e „poarta de delegare": implicit C.C face singur, deleagă doar la un zid fizic real. Pentru a folosi sistemul în **alt proiect**, copiază secțiunea „Poarta de delegare" din `CLAUDE.md` în `CLAUDE.md`-ul acelui proiect (sau în `~/.claude/CLAUDE.md` global, dacă lucrezi din desktop).
