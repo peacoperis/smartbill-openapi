@@ -7,12 +7,15 @@ Prescurtări: **C.C** = Claude Code · **C.K** = Claude Cowork · **C.A** = Clau
 ## Cum funcționează, pe scurt
 
 ```
-  C.C (cloud) ── scrie sarcina ──▶  Notion HUB  ◀── C.K (PC local) ia sarcina,
-       ▲                          (puntea comună)     execută, scrie rezultatul
-       └──── citește DOAR rezultatul sarcinii lui ─────────────┘
+  C.C (cloud) ── scrie sarcina ──▶  Notion HUB  ◀── C.K EXECUTANT (PC local):
+       ▲                          (puntea comună)     execută + urcă PROBE,
+       │                                              lasă sarcina „De verificat"
+       └── VERIFICĂ independent din probe ────────────────────┘
+           (deschide URL-ul, re-confirmă, apoi Gata/Respins)
 ```
 
-C.C și C.K **nu vorbesc direct** — comunică doar prin baza de date Notion „Hub C.C ↔ C.K".
+C.C și C.K **nu vorbesc direct** — comunică doar prin baza Notion „Hub C.C ↔ C.K".
+**Regula de fier:** cine execută (C.K) NU se declară singur gata; verifică C.C, independent, din probe.
 
 ## Unde e hub-ul (Notion)
 
@@ -37,9 +40,11 @@ C.C și C.K **nu vorbesc direct** — comunică doar prin baza de date Notion �
 ## Ce ai de făcut tu (o singură dată)
 
 1. Deschide hub-ul Notion (link mai sus) și verifică-l.
-2. Deschide `reteta-cowork.md`, copiază prompt-ul și creează în **Cowork** o sarcină programată (ex: la 10 min) cu el.
+2. Deschide `reteta-cowork.md`, copiază prompt-ul și creează în **Cowork două sarcini programate zilnice**: una la **11:59** și una la **20:00**.
 3. Asigură-te că în Cowork ai conectorul **Notion** și **Claude in Chrome** active.
-4. Gata — de acum, când C.C se blochează, sarcina apare singură în `📥 De făcut (pentru C.K)`, C.K o rezolvă, iar C.C continuă.
+4. Gata — de acum, când C.C se blochează, sarcina apare singură în `📥 De făcut (pentru C.K)`, C.K o execută + urcă probe (`De verificat`), iar C.C o verifică independent și continuă.
+
+> **Roluri:** C.K = **doar executant** (maximul lui e `De verificat`). C.C = **creator + verificator**. Tu = **aprobator** doar pe acțiunile ireversibile (bani/email/ștergere).
 
 > **Securitate:** parolele/credentialele NU se scriu niciodată în Notion. În sarcină se pune doar „folosește contul X"; login-ul efectiv îl face C.K local, pe PC-ul tău.
 

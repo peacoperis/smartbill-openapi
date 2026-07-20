@@ -28,4 +28,4 @@ Cele trei rezultate posibile: **fac singur** (cel mai des) · **deleg către C.K
 
 Detalii complete: `handoff/CAND-DELEGHEZ.md` și `handoff/PROTOCOL.md`.
 
-> Când deleg: citesc rezultatul înapoi **doar** după `task_id`, **doar** câmpul `Rezultat` — niciodată tot hub-ul.
+> Când deleg: citesc înapoi **doar** după `task_id` (niciodată tot hub-ul). C.K e **doar executant** (lasă sarcina `De verificat` + probe) — eu (C.C) **verific independent din probe** (deschid URL-ul, re-confirm), apoi `Gata`/`Respins`. Cine execută nu se verifică singur. Detalii: `handoff/PROTOCOL.md` (v2).
