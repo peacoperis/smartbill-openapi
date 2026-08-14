@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>PeAcoperis.ro | Schiță Acoperiș V1</title>
+
+    <!--
+      SCHIȚĂ ACOPERIȘ V1 — PeAcoperis.ro
+      Fluxul: desenezi planul acoperișului (vedere de sus) → aplicația detectează
+      automat versanții → introduci lungimile de pantă măsurate → panotaj automat
+      → necesar de materiale (inclusiv pluvial) → ofertă PDF + formular comandă Excel.
+
+      OFFLINE: prima încărcare are nevoie de internet (librăriile vin din CDN).
+      După o deschidere pe Wi-Fi, cache-ul browserului acoperă utilizarea pe teren.
+      v1.1: librăriile se pot îngloba direct în fișier pentru offline complet.
+    -->
+
+    <!-- CORE ENGINE -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; min-height: 100vh; overscroll-behavior: none; }
+        .animate-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+        input:focus, select:focus { outline: none; }
+        .glass { background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); }
+        .gradient-header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); }
+        .tab-active { background: #dc2626; color: white; }
+        .sketch-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<!-- ============================================================ -->
+<!-- GEO — motorul de geometrie (JavaScript pur, testat separat)  -->
+<!-- Coordonate model: metri, y crește în sus. SVG inversează y.  -->
+<!-- ============================================================ -->
+<script>
+const Geo = (() => {
+    const EPS = 1e-9;
+    const round2 = (v) => Math.round(v * 100) / 100;
+
+    const dist = (a, b) => Math.hypot(b.x - a.x, b.y - a.y);
+
+    // Aria cu semn (shoelace). >0 = poligon în sens trigonometric (CCW).
+    const signedArea = (pts) => {
+        let s = 0;
+        for (let i = 0; i < pts.length; i++) {
+            const a = pts[i], b = pts[(i + 1) % pts.length];
+            s += a.x * b.y - b.x * a.y;
+        }
+        return s / 2;
+    };
+    const polygonArea = (pts) => Math.abs(signedArea(pts));
+
+    const centroid = (pts) => {
+        let x = 0, y = 0;
+        pts.forEach(p => { x += p.x; y += p.y; });
+        return { x: x / pts.length, y: y / pts.length };
+    };
+
+    const bounds = (pts) => {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        pts.forEach(p => {
+            minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+            minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+        });
+        return { minX, minY, maxX, maxY };
+    };
+
+    // ------------------------------------------------------------
+    // Detecția fețelor dintr-un graf planar (vertices + edges).
+    // Half-edge: la fiecare vârf muchiile ies sortate după unghi;
+    // succesorul lui u→v e următoarea muchie în sens orar după v→u,
+    // ceea ce parcurge fiecare față interioară în sens trigonometric.
+    // ------------------------------------------------------------
+    const detectFaces = (vertices, edges) => {
+        const out = new Map();
+        edges.forEach((e, ei) => {
+            const add = (from, to) => {
+                if (!out.has(from)) out.set(from, []);
+                const dx = vertices[to].x - vertices[from].x;
+                const dy = vertices[to].y - vertices[from].y;
+                out.get(from).push({ to, edgeId: ei, angle: Math.atan2(dy, dx) });
+            };
+            add(e.a, e.b);
+            add(e.b, e.a);
+        });
+        out.forEach(list => list.sort((p, q) => p.angle - q.angle));
+
+        const visited = new Set();
+        const faces = [];
+        out.forEach((list, from) => {
+            list.forEach(he => {
+                if (visited.has(from + ':' + he.to + ':' + he.edgeId)) return;
+                const vertIds = [], edgeIds = [];
+                let cf = from, che = he;
+                let guard = 0;
+                while (guard++ < 10000) {
+                    const key = cf + ':' + che.to + ':' + che.edgeId;
+                    if (visited.has(key)) break;
+                    visited.add(key);
+                    vertIds.push(cf);
+                    edgeIds.push(che.edgeId);
+                    const lst = out.get(che.to);
+                    const idx = lst.findIndex(o => o.to === cf && o.edgeId === che.edgeId);
+                    const nxt = lst[(idx - 1 + lst.length) % lst.length];
+                    cf = che.to; che = nxt;
+                    if (cf === from && che.to === he.to && che.edgeId === he.edgeId) break;
+                }
+                if (vertIds.length >= 3) {
+                    const pts = vertIds.map(i => vertices[i]);
+                    const sa = signedArea(pts);
+                    if (sa > EPS) faces.push({ vertIds, edgeIds, area: sa });
+                }
+            });
+        });
+        return faces;
+    };
+
+    // ------------------------------------------------------------
+    // Sensul de scurgere auto: perpendicular pe streașina probabilă
+    // (cea mai lungă muchie de contur, cu bonus dacă e paralelă cu
+    // coama probabilă), dinspre centroid spre exterior.
+    // ------------------------------------------------------------
+    const autoFlowDir = (vertices, edges, face, edgeFaceCount) => {
+        let ridgeDir = null, ridgeLen = -1;
+        face.edgeIds.forEach(eid => {
+            if (edgeFaceCount[eid] !== 2) return;
+            const e = edges[eid];
+            const L = dist(vertices[e.a], vertices[e.b]);
+            if (L > ridgeLen) {
+                ridgeLen = L;
+                ridgeDir = { x: (vertices[e.b].x - vertices[e.a].x) / L, y: (vertices[e.b].y - vertices[e.a].y) / L };
+            }
+        });
+        let best = null, bestScore = -1;
+        face.edgeIds.forEach(eid => {
+            if (edgeFaceCount[eid] !== 1) return;
+            const e = edges[eid];
+            const L = dist(vertices[e.a], vertices[e.b]);
+            let score = L;
+            if (ridgeDir && L > 0) {
+                const ux = (vertices[e.b].x - vertices[e.a].x) / L;
+                const uy = (vertices[e.b].y - vertices[e.a].y) / L;
+                score = L * (1 + 0.5 * Math.abs(ux * ridgeDir.x + uy * ridgeDir.y));
+            }
+            if (score > bestScore) { bestScore = score; best = e; }
+        });
+        if (!best) return { x: 0, y: -1 };
+        const A = vertices[best.a], B = vertices[best.b];
+        const mid = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+        const c = centroid(face.vertIds.map(i => vertices[i]));
+        const ex = B.x - A.x, ey = B.y - A.y;
+        const L = Math.hypot(ex, ey) || 1;
+        let nx = ey / L, ny = -ex / L;
+        if ((mid.x - c.x) * nx + (mid.y - c.y) * ny < 0) { nx = -nx; ny = -ny; }
+        return { x: nx, y: ny };
+    };
+
+    // ------------------------------------------------------------
+    // Clasificarea automată a muchiilor:
+    // streasina | pazie | coama | muchie | dolie
+    // ------------------------------------------------------------
+    const classifyEdges = (vertices, edges, faces, flowByFace) => {
+        const incident = edges.map(() => []);
+        faces.forEach((f, fi) => f.edgeIds.forEach((eid, j) => {
+            incident[eid].push({ fi, from: f.vertIds[j], to: f.vertIds[(j + 1) % f.vertIds.length] });
+        }));
+        const PERP_TOL = Math.cos(70 * Math.PI / 180);
+
+        // fluxul iese din față peste muchie? (flow · normala interioară < 0)
+        const flowExits = (inc) => {
+            const A = vertices[inc.from], B = vertices[inc.to];
+            const L = dist(A, B) || 1;
+            const nx = -(B.y - A.y) / L, ny = (B.x - A.x) / L;
+            const flow = flowByFace.get(inc.fi) || { x: 0, y: -1 };
+            return flow.x * nx + flow.y * ny < -0.05;
+        };
+
+        return edges.map((e, ei) => {
+            const A = vertices[e.a], B = vertices[e.b];
+            const L = dist(A, B) || 1;
+            const ux = (B.x - A.x) / L, uy = (B.y - A.y) / L;
+            const inc = incident[ei];
+
+            if (inc.length === 1) {
+                const flow = flowByFace.get(inc[0].fi) || { x: 0, y: -1 };
+                if (Math.abs(ux * flow.x + uy * flow.y) > 0.5) return 'pazie';
+                return flowExits(inc[0]) ? 'streasina' : 'coama';
+            }
+            if (inc.length === 2) {
+                if (inc.every(flowExits)) return 'dolie';
+                const perpBoth = inc.every(i2 => {
+                    const flow = flowByFace.get(i2.fi) || { x: 0, y: -1 };
+                    return Math.abs(ux * flow.x + uy * flow.y) < PERP_TOL;
+                });
+                return perpBoth ? 'coama' : 'muchie';
+            }
+            return 'racord';
+        });
+    };
+
+    // ------------------------------------------------------------
+    // Desfășurarea unei fețe: rotește cu streașina pe orizontală,
+    // scalează pe pantă cu k = L_real / L_plan, mută min la (0,0).
+    // ------------------------------------------------------------
+    const unfoldFace = (pts, eaveA, eaveB, k) => {
+        const ang = Math.atan2(eaveB.y - eaveA.y, eaveB.x - eaveA.x);
+        const cos = Math.cos(-ang), sin = Math.sin(-ang);
+        let out = pts.map(p => ({
+            x: (p.x - eaveA.x) * cos - (p.y - eaveA.y) * sin,
+            y: (p.x - eaveA.x) * sin + (p.y - eaveA.y) * cos
+        }));
+        const c = centroid(out);
+        if (c.y < 0) out = out.map(p => ({ x: p.x, y: -p.y }));
+        out = out.map(p => ({ x: p.x, y: p.y * k }));
+        const b = bounds(out);
+        return out.map(p => ({ x: p.x - b.minX, y: p.y - b.minY }));
+    };
+
+    // Adâncimea în plan a pantei (distanța maximă față de streașină)
+    const planSlopeDepth = (pts, eaveA, eaveB) => {
+        const ex = eaveB.x - eaveA.x, ey = eaveB.y - eaveA.y;
+        const L = Math.hypot(ex, ey) || 1;
+        const nx = -ey / L, ny = ex / L;
+        let maxD = 0;
+        pts.forEach(p => {
+            const d = Math.abs((p.x - eaveA.x) * nx + (p.y - eaveA.y) * ny);
+            maxD = Math.max(maxD, d);
+        });
+        return maxD;
+    };
+
+    // ------------------------------------------------------------
+    // Tăierea poligonului la banda verticală [x0,x1] (Sutherland–Hodgman)
+    // ------------------------------------------------------------
+    const clipHalf = (pts, inside, cross) => {
+        const out = [];
+        for (let i = 0; i < pts.length; i++) {
+            const cur = pts[i], prev = pts[(i + pts.length - 1) % pts.length];
+            const ci = inside(cur), pi = inside(prev);
+            if (ci) {
+                if (!pi) out.push(cross(prev, cur));
+                out.push(cur);
+            } else if (pi) {
+                out.push(cross(prev, cur));
+            }
+        }
+        return out;
+    };
+    const clipBandX = (pts, x0, x1) => {
+        const crossAt = (X) => (p, q) => {
+            const t = (X - p.x) / (q.x - p.x);
+            return { x: X, y: p.y + t * (q.y - p.y) };
+        };
+        let r = clipHalf(pts, p => p.x >= x0 - EPS, crossAt(x0));
+        if (r.length) r = clipHalf(r, p => p.x <= x1 + EPS, crossAt(x1));
+        return r;
+    };
+
+    // ------------------------------------------------------------
+    // Lungimi valide de fabricație: k·modul + streașină (foaia de jos)
+    // sau k·modul (foile superioare); fără modul → pas de tăiere.
+    // ------------------------------------------------------------
+    const roundLen = (raw, cfg, isTop) => {
+        let len;
+        if (cfg.module > 0) {
+            const extra = isTop ? 0 : (cfg.eaveExtra || 0);
+            const k = Math.max(1, Math.ceil((raw - extra - EPS) / cfg.module));
+            len = k * cfg.module + extra;
+        } else {
+            const step = cfg.lengthStep || 0.05;
+            len = Math.ceil(raw / step - EPS) * step;
+        }
+        return round2(Math.max(len, cfg.minLen || 0));
+    };
+    const maxValidLen = (cap, cfg, isTop) => {
+        if (cfg.module > 0) {
+            const extra = isTop ? 0 : (cfg.eaveExtra || 0);
+            const k = Math.max(1, Math.floor((cap - extra + EPS) / cfg.module));
+            return round2(k * cfg.module + extra);
+        }
+        const step = cfg.lengthStep || 0.05;
+        return round2(Math.floor(cap / step + EPS) * step);
+    };
+
+    // ------------------------------------------------------------
+    // PANOTAJ. pts = versantul desfășurat (metri, y=0 la streașină).
+    // ------------------------------------------------------------
+    const computePanotaj = (ptsIn, cfg) => {
+        if (!ptsIn || ptsIn.length < 3) return null;
+        const b0 = bounds(ptsIn);
+        let pts = ptsIn.map(p => ({ x: p.x - b0.minX, y: p.y - b0.minY }));
+        const bb = bounds(pts);
+        if (cfg.startSide === 'right') pts = pts.map(p => ({ x: bb.maxX - p.x, y: p.y }));
+
+        const W = cfg.W;
+        const off = cfg.startOffset || 0;
+        const n = Math.max(1, Math.ceil((bb.maxX - off - EPS) / W));
+        const strips = [];
+        let sheetNo = 0;
+        const allSheets = [];
+
+        for (let i = 0; i < n; i++) {
+            const x0 = off + i * W;
+            const x1 = Math.min(x0 + W, bb.maxX);
+            if (x1 - x0 < 0.005) continue;
+            const clipped = clipBandX(pts, x0, x1);
+            if (clipped.length < 3 || polygonArea(clipped) < 1e-4) continue;
+            const cb = bounds(clipped);
+            const rawLen = cb.maxY - cb.minY;
+
+            // foile benzii, de jos în sus; despicare peste maxLen cu
+            // suprapunere: acoperirea efectivă = Σ len − overlap·(n−1)
+            const sheets = [];
+            let covered = 0;
+            let first = true;
+            let guard = 0;
+            while (covered < rawLen - 1e-6 && guard++ < 20) {
+                const remaining = rawLen - covered + (first ? 0 : cfg.overlap);
+                const need = roundLen(remaining, cfg, !first);
+                const len = need <= cfg.maxLen + EPS ? need : maxValidLen(cfg.maxLen, cfg, !first);
+                const yFrom = cb.minY + covered - (first ? 0 : cfg.overlap);
+                sheets.push({ len, yFrom });
+                covered = (yFrom - cb.minY) + len;
+                first = false;
+            }
+            sheets.forEach(s => { s.split = sheets.length > 1; });
+
+            sheetNo++;
+            const letters = 'abcdefgh';
+            sheets.forEach((s, si) => {
+                s.no = sheets.length > 1 ? `${sheetNo}${letters[si]}` : String(sheetNo);
+                s.stripIdx = i;
+            });
+            strips.push({ x0, x1, rawLen: round2(rawLen), yMin: cb.minY, clipped, sheets });
+            allSheets.push(...sheets);
+        }
+
+        const polyArea = polygonArea(pts);
+        const panelArea = allSheets.reduce((s, sh) => s + sh.len * W, 0);
+        const orderMap = new Map();
+        allSheets.forEach(sh => {
+            const key = sh.len.toFixed(2);
+            orderMap.set(key, (orderMap.get(key) || 0) + 1);
+        });
+        const orderList = [...orderMap.entries()]
+            .map(([len, qty]) => ({ len: parseFloat(len), qty }))
+            .sort((a, b) => b.len - a.len);
+
+        return {
+            strips,
+            sheets: allSheets,
+            mirrored: cfg.startSide === 'right',
+            width: bb.maxX, height: bb.maxY,
+            polyArea: round2(polyArea),
+            panelArea: round2(panelArea),
+            wastePct: polyArea > 0 ? Math.round((panelArea - polyArea) / polyArea * 100) : 0,
+            orderList
+        };
+    };
+
+    // ------------------------------------------------------------
+    // Șabloane de plan (grafuri garantat valide).
+    // ------------------------------------------------------------
+    const tpl2Ape = (L, W) => ({
+        vertices: [
+            { x: 0, y: 0 }, { x: L, y: 0 },
+            { x: L, y: W }, { x: 0, y: W },
+            { x: 0, y: W / 2 }, { x: L, y: W / 2 }
+        ],
+        edges: [
+            { a: 0, b: 1 }, { a: 1, b: 5 }, { a: 5, b: 2 },
+            { a: 2, b: 3 }, { a: 3, b: 4 }, { a: 4, b: 0 },
+            { a: 4, b: 5 }
+        ]
+    });
+
+    const tpl4Ape = (L, W) => {
+        const h = W / 2;
+        return {
+            vertices: [
+                { x: 0, y: 0 }, { x: L, y: 0 }, { x: L, y: W }, { x: 0, y: W },
+                { x: h, y: h }, { x: L - h, y: h }
+            ],
+            edges: [
+                { a: 0, b: 1 }, { a: 1, b: 2 }, { a: 2, b: 3 }, { a: 3, b: 0 },
+                { a: 0, b: 4 }, { a: 3, b: 4 },
+                { a: 1, b: 5 }, { a: 2, b: 5 },
+                { a: 4, b: 5 }
+            ]
+        };
+    };
+
+    // Formă în L, 2 ape pe fiecare aripă, dolie la colțul interior.
+    const tplL = (L1, W1, L2, W2) => {
+        const v = [
+            { x: 0, y: 0 }, { x: L1, y: 0 },
+            { x: L1, y: W1 },
+            { x: L1, y: W1 + L2 }, { x: L1 - W2, y: W1 + L2 },
+            { x: L1 - W2, y: W1 }, { x: 0, y: W1 },
+            { x: 0, y: W1 / 2 },
+            { x: L1 - W2 / 2, y: W1 / 2 },
+            { x: L1 - W2 / 2, y: W1 + L2 }
+        ];
+        const e = [
+            { a: 0, b: 1 }, { a: 1, b: 2 }, { a: 2, b: 3 },
+            { a: 3, b: 9 }, { a: 9, b: 4 },
+            { a: 4, b: 5 }, { a: 5, b: 6 }, { a: 6, b: 7 }, { a: 7, b: 0 },
+            { a: 7, b: 8 },
+            { a: 8, b: 9 },
+            { a: 5, b: 8 },
+            { a: 2, b: 8 }
+        ];
+        return { vertices: v, edges: e };
+    };
+
+    return {
+        EPS, round2, dist, signedArea, polygonArea, centroid, bounds,
+        detectFaces, autoFlowDir, classifyEdges,
+        unfoldFace, planSlopeDepth, clipBandX,
+        roundLen, maxValidLen, computePanotaj,
+        tpl2Ape, tpl4Ape, tplL
+    };
+})();
+</script>
+
+<script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+    // ============================================
+    // ICONS LIBRARY
+    // ============================================
+    const Icon = ({ name, size = 16, className = "" }) => {
+        const icons = {
+            User: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+            Lock: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
+            Unlock: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></>,
+            Settings: <><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></>,
+            Trash2: <><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></>,
+            Printer: <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>,
+            MessageSquare: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+            CheckCircle: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>,
+            AlertCircle: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
+            XCircle: <><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>,
+            Plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+            Minus: <line x1="5" y1="12" x2="19" y2="12"/>,
+            MapPin: <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></>,
+            Phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>,
+            Package: <><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>,
+            Layers: <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+            Calculator: <><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10.01"/><line x1="12" y1="10" x2="12" y2="10.01"/><line x1="16" y1="10" x2="16" y2="10.01"/><line x1="8" y1="14" x2="8" y2="14.01"/><line x1="12" y1="14" x2="12" y2="14.01"/><line x1="16" y1="14" x2="16" y2="14.01"/><line x1="8" y1="18" x2="8" y2="18.01"/><line x1="12" y1="18" x2="12" y2="18.01"/><line x1="16" y1="18" x2="16" y2="18.01"/></>,
+            Ruler: <><path d="M21.21 15.89A1 1 0 0 0 22 15V6a1 1 0 0 0-.29-.71l-4-4A1 1 0 0 0 17 1H8a1 1 0 0 0-.71.29l-4 4A1 1 0 0 0 3 6v9a1 1 0 0 0 .79.98l7 1.5a1 1 0 0 0 .42 0l7-1.5z"/></>,
+            Home: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
+            Pencil: <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>,
+            Grid: <><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></>,
+            FileText: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,
+            Download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
+            Upload: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>,
+            RefreshCw: <><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></>,
+            Eye: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>,
+            ChevronDown: <polyline points="6 9 12 15 18 9"/>,
+            ChevronRight: <polyline points="9 18 15 12 9 6"/>,
+            Check: <polyline points="20 6 9 17 4 12"/>,
+            X: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+            Info: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>,
+            Copy: <><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></>,
+            Undo: <><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></>,
+            Move: <><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></>,
+            Droplet: <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>,
+            Maximize: <><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></>,
+            Flame: <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+        };
+        return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
+    };
+
+    // ============================================
+    // HARD DATA - CATALOAGE
+    // Prețurile marcate TODO sunt orientative — se
+    // actualizează aici, la un singur loc.
+    // ============================================
+
+    // Marje și monedă per furnizor (ca în calculatorul de șipcă)
+    const PROVIDERS = {
+        'Bilka':   { margin: 6.98,  currency: 'EUR', exchange: 4.97 },
+        'Caretta': { margin: 10.00, currency: 'RON' },
+        'TPS':     { margin: 8.50,  currency: 'RON' },
+        'Arkada':  { margin: 10.00, currency: 'RON' }
+    };
+
+    // Profile de țiglă metalică: lățime utilă (m), modul (m), streașină extra (m),
+    // lungimi min/max de fabricație (m). TODO: verificat cu fișele tehnice reale.
+    const TIGLA_PROFILES = {
+        'Bilka Balcanic': { provider: 'Bilka', W: 1.00, module: 0.35, eaveExtra: 0.10, minLen: 0.45, maxLen: 6.10 },
+        'Bilka Romanic':  { provider: 'Bilka', W: 1.10, module: 0.35, eaveExtra: 0.10, minLen: 0.45, maxLen: 6.10 },
+        'Bilka Iberic':   { provider: 'Bilka', W: 1.10, module: 0.35, eaveExtra: 0.10, minLen: 0.45, maxLen: 6.10 },
+        'Caretta Elegant':{ provider: 'Caretta', W: 1.15, module: 0.35, eaveExtra: 0.10, minLen: 0.45, maxLen: 6.00 },
+        'TPS Clasic':     { provider: 'TPS', W: 1.10, module: 0.35, eaveExtra: 0.10, minLen: 0.50, maxLen: 6.00 }
+    };
+
+    // Preț țiglă per m² (moneda furnizorului): furnizor → grosime → finisaj
+    // TODO preț real: valori orientative de completat de la furnizori.
+    const TIGLA_CATALOG = {
+        'Bilka': {
+            '0.45': { 'Lucios': { price: 6.30, colors: ['3005', '3011', '8017', '9005'] },
+                      'Mat':    { price: 6.90, colors: ['3005', '8017', '8019', '7024', '9005'] } },
+            '0.50': { 'Lucios': { price: 6.80, colors: ['3005', '8017'] },
+                      'Mat':    { price: 7.40, colors: ['3005', '8017', '8019', '9005', '7024'] },
+                      'GrandeMat': { price: 8.10, colors: ['8017', '9005', '7024'] } },
+            '0.60': { 'Mat':    { price: 9.20, colors: ['8017', '9005'] } }
+        },
+        'Caretta': {
+            '0.45': { 'Mat': { price: 32.0, colors: ['3005', '8017', '8019', '9005'] } },
+            '0.50': { 'Mat': { price: 36.0, colors: ['3005', '8017', '8019', '9005', '7024'] } }
+        },
+        'TPS': {
+            '0.45': { 'Mat': { price: 31.0, colors: ['8017', '9005', '7024'] } },
+            '0.50': { 'Mat': { price: 34.5, colors: ['8017', '9005', '7024'] } }
+        },
+        'Arkada': {
+            '0.50': { 'Mat': { price: 33.0, colors: ['8017', '3005', '7024'] } }
+        }
+    };
+
+    const RAL_COLORS = {
+        '3005': { hex: '#5E1224', name: 'Vișiniu' },
+        '3011': { hex: '#792423', name: 'Roșu Maro' },
+        '7024': { hex: '#45494E', name: 'Gri Grafit' },
+        '8017': { hex: '#44322D', name: 'Maro Ciocolată' },
+        '8019': { hex: '#3D3D3D', name: 'Gri Maro' },
+        '9005': { hex: '#0A0A0A', name: 'Negru Profund' }
+    };
+
+    // Accesorii de acoperiș: bară fizică, lungime utilă, preț/buc (moneda furnizorului)
+    // TODO preț real per furnizor.
+    const ACCESSORIES_CATALOG = {
+        coama:        { label: 'Coamă (coame + muchii)',  barLen: 2.00, utilLen: 1.90, price: 8.5, unit: 'buc' },
+        dolie:        { label: 'Dolie',                    barLen: 2.00, utilLen: 1.90, price: 9.5, unit: 'buc' },
+        sortStreasina:{ label: 'Șorț de streașină',        barLen: 2.00, utilLen: 1.90, price: 5.5, unit: 'buc' },
+        pazie:        { label: 'Pazie (bordură fronton)',  barLen: 2.00, utilLen: 1.90, price: 7.5, unit: 'buc' },
+        borduraCos:   { label: 'Bordură coș (set)',        price: 28.0, unit: 'set' },
+        folie:        { label: 'Folie anticondens (rolă 75 m²)', rollSqm: 75, utilFactor: 0.9, price: 42.0, unit: 'rolă' },
+        suruburi:     { label: 'Șuruburi autoforante (cutie 250)', perSqm: 7, box: 250, price: 9.0, unit: 'cutie' },
+        parazapada:   { label: 'Parazăpadă', barLen: 2.00, utilLen: 2.00, price: 12.0, unit: 'buc' }
+    };
+
+    // Sistem pluvial. TODO preț real per furnizor.
+    const PLUVIAL_CATALOG = {
+        jgheab:   { label: 'Jgheab (bară 3 m)', barLen: 3.00, utilLen: 2.95, price: 9.0, unit: 'buc' },
+        carlig:   { label: 'Cârlig jgheab', perMl: 1.6, price: 1.1, unit: 'buc' },
+        racord:   { label: 'Racord scurgere (etaj jgheab)', price: 6.5, unit: 'buc' },
+        burlan:   { label: 'Burlan (bară 3 m)', barLen: 3.00, price: 10.5, unit: 'buc' },
+        cot:      { label: 'Cot burlan', price: 4.0, unit: 'buc' },
+        coltJgheab: { label: 'Colț jgheab (int/ext)', price: 8.0, unit: 'buc' }
+    };
+
+    const EDGE_TYPES = {
+        streasina: { label: 'Streașină', color: '#2563eb' },
+        pazie:     { label: 'Pazie',     color: '#16a34a' },
+        coama:     { label: 'Coamă',     color: '#dc2626' },
+        muchie:    { label: 'Muchie',    color: '#ea580c' },
+        dolie:     { label: 'Dolie',     color: '#9333ea' },
+        racord:    { label: 'Racord',    color: '#64748b' }
+    };
+
+    // ============================================
+    // PERSISTENȚĂ (localStorage)
+    // ============================================
+    const LS_PROJECTS = 'roof_projects_v1';
+    const LS_SETTINGS = 'roof_settings_v1';
+
+    const loadLS = (key, fallback) => {
+        try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+        catch (e) { return fallback; }
+    };
+    const saveLS = (key, val) => {
+        try { localStorage.setItem(key, JSON.stringify(val)); return true; }
+        catch (e) { return false; }
+    };
+
+    const uid = () => 'p' + Math.random().toString(36).slice(2, 10);
+
+    const newProject = () => ({
+        id: uid(),
+        name: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        client: { name: '', phone: '', location: '', email: '' },
+        material: {
+            provider: 'Bilka', profile: 'Bilka Romanic',
+            thickness: '0.50', finish: 'Mat', color: '8017',
+            W: 1.10, module: 0.35, eaveExtra: 0.10,
+            minLen: 0.45, maxLen: 6.10, overlap: 0.35, lengthStep: 0.05
+        },
+        plan: { vertices: [], edges: [], chimneys: [] },
+        faceOverrides: {},   // faceKey → { name, L_real, flowAngle, startSide }
+        edgeOverrides: {},   // edgeIdx → type
+        pluvial: { hasGutters: true, carligeAuto: true, carligeCount: 0, scurgeri: 2, hasBurlane: true, burlanMlPerScurgere: 3.5 },
+        extraLines: [],      // rânduri manuale în necesar: { label, qty, unit, price }
+        necesarOverrides: {},// itemKey → qty
+        pricing: { vat: 19, laborPerSqm: 0, discountPct: 0 }
+    });
+
+    // ============================================
+    // CALCUL DERIVAT: plan → fețe → desfășurate → panotaj → totaluri muchii
+    // ============================================
+    const faceKeyOf = (face) => [...face.vertIds].sort((a, b) => a - b).join('-');
+
+    const computeDerived = (project) => {
+        const { vertices, edges } = project.plan;
+        const mat = project.material;
+        if (!vertices.length || !edges.length) {
+            return { faces: [], edgeTypes: [], edgeFaceCount: [], sums: {}, ready: false };
+        }
+        const rawFaces = Geo.detectFaces(vertices, edges);
+        const edgeFaceCount = edges.map(() => 0);
+        rawFaces.forEach(f => f.edgeIds.forEach(e => edgeFaceCount[e]++));
+
+        // ordonare stabilă: după centroid (y apoi x)
+        rawFaces.sort((f1, f2) => {
+            const c1 = Geo.centroid(f1.vertIds.map(i => vertices[i]));
+            const c2 = Geo.centroid(f2.vertIds.map(i => vertices[i]));
+            return (c1.y - c2.y) || (c1.x - c2.x);
+        });
+
+        // sens de scurgere (auto sau override prin unghi)
+        const flowByFace = new Map();
+        rawFaces.forEach((f, fi) => {
+            const key = faceKeyOf(f);
+            const ov = project.faceOverrides[key];
+            if (ov && typeof ov.flowAngle === 'number') {
+                flowByFace.set(fi, { x: Math.cos(ov.flowAngle), y: Math.sin(ov.flowAngle) });
+            } else {
+                flowByFace.set(fi, Geo.autoFlowDir(vertices, edges, f, edgeFaceCount));
+            }
+        });
+
+        // tipuri muchii (auto + override)
+        const autoTypes = Geo.classifyEdges(vertices, edges, rawFaces, flowByFace);
+        const edgeTypes = autoTypes.map((t, ei) => project.edgeOverrides[ei] || t);
+
+        // fețele complete: streașină proprie, desfășurare, panotaj
+        const cfgBase = {
+            W: mat.W, minLen: mat.minLen, maxLen: mat.maxLen,
+            module: mat.module, eaveExtra: mat.eaveExtra,
+            overlap: mat.overlap, lengthStep: mat.lengthStep
+        };
+        const faces = rawFaces.map((f, fi) => {
+            const key = faceKeyOf(f);
+            const ov = project.faceOverrides[key] || {};
+            const pts = f.vertIds.map(i => vertices[i]);
+            const flow = flowByFace.get(fi);
+
+            // streașina feței: cea mai lungă muchie proprie tip streașină;
+            // fallback: cea mai lungă muchie de contur
+            let eave = null, eaveLen = -1;
+            const pick = (wantType) => f.edgeIds.forEach(eid => {
+                if (wantType && edgeTypes[eid] !== wantType) return;
+                if (!wantType && edgeFaceCount[eid] !== 1) return;
+                const e = edges[eid];
+                const L = Geo.dist(vertices[e.a], vertices[e.b]);
+                if (L > eaveLen) { eaveLen = L; eave = { ...e, id: eid }; }
+            });
+            pick('streasina');
+            if (!eave) pick(null);
+            if (!eave) { const e = edges[f.edgeIds[0]]; eave = { ...e, id: f.edgeIds[0] }; }
+
+            const A = vertices[eave.a], B = vertices[eave.b];
+            const L_plan = Geo.round2(Geo.planSlopeDepth(pts, A, B));
+            const L_real = ov.L_real || null;
+            const k = L_real && L_plan > 0 ? L_real / L_plan : 1;
+            const unfolded = Geo.unfoldFace(pts, A, B, k);
+            const startSide = ov.startSide || 'left';
+            const panotaj = Geo.computePanotaj(unfolded, { ...cfgBase, startSide });
+
+            return {
+                fi, key, raw: f, pts,
+                name: ov.name || `Versant ${fi + 1}`,
+                flow, eave, L_plan, L_real, k: Geo.round2(k),
+                missingPitch: !L_real,
+                unfolded, panotaj, startSide,
+                planArea: Geo.round2(f.area),
+                realArea: panotaj ? panotaj.polyArea : 0
+            };
+        });
+
+        // lungimi reale ale muchiilor: componenta de-a lungul streașinii feței
+        // rămâne, componenta pe pantă se scalează cu k; medie pe fețele adiacente
+        const edgeRealLen = edges.map((e, ei) => {
+            const A = vertices[e.a], B = vertices[e.b];
+            const planLen = Geo.dist(A, B);
+            const adj = faces.filter(fc => fc.raw.edgeIds.includes(ei));
+            if (!adj.length) return planLen;
+            const reals = adj.map(fc => {
+                const eA = vertices[fc.eave.a], eB = vertices[fc.eave.b];
+                const eL = Geo.dist(eA, eB) || 1;
+                const ux = (eB.x - eA.x) / eL, uy = (eB.y - eA.y) / eL;
+                const dx = B.x - A.x, dy = B.y - A.y;
+                const along = Math.abs(dx * ux + dy * uy);
+                const across = Math.abs(dx * (-uy) + dy * ux);
+                return Math.hypot(along, across * fc.k);
+            });
+            return reals.reduce((s, v) => s + v, 0) / reals.length;
+        });
+
+        // sume pe tip de muchie (fiecare muchie o singură dată — avantajul grafului)
+        const sums = {};
+        Object.keys(EDGE_TYPES).forEach(t => sums[t] = 0);
+        edges.forEach((e, ei) => { sums[edgeTypes[ei]] = (sums[edgeTypes[ei]] || 0) + edgeRealLen[ei]; });
+        Object.keys(sums).forEach(t => sums[t] = Geo.round2(sums[t]));
+
+        const totalRealArea = Geo.round2(faces.reduce((s, f) => s + f.realArea, 0));
+        const totalPanelArea = Geo.round2(faces.reduce((s, f) => s + (f.panotaj ? f.panotaj.panelArea : 0), 0));
+
+        // lista de comandă globală (lungime → buc, toate fețele)
+        const orderMap = new Map();
+        faces.forEach(f => (f.panotaj ? f.panotaj.sheets : []).forEach(sh => {
+            const key = sh.len.toFixed(2);
+            orderMap.set(key, (orderMap.get(key) || 0) + 1);
+        }));
+        const globalOrder = [...orderMap.entries()]
+            .map(([len, qty]) => ({ len: parseFloat(len), qty }))
+            .sort((a, b) => b.len - a.len);
+
+        return {
+            faces, edgeTypes, edgeFaceCount, edgeRealLen, sums,
+            totalRealArea, totalPanelArea, globalOrder,
+            totalSheets: globalOrder.reduce((s, o) => s + o.qty, 0),
+            missingPitch: faces.some(f => f.missingPitch),
+            ready: faces.length > 0
+        };
+    };
+
+    // ============================================
+    // NECESAR: derivă rândurile de materiale din geometrie + cataloage
+    // ============================================
+    const buildNecesar = (project, derived) => {
+        if (!derived.ready) return [];
+        const mat = project.material;
+        const prov = PROVIDERS[mat.provider] || { margin: 0, currency: 'RON' };
+        const toRON = (p) => prov.currency === 'EUR' ? p * (prov.exchange || 5) : p;
+        const sums = derived.sums;
+        const rows = [];
+
+        const tigla = (((TIGLA_CATALOG[mat.provider] || {})[mat.thickness] || {})[mat.finish]) || { price: 0 };
+        rows.push({
+            key: 'tigla', label: `Țiglă metalică ${mat.profile} ${mat.thickness}mm ${mat.finish} RAL ${mat.color}`,
+            detail: `${derived.totalSheets} foi conform panotaj`,
+            qty: derived.totalPanelArea, unit: 'm²', priceRON: toRON(tigla.price)
+        });
+
+        const addBar = (key, ml) => {
+            const acc = ACCESSORIES_CATALOG[key];
+            if (!acc || ml <= 0.01) return;
+            rows.push({
+                key, label: acc.label, detail: `${Geo.round2(ml)} ml`,
+                qty: Math.ceil(ml / acc.utilLen), unit: acc.unit, priceRON: toRON(acc.price)
+            });
+        };
+        addBar('coama', (sums.coama || 0) + (sums.muchie || 0));
+        addBar('dolie', sums.dolie || 0);
+        addBar('sortStreasina', sums.streasina || 0);
+        addBar('pazie', sums.pazie || 0);
+
+        const nCos = project.plan.chimneys.length;
+        if (nCos > 0) {
+            const acc = ACCESSORIES_CATALOG.borduraCos;
+            rows.push({ key: 'borduraCos', label: acc.label, detail: `${nCos} coșuri`, qty: nCos, unit: acc.unit, priceRON: toRON(acc.price) });
+        }
+
+        const folie = ACCESSORIES_CATALOG.folie;
+        rows.push({
+            key: 'folie', label: folie.label, detail: `${derived.totalRealArea} m² acoperiș`,
+            qty: Math.max(1, Math.ceil(derived.totalRealArea / (folie.rollSqm * folie.utilFactor))),
+            unit: folie.unit, priceRON: toRON(folie.price)
+        });
+
+        const sur = ACCESSORIES_CATALOG.suruburi;
+        rows.push({
+            key: 'suruburi', label: sur.label, detail: `${sur.perSqm} buc/m²`,
+            qty: Math.max(1, Math.ceil(derived.totalPanelArea * sur.perSqm / sur.box)),
+            unit: sur.unit, priceRON: toRON(sur.price)
+        });
+
+        // pluvial
+        const pl = project.pluvial;
+        if (pl.hasGutters && (sums.streasina || 0) > 0.01) {
+            const ml = sums.streasina;
+            const jg = PLUVIAL_CATALOG.jgheab;
+            rows.push({ key: 'jgheab', label: jg.label, detail: `${Geo.round2(ml)} ml streașină`, qty: Math.ceil(ml / jg.utilLen), unit: jg.unit, priceRON: toRON(jg.price) });
+            const ca = PLUVIAL_CATALOG.carlig;
+            const nCarlige = pl.carligeAuto ? Math.ceil(ml * ca.perMl) : (pl.carligeCount || 0);
+            rows.push({ key: 'carlig', label: ca.label, detail: pl.carligeAuto ? `${ca.perMl} buc/ml` : 'manual', qty: nCarlige, unit: ca.unit, priceRON: toRON(ca.price) });
+            if (pl.scurgeri > 0) {
+                const ra = PLUVIAL_CATALOG.racord;
+                rows.push({ key: 'racord', label: ra.label, detail: '', qty: pl.scurgeri, unit: ra.unit, priceRON: toRON(ra.price) });
+                if (pl.hasBurlane) {
+                    const bu = PLUVIAL_CATALOG.burlan;
+                    const mlBurlan = pl.scurgeri * (pl.burlanMlPerScurgere || 3.5);
+                    rows.push({ key: 'burlan', label: bu.label, detail: `${pl.burlanMlPerScurgere} ml/scurgere`, qty: Math.ceil(mlBurlan / bu.barLen), unit: bu.unit, priceRON: toRON(bu.price) });
+                    const co = PLUVIAL_CATALOG.cot;
+                    rows.push({ key: 'cot', label: co.label, detail: '2 buc/scurgere', qty: pl.scurgeri * 2, unit: co.unit, priceRON: toRON(co.price) });
+                }
+            }
+        }
+
+        // rânduri manuale
+        project.extraLines.forEach((l, i) => {
+            rows.push({ key: 'extra' + i, label: l.label || 'Rând manual', detail: '', qty: l.qty || 0, unit: l.unit || 'buc', priceRON: l.price || 0, manual: true });
+        });
+
+        // override-urile utilizatorului câștigă
+        rows.forEach(r => {
+            if (project.necesarOverrides[r.key] !== undefined) {
+                r.qtyAuto = r.qty;
+                r.qty = project.necesarOverrides[r.key];
+                r.overridden = true;
+            }
+        });
+        return rows;
+    };
+
+    // prețul de vânzare: cost furnizor × (1+marjă furnizor) × (1+marjă ascunsă)
+    const sellPrice = (priceRON, provider, ghostMargins) => {
+        const m = (PROVIDERS[provider] || { margin: 0 }).margin / 100;
+        const g = ((ghostMargins || {})[provider] || 0) / 100;
+        return priceRON * (1 + m) * (1 + g);
+    };
+
+    // ============================================
+    // COMPONENTE UI GENERICE
+    // ============================================
+    const Card = ({ children, className = '' }) => (
+        <div className={`glass rounded-2xl shadow-lg border border-white/50 p-4 ${className}`}>{children}</div>
+    );
+
+    const Field = ({ label, children }) => (
+        <label className="block">
+            <span className="text-xs font-bold text-slate-500 uppercase">{label}</span>
+            <div className="mt-1">{children}</div>
+        </label>
+    );
+
+    const TextInput = ({ value, onChange, placeholder, type = 'text', inputMode }) => (
+        <input type={type} inputMode={inputMode} value={value} placeholder={placeholder}
+            onChange={e => onChange(e.target.value)}
+            className="w-full px-3 py-3 rounded-lg border border-slate-300 bg-white text-sm" />
+    );
+
+    // Pad numeric mare, pentru mâini cu mănuși
+    const NumPad = ({ title, initial, onOk, onCancel, allowEmpty }) => {
+        const [val, setVal] = useState(initial != null ? String(initial) : '');
+        const press = (c) => {
+            if (c === '⌫') setVal(v => v.slice(0, -1));
+            else if (c === ',') { if (!val.includes('.')) setVal(v => (v || '0') + '.'); }
+            else setVal(v => (v === '0' ? c : v + c));
+        };
+        const num = parseFloat(val);
+        return (
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 no-print" onClick={onCancel}>
+                <div className="bg-white rounded-2xl p-4 w-72 shadow-2xl animate-in" onClick={e => e.stopPropagation()}>
+                    <div className="text-sm font-bold text-slate-600 mb-2">{title}</div>
+                    <div className="text-3xl font-mono text-right border-b-2 border-slate-200 pb-2 mb-3 min-h-[44px]">{val || <span className="text-slate-300">0</span>}<span className="text-base text-slate-400"> m</span></div>
+                    <div className="grid grid-cols-3 gap-2">
+                        {['7','8','9','4','5','6','1','2','3',',','0','⌫'].map(c => (
+                            <button key={c} onClick={() => press(c)}
+                                className="h-14 rounded-xl bg-slate-100 hover:bg-slate-200 text-xl font-bold text-slate-700">{c}</button>
+                        ))}
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                        <button onClick={onCancel} className="flex-1 h-12 rounded-xl bg-slate-200 font-bold text-slate-600">Anulează</button>
+                        <button onClick={() => { if (allowEmpty && !val) { onOk(null); return; } if (!isNaN(num) && num > 0) onOk(Geo.round2(num)); }}
+                            className="flex-1 h-12 rounded-xl bg-red-600 text-white font-bold flex items-center justify-center gap-1"><Icon name="Check" size={18}/> OK</button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // ============================================
+    // ECRAN: PROIECTE
+    // ============================================
+    const ScreenProiecte = ({ projects, openProject, createProject, deleteProject, duplicateProject, importProject }) => {
+        const list = Object.values(projects).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+        const fileRef = useRef(null);
+        return (
+            <div className="space-y-4 animate-in">
+                <div className="flex gap-2">
+                    <button onClick={createProject} className="flex-1 h-14 rounded-2xl gradient-header text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg">
+                        <Icon name="Plus" size={20}/> Proiect nou
+                    </button>
+                    <button onClick={() => fileRef.current && fileRef.current.click()} className="h-14 px-4 rounded-2xl bg-white border border-slate-300 text-slate-600 font-bold flex items-center gap-2">
+                        <Icon name="Upload" size={18}/> Import
+                    </button>
+                    <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={e => {
+                        const f = e.target.files[0];
+                        if (!f) return;
+                        const rd = new FileReader();
+                        rd.onload = () => { try { importProject(JSON.parse(rd.result)); } catch (err) { alert('Fișier invalid'); } };
+                        rd.readAsText(f);
+                        e.target.value = '';
+                    }}/>
+                </div>
+                {list.length === 0 && (
+                    <Card className="text-center py-10 text-slate-400">
+                        <Icon name="Home" size={40} className="mx-auto mb-3 opacity-40"/>
+                        <div className="font-bold">Niciun proiect încă</div>
+                        <div className="text-xs mt-1">Apasă „Proiect nou" și desenează primul acoperiș</div>
+                    </Card>
+                )}
+                {list.map(p => (
+                    <Card key={p.id} className="flex items-center gap-3">
+                        <div className="h-11 w-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0"><Icon name="Home" size={20}/></div>
+                        <button className="flex-1 text-left" onClick={() => openProject(p.id)}>
+                            <div className="font-bold text-slate-800">{p.name || p.client.name || 'Proiect fără nume'}</div>
+                            <div className="text-xs text-slate-500">{p.client.location || '—'} · {new Date(p.updatedAt).toLocaleDateString('ro-RO')}</div>
+                        </button>
+                        <button onClick={() => duplicateProject(p.id)} className="p-3 text-slate-400 hover:text-slate-600" title="Duplică"><Icon name="Copy" size={18}/></button>
+                        <button onClick={() => { if (confirm('Ștergi proiectul „' + (p.name || p.client.name || 'fără nume') + '"?')) deleteProject(p.id); }}
+                            className="p-3 text-slate-400 hover:text-red-600" title="Șterge"><Icon name="Trash2" size={18}/></button>
+                    </Card>
+                ))}
+            </div>
+        );
+    };
+
+    // ============================================
+    // ECRAN: CLIENT + MATERIAL
+    // ============================================
+    const ScreenClient = ({ project, update }) => {
+        const mat = project.material;
+        const providerProfiles = Object.entries(TIGLA_PROFILES).filter(([, p]) => p.provider === mat.provider);
+        const thicknesses = Object.keys(TIGLA_CATALOG[mat.provider] || {});
+        const finishes = Object.keys((TIGLA_CATALOG[mat.provider] || {})[mat.thickness] || {});
+        const colors = (((TIGLA_CATALOG[mat.provider] || {})[mat.thickness] || {})[mat.finish] || {}).colors || [];
+
+        const setMat = (patch) => {
+            let m = { ...mat, ...patch };
+            // cascadă: la schimbarea furnizorului, resetează profil/grosime/finisaj/culoare
+            if (patch.provider) {
+                const profs = Object.entries(TIGLA_PROFILES).filter(([, p]) => p.provider === patch.provider);
+                if (profs.length) { m.profile = profs[0][0]; Object.assign(m, pickProfileDims(profs[0][0])); }
+                const th = Object.keys(TIGLA_CATALOG[patch.provider] || {});
+                m.thickness = th[0] || '';
+                const fin = Object.keys((TIGLA_CATALOG[patch.provider] || {})[m.thickness] || {});
+                m.finish = fin[0] || '';
+                const cols = (((TIGLA_CATALOG[patch.provider] || {})[m.thickness] || {})[m.finish] || {}).colors || [];
+                m.color = cols[0] || '';
+            }
+            if (patch.profile) Object.assign(m, pickProfileDims(patch.profile));
+            if (patch.thickness) {
+                const fin = Object.keys((TIGLA_CATALOG[m.provider] || {})[patch.thickness] || {});
+                if (!fin.includes(m.finish)) m.finish = fin[0] || '';
+            }
+            if (patch.thickness || patch.finish) {
+                const cols = (((TIGLA_CATALOG[m.provider] || {})[m.thickness] || {})[m.finish] || {}).colors || [];
+                if (!cols.includes(m.color)) m.color = cols[0] || '';
+            }
+            update({ material: m });
+        };
+        const pickProfileDims = (profileName) => {
+            const p = TIGLA_PROFILES[profileName];
+            return p ? { W: p.W, module: p.module, eaveExtra: p.eaveExtra, minLen: p.minLen, maxLen: p.maxLen } : {};
+        };
+
+        return (
+            <div className="space-y-4 animate-in">
+                <Card>
+                    <div className="font-bold text-slate-700 mb-3 flex items-center gap-2"><Icon name="User" size={18}/> Date client</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Field label="Nume client"><TextInput value={project.client.name} onChange={v => update({ client: { ...project.client, name: v } })} placeholder="Ex: Popescu Ion"/></Field>
+                        <Field label="Telefon"><TextInput value={project.client.phone} onChange={v => update({ client: { ...project.client, phone: v } })} placeholder="07xx xxx xxx" inputMode="tel"/></Field>
+                        <Field label="Localitate"><TextInput value={project.client.location} onChange={v => update({ client: { ...project.client, location: v } })} placeholder="Ex: Pitești"/></Field>
+                        <Field label="Email (opțional)"><TextInput value={project.client.email} onChange={v => update({ client: { ...project.client, email: v } })} placeholder="client@email.ro"/></Field>
+                        <Field label="Nume proiect (opțional)"><TextInput value={project.name} onChange={v => update({ name: v })} placeholder="Ex: Casă Ștefănești"/></Field>
+                    </div>
+                </Card>
+
+                <Card>
+                    <div className="font-bold text-slate-700 mb-3 flex items-center gap-2"><Icon name="Layers" size={18}/> Material acoperiș</div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <Field label="Furnizor">
+                            <select value={mat.provider} onChange={e => setMat({ provider: e.target.value })} className="w-full px-3 py-3 rounded-lg border border-slate-300 bg-white text-sm">
+                                {Object.keys(PROVIDERS).filter(p => TIGLA_CATALOG[p]).map(p => <option key={p}>{p}</option>)}
+                            </select>
+                        </Field>
+                        <Field label="Profil țiglă">
+                            <select value={mat.profile} onChange={e => setMat({ profile: e.target.value })} className="w-full px-3 py-3 rounded-lg border border-slate-300 bg-white text-sm">
+                                {providerProfiles.map(([name]) => <option key={name}>{name}</option>)}
+                            </select>
+                        </Field>
+                        <Field label="Grosime (mm)">
+                            <select value={mat.thickness} onChange={e => setMat({ thickness: e.target.value })} className="w-full px-3 py-3 rounded-lg border border-slate-300 bg-white text-sm">
+                                {thicknesses.map(t => <option key={t}>{t}</option>)}
+                            </select>
+                        </Field>
+                        <Field label="Finisaj">
+                            <select value={mat.finish} onChange={e => setMat({ finish: e.target.value })} className="w-full px-3 py-3 rounded-lg border border-slate-300 bg-white text-sm">
+                                {finishes.map(f => <option key={f}>{f}</option>)}
+                            </select>
+                        </Field>
+                    </div>
+                    <div className="mt-3">
+                        <span className="text-xs font-bold text-slate-500 uppercase">Culoare RAL</span>
+                        <div className="flex gap-2 mt-2 flex-wrap">
+                            {colors.map(c => (
+                                <button key={c} onClick={() => setMat({ color: c })}
+                                    className={`h-11 px-3 rounded-lg border-2 flex items-center gap-2 text-xs font-bold ${mat.color === c ? 'border-red-600 bg-red-50' : 'border-slate-200 bg-white'}`}>
+                                    <span className="h-6 w-6 rounded-full border border-slate-300" style={{ background: (RAL_COLORS[c] || {}).hex || '#888' }}></span>
+                                    {c} {(RAL_COLORS[c] || {}).name || ''}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </Card>
+
+                <Card>
+                    <div className="font-bold text-slate-700 mb-1 flex items-center gap-2"><Icon name="Ruler" size={18}/> Parametri foi (din profil, editabili)</div>
+                    <div className="text-xs text-slate-400 mb-3">Se completează automat din profilul ales — modifică doar dacă știi altă specificație de la furnizor.</div>
+                    <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                        {[['W', 'Lățime utilă'], ['module', 'Modul'], ['eaveExtra', 'Streașină'], ['minLen', 'Lung. min'], ['maxLen', 'Lung. max'], ['overlap', 'Suprapunere']].map(([k, lbl]) => (
+                            <Field key={k} label={lbl + ' (m)'}>
+                                <input type="number" step="0.01" value={mat[k]}
+                                    onChange={e => update({ material: { ...mat, [k]: parseFloat(e.target.value) || 0 } })}
+                                    className="w-full px-2 py-3 rounded-lg border border-slate-300 bg-white text-sm"/>
+                            </Field>
+                        ))}
+                    </div>
+                </Card>
+            </div>
+        );
+    };
+
+    // ============================================
+    // ECRAN: PLAN (editor desen) — construit în etapa următoare
+    // ============================================
+    const ScreenPlan = ({ project, update, derived }) => (
+        <Card className="text-center py-16 text-slate-400">
+            <Icon name="Pencil" size={40} className="mx-auto mb-3 opacity-40"/>
+            <div className="font-bold">Editorul de plan — în construcție</div>
+        </Card>
+    );
+
+    const ScreenVersanti = ({ project, update, derived }) => (
+        <Card className="text-center py-16 text-slate-400">
+            <Icon name="Layers" size={40} className="mx-auto mb-3 opacity-40"/>
+            <div className="font-bold">Versanți — în construcție</div>
+        </Card>
+    );
+
+    const ScreenPanotaj = ({ project, update, derived }) => (
+        <Card className="text-center py-16 text-slate-400">
+            <Icon name="Grid" size={40} className="mx-auto mb-3 opacity-40"/>
+            <div className="font-bold">Panotaj — în construcție</div>
+        </Card>
+    );
+
+    const ScreenNecesar = ({ project, update, derived }) => (
+        <Card className="text-center py-16 text-slate-400">
+            <Icon name="Package" size={40} className="mx-auto mb-3 opacity-40"/>
+            <div className="font-bold">Necesar — în construcție</div>
+        </Card>
+    );
+
+    const ScreenOferta = ({ project, update, derived, settings, setSettings }) => (
+        <Card className="text-center py-16 text-slate-400">
+            <Icon name="FileText" size={40} className="mx-auto mb-3 opacity-40"/>
+            <div className="font-bold">Ofertă — în construcție</div>
+        </Card>
+    );
+
+    // ============================================
+    // APP
+    // ============================================
+    const TABS = [
+        { id: 'proiecte', label: 'Proiecte', icon: 'Home' },
+        { id: 'client', label: 'Client', icon: 'User' },
+        { id: 'plan', label: 'Plan', icon: 'Pencil' },
+        { id: 'versanti', label: 'Versanți', icon: 'Layers' },
+        { id: 'panotaj', label: 'Panotaj', icon: 'Grid' },
+        { id: 'necesar', label: 'Necesar', icon: 'Package' },
+        { id: 'oferta', label: 'Ofertă', icon: 'FileText' }
+    ];
+
+    const App = () => {
+        const [settings, setSettings] = useState(() => loadLS(LS_SETTINGS, {
+            agent: { name: 'Daniel Neacșu', phone: '0722 000 000', company: 'PeAcoperis.ro', email: 'oferta@peacoperis.com' },
+            ghostMargins: { 'Bilka': 0, 'Caretta': 0, 'TPS': 0, 'Arkada': 0 },
+            adminUnlocked: false, showCost: false, quoteValidity: 15
+        }));
+        const [projects, setProjects] = useState(() => loadLS(LS_PROJECTS, {}));
+        const [project, setProject] = useState(null);
+        const [screen, setScreen] = useState('proiecte');
+        const [saveFlash, setSaveFlash] = useState(false);
+
+        // autosave cu debounce
+        useEffect(() => {
+            if (!project) return;
+            const t = setTimeout(() => {
+                setProjects(prev => {
+                    const next = { ...prev, [project.id]: { ...project, updatedAt: new Date().toISOString() } };
+                    if (!saveLS(LS_PROJECTS, next)) console.warn('localStorage plin — exportă proiectele în JSON');
+                    return next;
+                });
+                setSaveFlash(true);
+                setTimeout(() => setSaveFlash(false), 800);
+            }, 500);
+            return () => clearTimeout(t);
+        }, [project]);
+
+        useEffect(() => { saveLS(LS_SETTINGS, settings); }, [settings]);
+
+        const update = useCallback((patch) => setProject(p => ({ ...p, ...patch })), []);
+        const derived = useMemo(() => project ? computeDerived(project) : { faces: [], ready: false }, [project]);
+
+        const openProject = (id) => { setProject(projects[id]); setScreen(projects[id].plan.vertices.length ? 'plan' : 'client'); };
+        const createProject = () => { const p = newProject(); setProject(p); setScreen('client'); };
+        const deleteProject = (id) => {
+            setProjects(prev => { const n = { ...prev }; delete n[id]; saveLS(LS_PROJECTS, n); return n; });
+            if (project && project.id === id) { setProject(null); setScreen('proiecte'); }
+        };
+        const duplicateProject = (id) => {
+            const src = projects[id];
+            const cp = { ...JSON.parse(JSON.stringify(src)), id: uid(), name: (src.name || 'Proiect') + ' (copie)', createdAt: new Date().toISOString() };
+            setProjects(prev => { const n = { ...prev, [cp.id]: cp }; saveLS(LS_PROJECTS, n); return n; });
+        };
+        const importProject = (data) => {
+            const p = { ...newProject(), ...data, id: uid() };
+            setProjects(prev => { const n = { ...prev, [p.id]: p }; saveLS(LS_PROJECTS, n); return n; });
+        };
+        const exportProject = () => {
+            if (!project) return;
+            const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Proiect_${(project.name || project.client.name || 'acoperis').replace(/\s+/g, '_')}.json`;
+            a.click();
+        };
+
+        // starea de completare pentru bifele din tab bar
+        const done = {
+            client: project && (project.client.name || '').length > 0,
+            plan: derived.ready,
+            versanti: derived.ready && !derived.missingPitch,
+            panotaj: derived.ready && !derived.missingPitch
+        };
+
+        const screens = {
+            proiecte: <ScreenProiecte projects={projects} openProject={openProject} createProject={createProject}
+                deleteProject={deleteProject} duplicateProject={duplicateProject} importProject={importProject}/>,
+            client: project && <ScreenClient project={project} update={update}/>,
+            plan: project && <ScreenPlan project={project} update={update} derived={derived}/>,
+            versanti: project && <ScreenVersanti project={project} update={update} derived={derived}/>,
+            panotaj: project && <ScreenPanotaj project={project} update={update} derived={derived}/>,
+            necesar: project && <ScreenNecesar project={project} update={update} derived={derived}/>,
+            oferta: project && <ScreenOferta project={project} update={update} derived={derived} settings={settings} setSettings={setSettings}/>
+        };
+
+        return (
+            <div className="max-w-5xl mx-auto min-h-screen p-3 pb-28">
+                {/* HEADER */}
+                <header className="glass p-3 rounded-2xl shadow-lg border border-white/50 mb-4 flex items-center justify-between no-print">
+                    <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 gradient-header text-white flex items-center justify-center rounded-xl font-bold shadow-lg">PA</div>
+                        <div>
+                            <h1 className="font-bold text-slate-800 leading-tight">{settings.agent.company} · Schiță Acoperiș</h1>
+                            <div className="text-xs text-slate-500">
+                                {project ? (project.name || project.client.name || 'Proiect nou') : 'Alege sau creează un proiect'}
+                                {saveFlash && <span className="ml-2 text-green-600 font-bold">✓ salvat</span>}
+                            </div>
+                        </div>
+                    </div>
+                    {project && (
+                        <div className="flex gap-2">
+                            <button onClick={exportProject} className="p-2.5 rounded-lg bg-slate-100 text-slate-500" title="Export JSON"><Icon name="Download" size={18}/></button>
+                            <button onClick={() => { setProject(null); setScreen('proiecte'); }} className="p-2.5 rounded-lg bg-slate-100 text-slate-500" title="Închide proiectul"><Icon name="X" size={18}/></button>
+                        </div>
+                    )}
+                </header>
+
+                {screens[screen] || screens.proiecte}
+
+                {/* TAB BAR */}
+                <nav className="fixed bottom-0 left-0 right-0 z-40 no-print">
+                    <div className="max-w-5xl mx-auto p-2">
+                        <div className="glass rounded-2xl shadow-2xl border border-white/50 flex overflow-x-auto">
+                            {TABS.map(t => {
+                                const disabled = t.id !== 'proiecte' && !project;
+                                return (
+                                    <button key={t.id} disabled={disabled}
+                                        onClick={() => setScreen(t.id)}
+                                        className={`flex-1 min-w-[64px] py-2.5 flex flex-col items-center gap-0.5 rounded-xl m-1 text-[11px] font-bold transition
+                                            ${screen === t.id ? 'tab-active shadow-lg' : disabled ? 'text-slate-300' : 'text-slate-500 hover:bg-slate-100'}`}>
+                                        <div className="relative">
+                                            <Icon name={t.icon} size={20}/>
+                                            {done[t.id] && screen !== t.id && <span className="absolute -top-1 -right-2 text-green-500"><Icon name="CheckCircle" size={11}/></span>}
+                                        </div>
+                                        {t.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+</body>
+</html>
