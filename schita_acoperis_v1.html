@@ -1643,19 +1643,251 @@ const Geo = (() => {
         );
     };
 
-    const ScreenVersanti = ({ project, update, derived }) => (
-        <Card className="text-center py-16 text-slate-400">
-            <Icon name="Layers" size={40} className="mx-auto mb-3 opacity-40"/>
-            <div className="font-bold">Versanți — în construcție</div>
-        </Card>
-    );
+    // ============================================
+    // ECRAN: VERSANȚI (lungimi de pantă măsurate + desfășurare)
+    // ============================================
+    const ScreenVersanti = ({ project, update, derived }) => {
+        const [numPad, setNumPad] = useState(null);
+        if (!derived.ready) {
+            return <Card className="text-center py-16 text-slate-400">
+                <Icon name="Layers" size={40} className="mx-auto mb-3 opacity-40"/>
+                <div className="font-bold">Desenează întâi planul acoperișului</div>
+                <div className="text-xs mt-1">Versanții apar automat din desen.</div>
+            </Card>;
+        }
+        const setFaceOv = (key, patch) => update({
+            faceOverrides: { ...project.faceOverrides, [key]: { ...(project.faceOverrides[key] || {}), ...patch } }
+        });
+        const copyToSame = (face) => {
+            const ovs = { ...project.faceOverrides };
+            derived.faces.forEach(f => {
+                if (f.key !== face.key && Math.abs(f.L_plan - face.L_plan) < 0.05) {
+                    ovs[f.key] = { ...(ovs[f.key] || {}), L_real: face.L_real };
+                }
+            });
+            update({ faceOverrides: ovs });
+        };
 
-    const ScreenPanotaj = ({ project, update, derived }) => (
-        <Card className="text-center py-16 text-slate-400">
-            <Icon name="Grid" size={40} className="mx-auto mb-3 opacity-40"/>
-            <div className="font-bold">Panotaj — în construcție</div>
-        </Card>
-    );
+        return (
+            <div className="space-y-3 animate-in">
+                <Card className="flex items-center gap-3 bg-sky-50/80">
+                    <Icon name="Info" size={20} className="text-sky-600 shrink-0"/>
+                    <div className="text-xs text-slate-600">
+                        Pentru fiecare versant introdu <b>lungimea pantei măsurată pe acoperiș</b> (de la streașină la coamă, pe direcția apei).
+                        Aplicația „întinde" versantul din plan la dimensiunea reală — lățimile la streașină rămân cele din plan.
+                    </div>
+                </Card>
+                {derived.faces.map(f => {
+                    const eaveLen = Geo.round2(Geo.dist(project.plan.vertices[f.eave.a], project.plan.vertices[f.eave.b]));
+                    return (
+                        <Card key={f.key} className={f.missingPitch ? 'border-2 border-amber-300' : ''}>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="min-w-[130px]">
+                                    <div className="font-bold text-slate-800">{f.name}</div>
+                                    <div className="text-xs text-slate-500">streașină {eaveLen} m · adâncime plan {f.L_plan} m</div>
+                                </div>
+                                <button onClick={() => setNumPad({
+                                    title: `${f.name} — lungimea pantei măsurată (m)`,
+                                    initial: f.L_real || '',
+                                    onOk: (v) => { setFaceOv(f.key, { L_real: v }); setNumPad(null); }
+                                })} className={`h-12 px-4 rounded-xl font-bold flex items-center gap-2 ${f.missingPitch ? 'bg-amber-400 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                                    <Icon name="Ruler" size={16}/>
+                                    {f.L_real ? `Pantă: ${f.L_real} m` : 'Introdu panta'}
+                                </button>
+                                {f.L_real && (
+                                    <>
+                                        <div className="text-xs text-slate-500">
+                                            factor <b>×{f.k}</b> · arie reală <b>{f.realArea} m²</b>
+                                            {f.k < 1 && <span className="text-red-500 font-bold ml-1">⚠ pantă mai mică decât planul!</span>}
+                                        </div>
+                                        <button onClick={() => copyToSame(f)} className="h-10 px-3 rounded-xl bg-slate-100 text-xs font-bold text-slate-500" title="Aplică aceeași pantă la versanții cu aceeași adâncime în plan">
+                                            <Icon name="Copy" size={13} className="inline mr-1"/>La fel la ceilalți
+                                        </button>
+                                    </>
+                                )}
+                                <div className="flex-1"></div>
+                                <div className="flex items-center gap-1 text-xs font-bold text-slate-500">
+                                    Start panotaj:
+                                    {['left', 'right'].map(s => (
+                                        <button key={s} onClick={() => setFaceOv(f.key, { startSide: s })}
+                                            className={`h-10 px-3 rounded-xl ${f.startSide === s ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                            {s === 'left' ? 'Stânga' : 'Dreapta'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </Card>
+                    );
+                })}
+                <Card className="flex items-center justify-between">
+                    <div className="font-bold text-slate-700">Total acoperiș</div>
+                    <div className="text-sm text-slate-600">
+                        {derived.faces.length} versanți · <b>{derived.totalRealArea} m²</b> suprafață reală
+                        {derived.missingPitch && <span className="text-amber-600 font-bold ml-2">⚠ lipsesc pante</span>}
+                    </div>
+                </Card>
+                {numPad && <NumPad title={numPad.title} initial={numPad.initial} onOk={numPad.onOk} onCancel={() => setNumPad(null)}/>}
+            </div>
+        );
+    };
+
+    // ============================================
+    // PANOTAJ: SVG la scară al unui versant desfășurat
+    // ============================================
+    const PanotajSVG = ({ face, material, maxH = 380 }) => {
+        const p = face.panotaj;
+        if (!p || !p.sheets.length) return null;
+        const W = material.W;
+        const topY = Math.max(p.height, ...p.sheets.map(s => s.yFrom + s.len));
+        const mirror = (x) => p.mirrored ? p.width - x : x;
+        // poligonul în spațiul afișat (cu oglindire dacă startul e dreapta)
+        const polyPts = (p.mirrored ? face.unfolded.map(q => ({ x: p.width - q.x, y: q.y })) : face.unfolded);
+        const pad = Math.max(0.4, topY * 0.06);
+        const fs = Math.max(p.width, topY) / 30;
+        const clipId = 'clip_' + face.key.replace(/[^a-z0-9]/gi, '');
+        return (
+            <svg viewBox={`${-pad} ${-pad} ${p.width + 2 * pad} ${topY + 2 * pad}`} style={{ maxHeight: maxH, width: '100%' }}>
+                <defs>
+                    <clipPath id={clipId}>
+                        <polygon points={polyPts.map(q => `${q.x},${topY - q.y}`).join(' ')}/>
+                    </clipPath>
+                </defs>
+                {/* foile, tăiate la conturul versantului */}
+                <g clipPath={`url(#${clipId})`}>
+                    {p.strips.map((st, si) => st.sheets.map((sh, shi) => {
+                        const x0 = Math.min(mirror(st.x0), mirror(st.x1));
+                        const y = topY - (sh.yFrom + sh.len);
+                        return (
+                            <g key={si + '_' + shi}>
+                                <rect x={x0} y={y} width={st.x1 - st.x0} height={sh.len}
+                                    fill={(si + shi) % 2 ? '#fca5a5' : '#fecaca'} fillOpacity="0.75"
+                                    stroke="#b91c1c" strokeWidth={fs / 14}/>
+                                {sh.split && shi > 0 && (
+                                    <rect x={x0} y={topY - (sh.yFrom + material.overlap)} width={st.x1 - st.x0} height={material.overlap}
+                                        fill="#7f1d1d" fillOpacity="0.35"/>
+                                )}
+                            </g>
+                        );
+                    }))}
+                </g>
+                {/* conturul versantului */}
+                <polygon points={polyPts.map(q => `${q.x},${topY - q.y}`).join(' ')} fill="none" stroke="#0f172a" strokeWidth={fs / 8}/>
+                {/* etichete foi (neclipate, lizibile și pe vârfuri) */}
+                {p.strips.map((st, si) => st.sheets.map((sh, shi) => {
+                    const cx = (mirror(st.x0) + mirror(st.x1)) / 2;
+                    const cy = topY - (sh.yFrom + sh.len / 2);
+                    return (
+                        <g key={'t' + si + '_' + shi}>
+                            <text x={cx} y={cy - fs * 0.25} textAnchor="middle" fontSize={fs} fontWeight="bold" fill="#7f1d1d">{sh.no}</text>
+                            <text x={cx} y={cy + fs * 0.95} textAnchor="middle" fontSize={fs * 0.72} fill="#334155">{sh.len.toFixed(2)}</text>
+                        </g>
+                    );
+                }))}
+                {/* cote generale */}
+                <text x={p.width / 2} y={topY + pad * 0.8} textAnchor="middle" fontSize={fs * 0.8} fill="#475569" fontWeight="bold">{Geo.round2(p.width)} m</text>
+                <text x={-pad * 0.35} y={topY / 2} textAnchor="middle" fontSize={fs * 0.8} fill="#475569" fontWeight="bold" transform={`rotate(-90 ${-pad * 0.35} ${topY / 2})`}>{Geo.round2(topY)} m</text>
+            </svg>
+        );
+    };
+
+    const ScreenPanotaj = ({ project, update, derived }) => {
+        const [selKey, setSelKey] = useState(null);
+        if (!derived.ready) {
+            return <Card className="text-center py-16 text-slate-400">
+                <Icon name="Grid" size={40} className="mx-auto mb-3 opacity-40"/>
+                <div className="font-bold">Desenează întâi planul acoperișului</div>
+            </Card>;
+        }
+        const face = derived.faces.find(f => f.key === selKey) || derived.faces[0];
+        const setFaceOv = (key, patch) => update({
+            faceOverrides: { ...project.faceOverrides, [key]: { ...(project.faceOverrides[key] || {}), ...patch } }
+        });
+        return (
+            <div className="space-y-3 animate-in">
+                {derived.missingPitch && (
+                    <Card className="bg-amber-50/90 border-2 border-amber-300 flex items-center gap-3">
+                        <Icon name="AlertCircle" size={20} className="text-amber-500 shrink-0"/>
+                        <div className="text-xs text-slate-600"><b>Atenție:</b> la versanții fără pantă introdusă, panotajul folosește dimensiunile din plan (mai scurte decât realitatea). Completează pantele în ecranul „Versanți".</div>
+                    </Card>
+                )}
+                <div className="flex gap-2 overflow-x-auto pb-1 no-print">
+                    {derived.faces.map(f => (
+                        <button key={f.key} onClick={() => setSelKey(f.key)}
+                            className={`h-11 px-4 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 ${face.key === f.key ? 'bg-red-600 text-white' : 'bg-white text-slate-600 shadow'}`}>
+                            {f.name}{f.missingPitch ? ' ⚠' : ''}
+                        </button>
+                    ))}
+                </div>
+
+                {face && face.panotaj && (
+                    <Card>
+                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                            <div className="font-bold text-slate-800">{face.name} — panotaj</div>
+                            <div className="text-xs text-slate-500">
+                                {face.panotaj.sheets.length} foi · {face.panotaj.panelArea} m² tablă · pierdere {face.panotaj.wastePct}%
+                            </div>
+                            <div className="flex-1"></div>
+                            <div className="flex items-center gap-1 text-xs font-bold text-slate-500 no-print">
+                                Start:
+                                {['left', 'right'].map(s => (
+                                    <button key={s} onClick={() => setFaceOv(face.key, { startSide: s })}
+                                        className={`h-10 px-3 rounded-xl ${face.startSide === s ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                        {s === 'left' ? 'Stânga' : 'Dreapta'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl border border-slate-200 p-2">
+                            <PanotajSVG face={face} material={project.material}/>
+                        </div>
+                        <div className="mt-3 overflow-x-auto">
+                            <table className="w-full text-xs">
+                                <thead><tr className="text-left text-slate-400 uppercase">
+                                    <th className="py-1.5 pr-3">Foaie</th><th className="py-1.5 pr-3">Lungime (m)</th><th className="py-1.5 pr-3">Lățime utilă (m)</th><th className="py-1.5">Observații</th>
+                                </tr></thead>
+                                <tbody>
+                                    {face.panotaj.sheets.map((sh, i) => (
+                                        <tr key={i} className="border-t border-slate-100">
+                                            <td className="py-1.5 pr-3 font-bold text-slate-700">{sh.no}</td>
+                                            <td className="py-1.5 pr-3 font-mono">{sh.len.toFixed(2)}</td>
+                                            <td className="py-1.5 pr-3 font-mono">{project.material.W.toFixed(2)}</td>
+                                            <td className="py-1.5 text-slate-400">{sh.split ? `suprapunere ${project.material.overlap} m` : ''}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                )}
+
+                {/* LISTĂ COMANDĂ GLOBALĂ */}
+                <Card>
+                    <div className="font-bold text-slate-700 mb-2 flex items-center gap-2"><Icon name="Package" size={17}/> Listă comandă tablă — tot acoperișul</div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                            <thead><tr className="text-left text-slate-400 uppercase">
+                                <th className="py-1.5 pr-3">Lungime foaie (m)</th><th className="py-1.5 pr-3">Bucăți</th><th className="py-1.5">m²</th>
+                            </tr></thead>
+                            <tbody>
+                                {derived.globalOrder.map((o, i) => (
+                                    <tr key={i} className="border-t border-slate-100">
+                                        <td className="py-1.5 pr-3 font-mono font-bold">{o.len.toFixed(2)}</td>
+                                        <td className="py-1.5 pr-3 font-mono">{o.qty}</td>
+                                        <td className="py-1.5 font-mono">{Geo.round2(o.len * o.qty * project.material.W)}</td>
+                                    </tr>
+                                ))}
+                                <tr className="border-t-2 border-slate-300 font-bold">
+                                    <td className="py-1.5 pr-3">Total</td>
+                                    <td className="py-1.5 pr-3 font-mono">{derived.totalSheets}</td>
+                                    <td className="py-1.5 font-mono">{derived.totalPanelArea} m²</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
+            </div>
+        );
+    };
 
     const ScreenNecesar = ({ project, update, derived }) => (
         <Card className="text-center py-16 text-slate-400">
