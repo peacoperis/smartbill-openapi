@@ -611,7 +611,7 @@ const Geo = (() => {
         pluvial: { hasGutters: true, carligeAuto: true, carligeCount: 0, scurgeri: 2, hasBurlane: true, burlanMlPerScurgere: 3.5 },
         extraLines: [],      // rânduri manuale în necesar: { label, qty, unit, price }
         necesarOverrides: {},// itemKey → qty
-        pricing: { vat: 19, laborPerSqm: 0, discountPct: 0 }
+        pricing: { vat: 21, laborPerSqm: 0, discountPct: 0 }
     });
 
     // ============================================
@@ -1889,19 +1889,559 @@ const Geo = (() => {
         );
     };
 
-    const ScreenNecesar = ({ project, update, derived }) => (
-        <Card className="text-center py-16 text-slate-400">
-            <Icon name="Package" size={40} className="mx-auto mb-3 opacity-40"/>
-            <div className="font-bold">Necesar — în construcție</div>
-        </Card>
-    );
+    // ============================================
+    // ECRAN: NECESAR (materiale derivate + pluvial, totul editabil)
+    // ============================================
+    const ScreenNecesar = ({ project, update, derived }) => {
+        const [numPad, setNumPad] = useState(null);
+        if (!derived.ready) {
+            return <Card className="text-center py-16 text-slate-400">
+                <Icon name="Package" size={40} className="mx-auto mb-3 opacity-40"/>
+                <div className="font-bold">Desenează întâi planul acoperișului</div>
+            </Card>;
+        }
+        const rows = buildNecesar(project, derived);
+        const pl = project.pluvial;
+        const setPl = (patch) => update({ pluvial: { ...pl, ...patch } });
+        const sums = derived.sums;
 
-    const ScreenOferta = ({ project, update, derived, settings, setSettings }) => (
-        <Card className="text-center py-16 text-slate-400">
-            <Icon name="FileText" size={40} className="mx-auto mb-3 opacity-40"/>
-            <div className="font-bold">Ofertă — în construcție</div>
-        </Card>
-    );
+        return (
+            <div className="space-y-3 animate-in">
+                {/* verificare muchii */}
+                <Card>
+                    <div className="font-bold text-slate-700 mb-2 flex items-center gap-2"><Icon name="Ruler" size={17}/> Lungimi de muchii (reale, cu panta)</div>
+                    <div className="flex flex-wrap gap-2">
+                        {Object.entries(EDGE_TYPES).map(([k, t]) => (sums[k] || 0) > 0.01 && (
+                            <span key={k} className="px-3 py-2 rounded-xl text-xs font-bold" style={{ background: t.color + '22', color: t.color }}>
+                                {t.label}: {sums[k]} ml
+                            </span>
+                        ))}
+                        <span className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600">Coșuri: {project.plan.chimneys.length}</span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-2">Fiecare muchie e numărată o singură dată (coama dintre 2 versanți = o linie). Verifică cu ce ai măsurat — corecțiile se fac din Plan (tipul laturii) sau direct în cantitățile de mai jos.</div>
+                </Card>
+
+                {/* pluvial */}
+                <Card>
+                    <div className="font-bold text-slate-700 mb-3 flex items-center gap-2"><Icon name="Droplet" size={17}/> Sistem pluvial</div>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button onClick={() => setPl({ hasGutters: !pl.hasGutters })}
+                            className={`h-12 px-4 rounded-xl font-bold ${pl.hasGutters ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                            {pl.hasGutters ? '✓ Cu jgheaburi' : 'Fără jgheaburi'}
+                        </button>
+                        {pl.hasGutters && (
+                            <>
+                                <div className="flex items-center gap-1 text-xs font-bold text-slate-500">
+                                    Cârlige:
+                                    <button onClick={() => setPl({ carligeAuto: true })} className={`h-10 px-3 rounded-xl ${pl.carligeAuto ? 'bg-sky-600 text-white' : 'bg-slate-100'}`}>Auto ({PLUVIAL_CATALOG.carlig.perMl}/ml)</button>
+                                    <button onClick={() => setNumPad({ title: 'Număr cârlige', initial: pl.carligeCount || '', onOk: v => { setPl({ carligeAuto: false, carligeCount: Math.round(v) }); setNumPad(null); } })}
+                                        className={`h-10 px-3 rounded-xl ${!pl.carligeAuto ? 'bg-sky-600 text-white' : 'bg-slate-100'}`}>{pl.carligeAuto ? 'Manual' : `Manual: ${pl.carligeCount}`}</button>
+                                </div>
+                                <div className="flex items-center gap-1 text-xs font-bold text-slate-500">
+                                    Scurgeri:
+                                    <button onClick={() => setPl({ scurgeri: Math.max(0, pl.scurgeri - 1) })} className="h-10 w-10 rounded-xl bg-slate-100 text-lg">−</button>
+                                    <span className="w-8 text-center text-base text-slate-700">{pl.scurgeri}</span>
+                                    <button onClick={() => setPl({ scurgeri: pl.scurgeri + 1 })} className="h-10 w-10 rounded-xl bg-slate-100 text-lg">+</button>
+                                </div>
+                                <button onClick={() => setPl({ hasBurlane: !pl.hasBurlane })}
+                                    className={`h-12 px-4 rounded-xl font-bold ${pl.hasBurlane ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                    {pl.hasBurlane ? '✓ Cu burlane' : 'Fără burlane'}
+                                </button>
+                                {pl.hasBurlane && (
+                                    <button onClick={() => setNumPad({ title: 'Metri burlan per scurgere', initial: pl.burlanMlPerScurgere, onOk: v => { setPl({ burlanMlPerScurgere: v }); setNumPad(null); } })}
+                                        className="h-10 px-3 rounded-xl bg-slate-100 text-xs font-bold text-slate-500">{pl.burlanMlPerScurgere} ml/scurgere</button>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </Card>
+
+                {/* tabel necesar */}
+                <Card>
+                    <div className="font-bold text-slate-700 mb-2 flex items-center gap-2"><Icon name="Package" size={17}/> Necesar de materiale</div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                            <thead><tr className="text-left text-slate-400 uppercase">
+                                <th className="py-1.5 pr-3">Material</th><th className="py-1.5 pr-3">Detaliu</th><th className="py-1.5 pr-3">Cantitate</th><th className="py-1.5">UM</th><th></th>
+                            </tr></thead>
+                            <tbody>
+                                {rows.map(r => (
+                                    <tr key={r.key} className="border-t border-slate-100">
+                                        <td className="py-2 pr-3 font-bold text-slate-700">{r.label}</td>
+                                        <td className="py-2 pr-3 text-slate-400">{r.detail}</td>
+                                        <td className="py-2 pr-3">
+                                            <button onClick={() => setNumPad({
+                                                title: r.label + ' — cantitate', initial: r.qty,
+                                                onOk: v => { update({ necesarOverrides: { ...project.necesarOverrides, [r.key]: v } }); setNumPad(null); }
+                                            })} className={`font-mono font-bold px-3 py-1.5 rounded-lg ${r.overridden ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'}`}>
+                                                {r.qty}{r.overridden && ` (auto: ${r.qtyAuto})`}
+                                            </button>
+                                        </td>
+                                        <td className="py-2 text-slate-500">{r.unit}</td>
+                                        <td className="py-2 text-right">
+                                            {r.overridden && (
+                                                <button onClick={() => { const o = { ...project.necesarOverrides }; delete o[r.key]; update({ necesarOverrides: o }); }}
+                                                    className="text-[10px] font-bold text-slate-400 underline">reset</button>
+                                            )}
+                                            {r.manual && (
+                                                <button onClick={() => update({ extraLines: project.extraLines.filter((_, i) => 'extra' + i !== r.key) })}
+                                                    className="text-red-400 p-1"><Icon name="Trash2" size={13}/></button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button onClick={() => {
+                        const label = prompt('Denumire material:');
+                        if (!label) return;
+                        update({ extraLines: [...project.extraLines, { label, qty: 1, unit: 'buc', price: 0 }] });
+                    }} className="mt-3 h-11 px-4 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold flex items-center gap-2"><Icon name="Plus" size={14}/> Adaugă rând manual</button>
+                    <div className="text-[11px] text-slate-400 mt-2">Atinge o cantitate ca s-o corectezi — valorile corectate rămân marcate cu galben. Prețurile se văd în ecranul „Ofertă".</div>
+                </Card>
+
+                {numPad && <NumPad title={numPad.title} initial={numPad.initial} onOk={numPad.onOk} onCancel={() => setNumPad(null)}/>}
+            </div>
+        );
+    };
+
+    // ============================================
+    // EXPORT: SVG → PNG în div-urile de PDF (html2canvas redă SVG nesigur)
+    // ============================================
+    const rasterizeSvgs = async (container) => {
+        const svgs = [...container.querySelectorAll('svg')];
+        for (const svg of svgs) {
+            const rect = svg.getBoundingClientRect();
+            const w = Math.max(rect.width, 300), h = Math.max(rect.height, 200);
+            const xml = new XMLSerializer().serializeToString(svg);
+            const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+            await new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w * 2; canvas.height = h * 2;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const out = document.createElement('img');
+                    out.src = canvas.toDataURL('image/png');
+                    out.style.width = w + 'px';
+                    out.style.height = h + 'px';
+                    svg.replaceWith(out);
+                    resolve();
+                };
+                img.onerror = () => resolve(); // lasă SVG-ul dacă nu se poate
+                img.src = url;
+            });
+        }
+    };
+
+    const generatePdfFrom = async (sourceEl, filename) => {
+        // clonează sursa, rasterizează SVG-urile, generează PDF-ul.
+        // holder absolut + scroll la 0 + scrollY:0 — altfel html2canvas
+        // deplasează conținutul cu valoarea scroll-ului paginii.
+        const scroll0 = window.scrollY;
+        window.scrollTo(0, 0);
+        const holder = document.createElement('div');
+        holder.style.cssText = 'position:absolute;left:-10000px;top:0;width:210mm;background:white;';
+        holder.appendChild(sourceEl.cloneNode(true));
+        document.body.appendChild(holder);
+        try {
+            await rasterizeSvgs(holder);
+            await html2pdf().set({
+                margin: 8, filename,
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: { scale: 2, scrollY: 0, scrollX: 0 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'img'] }
+            }).from(holder.firstChild).save();
+        } finally {
+            document.body.removeChild(holder);
+            window.scrollTo(0, scroll0);
+        }
+    };
+
+    // mini-hartă a planului pentru PDF-uri
+    const PlanMiniSVG = ({ project, derived, width = 640, height = 300 }) => {
+        const { vertices, edges } = project.plan;
+        if (!vertices.length) return null;
+        const b = Geo.bounds(vertices);
+        const pad = Math.max(1.5, (b.maxX - b.minX) * 0.12);
+        const fs = (b.maxX - b.minX + 2 * pad) / 38;
+        return (
+            <svg viewBox={`${b.minX - pad} ${-b.maxY - pad} ${b.maxX - b.minX + 2 * pad} ${b.maxY - b.minY + 2 * pad}`}
+                style={{ width, maxHeight: height }}>
+                {derived.faces.map((f, fi) => {
+                    const c = Geo.centroid(f.pts);
+                    return (
+                        <g key={f.key}>
+                            <polygon points={f.pts.map(p => `${p.x},${-p.y}`).join(' ')} fill={FACE_TINTS[fi % FACE_TINTS.length]} fillOpacity="0.5"/>
+                            <text x={c.x} y={-c.y} textAnchor="middle" fontSize={fs} fontWeight="bold" fill="#334155">{f.name}</text>
+                        </g>
+                    );
+                })}
+                {edges.map((e, ei) => {
+                    const A = vertices[e.a], B = vertices[e.b];
+                    const t = derived.edgeTypes[ei] || 'racord';
+                    const mid = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+                    return (
+                        <g key={ei}>
+                            <line x1={A.x} y1={-A.y} x2={B.x} y2={-B.y} stroke={EDGE_TYPES[t].color} strokeWidth={fs / 5} strokeLinecap="round"/>
+                            <text x={mid.x} y={-mid.y - fs * 0.3} textAnchor="middle" fontSize={fs * 0.7} fill="#475569">{Geo.round2(Geo.dist(A, B))}</text>
+                        </g>
+                    );
+                })}
+                {project.plan.chimneys.map((c, i) => (
+                    <rect key={i} x={c.x - c.w / 2} y={-c.y - c.h / 2} width={c.w} height={c.h} fill="#78716c"/>
+                ))}
+            </svg>
+        );
+    };
+
+    // ============================================
+    // ECRAN: OFERTĂ (prețuri, PDF-uri, Excel, WhatsApp)
+    // ============================================
+    const ScreenOferta = ({ project, update, derived, settings, setSettings }) => {
+        const [busy, setBusy] = useState(null);
+        const offerRef = useRef(null);
+        const prodRef = useRef(null);
+        if (!derived.ready) {
+            return <Card className="text-center py-16 text-slate-400">
+                <Icon name="FileText" size={40} className="mx-auto mb-3 opacity-40"/>
+                <div className="font-bold">Desenează întâi planul acoperișului</div>
+            </Card>;
+        }
+
+        const rows = buildNecesar(project, derived);
+        const provider = project.material.provider;
+        const priced = rows.map(r => {
+            const unit = r.manual ? (r.priceRON || 0) : sellPrice(r.priceRON, provider, settings.ghostMargins);
+            return { ...r, unitSell: unit, total: unit * r.qty };
+        });
+        const materialTotal = priced.reduce((s, r) => s + r.total, 0);
+        const labor = (project.pricing.laborPerSqm || 0) * derived.totalRealArea;
+        const subtotal = materialTotal + labor;
+        const discount = subtotal * (project.pricing.discountPct || 0) / 100;
+        const net = subtotal - discount;
+        const vat = net * (project.pricing.vat || 0) / 100;
+        const total = net + vat;
+        const fmt = (v) => v.toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const today = new Date().toLocaleDateString('ro-RO');
+        const offerNo = project.id.slice(1, 7).toUpperCase();
+
+        const adminAuth = () => {
+            const code = prompt('Cod administrator:');
+            if (code === (settings.adminCode || '2580')) setSettings(s => ({ ...s, adminUnlocked: !s.adminUnlocked }));
+            else if (code !== null) alert('Cod greșit');
+        };
+
+        const doPdfOffer = async () => {
+            setBusy('offer');
+            try { await generatePdfFrom(offerRef.current, `Oferta_${(project.client.name || 'Client').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`); }
+            finally { setBusy(null); }
+        };
+        const doPdfProd = async () => {
+            setBusy('prod');
+            try { await generatePdfFrom(prodRef.current, `Fisa_productie_${(project.client.name || 'Client').replace(/\s+/g, '_')}.pdf`); }
+            finally { setBusy(null); }
+        };
+
+        const doExcel = () => {
+            const wb = XLSX.utils.book_new();
+            const aoa = [];
+            aoa.push(['FORMULAR COMANDĂ MATERIALE ACOPERIȘ — ' + settings.agent.company]);
+            aoa.push([]);
+            aoa.push(['Data', today, '', 'Ofertă nr.', offerNo]);
+            aoa.push(['Client', project.client.name, '', 'Telefon', project.client.phone]);
+            aoa.push(['Localitate', project.client.location, '', 'Agent', settings.agent.name]);
+            aoa.push([]);
+            aoa.push(['MATERIAL']);
+            aoa.push(['Profil', project.material.profile, 'Grosime', project.material.thickness + ' mm']);
+            aoa.push(['Finisaj', project.material.finish, 'Culoare', 'RAL ' + project.material.color]);
+            aoa.push(['Lățime utilă', project.material.W + ' m', 'Modul', project.material.module + ' m']);
+            aoa.push([]);
+            aoa.push(['VERSANȚI']);
+            aoa.push(['Nume', 'Streașină (m)', 'Pantă (m)', 'Arie reală (m²)', 'Nr. foi', 'Pierdere %']);
+            derived.faces.forEach(f => {
+                const eaveLen = Geo.round2(Geo.dist(project.plan.vertices[f.eave.a], project.plan.vertices[f.eave.b]));
+                aoa.push([f.name, eaveLen, f.L_real || f.L_plan + ' (plan!)', f.realArea, f.panotaj ? f.panotaj.sheets.length : 0, f.panotaj ? f.panotaj.wastePct : '']);
+            });
+            aoa.push([]);
+            aoa.push(['FOI TABLĂ — LISTĂ COMANDĂ']);
+            aoa.push(['Lungime (m)', 'Lățime utilă (m)', 'Bucăți', 'm²']);
+            derived.globalOrder.forEach(o => aoa.push([o.len, project.material.W, o.qty, Geo.round2(o.len * o.qty * project.material.W)]));
+            aoa.push(['TOTAL', '', derived.totalSheets, derived.totalPanelArea]);
+            aoa.push([]);
+            aoa.push(['PANOTAJ DETALIAT (foi per versant)']);
+            aoa.push(['Versant', 'Foaie', 'Lungime (m)', 'Lățime (m)']);
+            derived.faces.forEach(f => (f.panotaj ? f.panotaj.sheets : []).forEach(sh => aoa.push([f.name, sh.no, sh.len, project.material.W])));
+            aoa.push([]);
+            aoa.push(['ACCESORII + PLUVIAL']);
+            aoa.push(['Denumire', 'Detaliu', 'Cantitate', 'UM']);
+            priced.filter(r => r.key !== 'tigla').forEach(r => aoa.push([r.label, r.detail, r.qty, r.unit]));
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            ws['!cols'] = [{ wch: 34 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }];
+            XLSX.utils.book_append_sheet(wb, ws, 'Comandă');
+            XLSX.writeFile(wb, `Comanda_${(project.client.name || 'Client').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        };
+
+        const doWhatsApp = () => {
+            const msg = `*Ofertă acoperiș — ${settings.agent.company}*%0a` +
+                `Client: ${project.client.name}%0a` +
+                `Acoperiș: ${derived.totalRealArea} m², ${derived.faces.length} versanți, ${derived.totalSheets} foi ${project.material.profile}%0a` +
+                `*Total cu TVA: ${fmt(total)} RON*%0a` +
+                `Valabilitate: ${settings.quoteValidity} zile · ${settings.agent.name} ${settings.agent.phone}`;
+            window.open('https://wa.me/?text=' + msg, '_blank');
+        };
+
+        return (
+            <div className="space-y-3 animate-in">
+                {/* verificări înainte de finalizare */}
+                <div className="flex flex-wrap gap-2 no-print">
+                    {[
+                        [!!project.client.name, 'Client'],
+                        [derived.ready, 'Plan desenat'],
+                        [!derived.missingPitch, 'Pante introduse'],
+                        [true, `${project.plan.chimneys.length} coșuri`],
+                        [true, project.pluvial.hasGutters ? `Pluvial: ${project.pluvial.scurgeri} scurgeri${project.pluvial.hasBurlane ? '' : ', fără burlane'}` : 'Fără pluvial']
+                    ].map(([ok, lbl], i) => (
+                        <span key={i} className={`px-3 py-2 rounded-xl text-xs font-bold ${ok ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {ok ? '✓' : '⚠'} {lbl}
+                        </span>
+                    ))}
+                </div>
+
+                {/* tabel prețuri */}
+                <Card>
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="font-bold text-slate-700 flex items-center gap-2"><Icon name="Calculator" size={17}/> Ofertă de preț</div>
+                        <button onClick={adminAuth} className="p-2 rounded-lg bg-slate-100 text-slate-400"><Icon name={settings.adminUnlocked ? 'Unlock' : 'Lock'} size={15}/></button>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                            <thead><tr className="text-left text-slate-400 uppercase">
+                                <th className="py-1.5 pr-3">Produs</th><th className="py-1.5 pr-3">Cant.</th><th className="py-1.5 pr-3">UM</th>
+                                {settings.adminUnlocked && settings.showCost && <th className="py-1.5 pr-3">Cost</th>}
+                                <th className="py-1.5 pr-3">Preț unitar</th><th className="py-1.5 text-right">Total (RON)</th>
+                            </tr></thead>
+                            <tbody>
+                                {priced.map(r => (
+                                    <tr key={r.key} className="border-t border-slate-100">
+                                        <td className="py-1.5 pr-3 font-bold text-slate-700">{r.label}</td>
+                                        <td className="py-1.5 pr-3 font-mono">{r.qty}</td>
+                                        <td className="py-1.5 pr-3 text-slate-400">{r.unit}</td>
+                                        {settings.adminUnlocked && settings.showCost && <td className="py-1.5 pr-3 font-mono text-slate-400">{fmt(r.priceRON)}</td>}
+                                        <td className="py-1.5 pr-3 font-mono">{fmt(r.unitSell)}</td>
+                                        <td className="py-1.5 font-mono text-right font-bold">{fmt(r.total)}</td>
+                                    </tr>
+                                ))}
+                                {labor > 0 && <tr className="border-t border-slate-100">
+                                    <td className="py-1.5 pr-3 font-bold text-slate-700">Manoperă montaj</td>
+                                    <td className="py-1.5 pr-3 font-mono">{derived.totalRealArea}</td>
+                                    <td className="py-1.5 pr-3 text-slate-400">m²</td>
+                                    {settings.adminUnlocked && settings.showCost && <td></td>}
+                                    <td className="py-1.5 pr-3 font-mono">{fmt(project.pricing.laborPerSqm)}</td>
+                                    <td className="py-1.5 font-mono text-right font-bold">{fmt(labor)}</td>
+                                </tr>}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="mt-3 border-t-2 border-slate-200 pt-3 space-y-1 text-sm">
+                        <div className="flex justify-between text-slate-600"><span>Subtotal</span><span className="font-mono">{fmt(subtotal)} RON</span></div>
+                        {discount > 0 && <div className="flex justify-between text-green-600"><span>Discount {project.pricing.discountPct}%</span><span className="font-mono">−{fmt(discount)} RON</span></div>}
+                        <div className="flex justify-between text-slate-600"><span>TVA {project.pricing.vat}%</span><span className="font-mono">{fmt(vat)} RON</span></div>
+                        <div className="flex justify-between text-lg font-bold text-slate-800"><span>TOTAL</span><span className="font-mono">{fmt(total)} RON</span></div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 mt-3">
+                        <Field label="Manoperă (RON/m²)">
+                            <input type="number" inputMode="decimal" value={project.pricing.laborPerSqm}
+                                onChange={e => update({ pricing: { ...project.pricing, laborPerSqm: parseFloat(e.target.value) || 0 } })}
+                                className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm"/>
+                        </Field>
+                        <Field label="Discount (%)">
+                            <input type="number" inputMode="decimal" value={project.pricing.discountPct}
+                                onChange={e => update({ pricing: { ...project.pricing, discountPct: parseFloat(e.target.value) || 0 } })}
+                                className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm"/>
+                        </Field>
+                        <Field label="TVA (%)">
+                            <input type="number" inputMode="decimal" value={project.pricing.vat}
+                                onChange={e => update({ pricing: { ...project.pricing, vat: parseFloat(e.target.value) || 0 } })}
+                                className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm"/>
+                        </Field>
+                    </div>
+                </Card>
+
+                {/* panou admin */}
+                {settings.adminUnlocked && (
+                    <Card className="border-2 border-slate-800">
+                        <div className="font-bold text-slate-700 mb-3 flex items-center gap-2"><Icon name="Settings" size={16}/> Panou administrator</div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {Object.keys(PROVIDERS).map(p => (
+                                <Field key={p} label={`Marjă extra ${p} (%)`}>
+                                    <input type="number" inputMode="decimal" value={settings.ghostMargins[p] || 0}
+                                        onChange={e => setSettings(s => ({ ...s, ghostMargins: { ...s.ghostMargins, [p]: parseFloat(e.target.value) || 0 } }))}
+                                        className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm"/>
+                                </Field>
+                            ))}
+                        </div>
+                        <div className="flex flex-wrap gap-3 mt-3 items-end">
+                            <Field label="Agent"><TextInput value={settings.agent.name} onChange={v => setSettings(s => ({ ...s, agent: { ...s.agent, name: v } }))}/></Field>
+                            <Field label="Telefon agent"><TextInput value={settings.agent.phone} onChange={v => setSettings(s => ({ ...s, agent: { ...s.agent, phone: v } }))}/></Field>
+                            <Field label="Valabilitate ofertă (zile)">
+                                <input type="number" value={settings.quoteValidity} onChange={e => setSettings(s => ({ ...s, quoteValidity: parseInt(e.target.value) || 15 }))}
+                                    className="w-24 px-3 py-2.5 rounded-lg border border-slate-300 text-sm"/>
+                            </Field>
+                            <button onClick={() => setSettings(s => ({ ...s, showCost: !s.showCost }))}
+                                className={`h-11 px-4 rounded-xl text-xs font-bold ${settings.showCost ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                {settings.showCost ? 'Ascunde costurile' : 'Arată costurile'}
+                            </button>
+                        </div>
+                    </Card>
+                )}
+
+                {/* butoane export */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 no-print">
+                    <button onClick={doPdfOffer} disabled={busy}
+                        className="h-14 rounded-2xl gradient-header text-white font-bold flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
+                        <Icon name="FileText" size={18}/>{busy === 'offer' ? 'Se generează…' : 'PDF Ofertă'}
+                    </button>
+                    <button onClick={doPdfProd} disabled={busy}
+                        className="h-14 rounded-2xl bg-slate-800 text-white font-bold flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
+                        <Icon name="Grid" size={18}/>{busy === 'prod' ? 'Se generează…' : 'PDF Fișă producție'}
+                    </button>
+                    <button onClick={doExcel} className="h-14 rounded-2xl bg-green-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg">
+                        <Icon name="Download" size={18}/> Excel Comandă
+                    </button>
+                    <button onClick={doWhatsApp} className="h-14 rounded-2xl bg-emerald-500 text-white font-bold flex items-center justify-center gap-2 shadow-lg">
+                        <Icon name="MessageSquare" size={18}/> WhatsApp
+                    </button>
+                </div>
+
+                {/* ============ TEMPLATE PDF OFERTĂ (ascuns) ============ */}
+                <div className="fixed -left-[9999px] top-0 w-[210mm]">
+                    <div ref={offerRef} style={{ fontFamily: 'Segoe UI, sans-serif', color: '#1e293b', padding: '4mm', background: 'white' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '3px solid #dc2626', paddingBottom: 8 }}>
+                            <div>
+                                <div style={{ fontSize: 22, fontWeight: 800, color: '#dc2626' }}>{settings.agent.company}</div>
+                                <div style={{ fontSize: 10, color: '#64748b' }}>{settings.agent.name} · {settings.agent.phone} · {settings.agent.email}</div>
+                            </div>
+                            <div style={{ textAlign: 'right', fontSize: 11 }}>
+                                <div style={{ fontWeight: 800, fontSize: 15 }}>OFERTĂ #{offerNo}</div>
+                                <div>{today} · valabilă {settings.quoteValidity} zile</div>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 24, margin: '10px 0', fontSize: 11 }}>
+                            <div><b>Client:</b> {project.client.name || '—'}<br/><b>Telefon:</b> {project.client.phone || '—'}<br/><b>Localitate:</b> {project.client.location || '—'}</div>
+                            <div><b>Acoperiș:</b> {derived.totalRealArea} m² · {derived.faces.length} versanți<br/>
+                                <b>Material:</b> {project.material.profile} {project.material.thickness}mm {project.material.finish} RAL {project.material.color}<br/>
+                                <b>Foi:</b> {derived.totalSheets} buc conform panotaj</div>
+                        </div>
+                        <div style={{ textAlign: 'center', margin: '6px 0' }}>
+                            <PlanMiniSVG project={project} derived={derived} width={560} height={240}/>
+                        </div>
+                        <table style={{ width: '100%', fontSize: 10, borderCollapse: 'collapse', marginTop: 6 }}>
+                            <thead><tr style={{ background: '#f1f5f9' }}>
+                                {['Produs', 'Cant.', 'UM', 'Preț unitar', 'Total (RON)'].map(h => <th key={h} style={{ padding: '5px 7px', textAlign: h === 'Produs' ? 'left' : 'right', border: '1px solid #e2e8f0' }}>{h}</th>)}
+                            </tr></thead>
+                            <tbody>
+                                {priced.map(r => (
+                                    <tr key={r.key}>
+                                        <td style={{ padding: '4px 7px', border: '1px solid #e2e8f0' }}>{r.label}</td>
+                                        <td style={{ padding: '4px 7px', border: '1px solid #e2e8f0', textAlign: 'right' }}>{r.qty}</td>
+                                        <td style={{ padding: '4px 7px', border: '1px solid #e2e8f0', textAlign: 'right' }}>{r.unit}</td>
+                                        <td style={{ padding: '4px 7px', border: '1px solid #e2e8f0', textAlign: 'right' }}>{fmt(r.unitSell)}</td>
+                                        <td style={{ padding: '4px 7px', border: '1px solid #e2e8f0', textAlign: 'right', fontWeight: 700 }}>{fmt(r.total)}</td>
+                                    </tr>
+                                ))}
+                                {labor > 0 && <tr>
+                                    <td style={{ padding: '4px 7px', border: '1px solid #e2e8f0' }}>Manoperă montaj</td>
+                                    <td style={{ padding: '4px 7px', border: '1px solid #e2e8f0', textAlign: 'right' }}>{derived.totalRealArea}</td>
+                                    <td style={{ padding: '4px 7px', border: '1px solid #e2e8f0', textAlign: 'right' }}>m²</td>
+                                    <td style={{ padding: '4px 7px', border: '1px solid #e2e8f0', textAlign: 'right' }}>{fmt(project.pricing.laborPerSqm)}</td>
+                                    <td style={{ padding: '4px 7px', border: '1px solid #e2e8f0', textAlign: 'right', fontWeight: 700 }}>{fmt(labor)}</td>
+                                </tr>}
+                            </tbody>
+                        </table>
+                        <div style={{ marginTop: 10, marginLeft: 'auto', width: 240, fontSize: 11 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>Subtotal</span><span>{fmt(subtotal)} RON</span></div>
+                            {discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#16a34a' }}><span>Discount {project.pricing.discountPct}%</span><span>−{fmt(discount)} RON</span></div>}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}><span>TVA {project.pricing.vat}%</span><span>{fmt(vat)} RON</span></div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontWeight: 800, fontSize: 14, borderTop: '2px solid #dc2626' }}><span>TOTAL</span><span>{fmt(total)} RON</span></div>
+                        </div>
+                        <div style={{ marginTop: 14, fontSize: 9, color: '#64748b', borderTop: '1px solid #e2e8f0', paddingTop: 6 }}>
+                            Ofertă valabilă {settings.quoteValidity} zile de la emitere. Cantitățile rezultă din măsurătorile la fața locului și panotajul automat;
+                            eventualele diferențe se regularizează la livrare. Prețurile includ transportul doar dacă e menționat explicit.
+                        </div>
+                    </div>
+                </div>
+
+                {/* ============ TEMPLATE PDF FIȘĂ PRODUCȚIE (ascuns) ============ */}
+                <div className="fixed -left-[9999px] top-0 w-[210mm]">
+                    <div ref={prodRef} style={{ fontFamily: 'Segoe UI, sans-serif', color: '#1e293b', padding: '4mm', background: 'white' }}>
+                        <div style={{ borderBottom: '3px solid #0f172a', paddingBottom: 6, marginBottom: 8 }}>
+                            <div style={{ fontSize: 18, fontWeight: 800 }}>FIȘĂ PRODUCȚIE / PANOTAJ — {project.client.name || 'Client'} ({project.client.location || '—'})</div>
+                            <div style={{ fontSize: 10, color: '#64748b' }}>
+                                {today} · {project.material.profile} {project.material.thickness}mm {project.material.finish} RAL {project.material.color} ·
+                                lățime utilă {project.material.W} m · modul {project.material.module} m · suprapunere {project.material.overlap} m
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 4 }}>Plan acoperiș (vedere de sus)</div>
+                            <PlanMiniSVG project={project} derived={derived} width={560} height={250}/>
+                        </div>
+                        <table style={{ width: '100%', fontSize: 10, borderCollapse: 'collapse', margin: '8px 0' }}>
+                            <thead><tr style={{ background: '#f1f5f9' }}>
+                                {['Lungime foaie (m)', 'Lățime utilă (m)', 'Bucăți', 'm²'].map(h => <th key={h} style={{ padding: '4px 7px', border: '1px solid #e2e8f0' }}>{h}</th>)}
+                            </tr></thead>
+                            <tbody>
+                                {derived.globalOrder.map((o, i) => (
+                                    <tr key={i}>
+                                        <td style={{ padding: '3px 7px', border: '1px solid #e2e8f0', textAlign: 'center', fontWeight: 700 }}>{o.len.toFixed(2)}</td>
+                                        <td style={{ padding: '3px 7px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{project.material.W.toFixed(2)}</td>
+                                        <td style={{ padding: '3px 7px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{o.qty}</td>
+                                        <td style={{ padding: '3px 7px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{Geo.round2(o.len * o.qty * project.material.W)}</td>
+                                    </tr>
+                                ))}
+                                <tr style={{ fontWeight: 800, background: '#f8fafc' }}>
+                                    <td style={{ padding: '3px 7px', border: '1px solid #e2e8f0' }}>TOTAL</td>
+                                    <td style={{ padding: '3px 7px', border: '1px solid #e2e8f0' }}></td>
+                                    <td style={{ padding: '3px 7px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{derived.totalSheets}</td>
+                                    <td style={{ padding: '3px 7px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{derived.totalPanelArea}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        {derived.faces.map(f => (
+                            <div key={f.key} style={{ pageBreakBefore: 'always', paddingTop: 6 }}>
+                                <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 2 }}>
+                                    {f.name} — {f.panotaj ? f.panotaj.sheets.length : 0} foi · {f.realArea} m² real · pantă {f.L_real || (f.L_plan + ' (din plan!)')} m ·
+                                    start {f.startSide === 'left' ? 'stânga' : 'dreapta'}
+                                </div>
+                                <div style={{ textAlign: 'center' }}>
+                                    <PanotajSVG face={f} material={project.material} maxH={430}/>
+                                </div>
+                                <table style={{ width: '100%', fontSize: 9, borderCollapse: 'collapse', marginTop: 4 }}>
+                                    <thead><tr style={{ background: '#f1f5f9' }}>
+                                        {['Foaie', 'Lungime (m)', 'Observații'].map(h => <th key={h} style={{ padding: '3px 6px', border: '1px solid #e2e8f0' }}>{h}</th>)}
+                                    </tr></thead>
+                                    <tbody>
+                                        {(f.panotaj ? f.panotaj.sheets : []).map((sh, i) => (
+                                            <tr key={i}>
+                                                <td style={{ padding: '2px 6px', border: '1px solid #e2e8f0', textAlign: 'center', fontWeight: 700 }}>{sh.no}</td>
+                                                <td style={{ padding: '2px 6px', border: '1px solid #e2e8f0', textAlign: 'center' }}>{sh.len.toFixed(2)}</td>
+                                                <td style={{ padding: '2px 6px', border: '1px solid #e2e8f0', textAlign: 'center', color: '#64748b' }}>{sh.split ? `suprapunere ${project.material.overlap} m` : ''}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     // ============================================
     // APP
