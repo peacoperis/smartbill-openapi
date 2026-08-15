@@ -69,6 +69,8 @@ Corolarul, sărit la prima rundă: alinierea unui singur cont acoperă un singur
 
 Regula de verificare a acestui pas: dacă nu poți numi, pentru fiecare om din firmă care folosește AI, ce anume îi face asistentul lui zilnic — pasul nu e terminat.
 
+**Formă:** profilul echipei se supune acelorași reguli ca restul (Pasul 3) — bloc unitar respins, șase intrări scurte acceptate, formulate ca informații despre utilizator, nu ca portrete la persoana a treia. Textele gata de folosit: `references/perplexity.md`.
+
 ## Pasul 5 — Delimitează rolul față de ceilalți asistenți
 
 Un asistent care concurează pe terenul altuia pare slab. Dă-i terenul pe care e cel mai bun și scrie explicit ce NU face.

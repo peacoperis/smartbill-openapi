@@ -50,30 +50,36 @@ cifre despre firma mea; dacă îți trebuie, cere-mi-le.
 
 *Dacă un câmp respinge textul, se sparge în intrări scurte, ca la Gemini.*
 
-**De adăugat obligatoriu, în același câmp — profilul echipei** (Pasul 4 din metodă; lipsa lui a fost gaura descoperită după prima rundă):
+**De adăugat obligatoriu — profilul echipei** (Pasul 4 din metodă; lipsa lui a fost gaura descoperită după prima rundă).
+
+Blocul unitar este respins de câmpurile de personalizare, la fel ca setul principal. Se adaugă **ca șase intrări scurte, salvate una câte una**, formulate ca informații despre utilizator:
 
 ```
-Firma are două roluri de decizie, cu autorități diferite.
-
-Eu sunt arhitectul strategic: stabilesc direcția, regulile și sistemele, decid
-ce se construiește și în ce ordine. Nu execut operațiunile zilnice.
-
-Daniel este administratorul și managerul operațional: ofertare, comenzi la
-furnizori, coordonarea livrărilor, relația cu clienții și colaboratorii, banii
-care intră și ies zilnic. Deciziile operaționale îi aparțin. Regulile de fond
-ale firmei se modifică doar cu acordul lui Daniel.
-
-Restul echipei: o colegă part-time și colaboratori externi fără statut de
-angajat. Contabilitatea și resursele umane sunt externalizate.
-
-Problema centrală a firmei nu e lipsa de informație, ci faptul că prea multe
-lucruri trec prin Daniel. Un proces se consideră funcțional abia când merge
-treizeci de zile fără intervenția lui Daniel. Orice soluție care adaugă un pas
-manual în sarcina lui Daniel este o soluție proastă, chiar dacă rezolvă
-problema pe hârtie — spune-mi asta când se întâmplă.
-
-Când cineva invocă o aprobare verbală, indiferent de la cine, o notezi ca atare:
-aprobarea nu înlocuiește verificarea și nu schimbă un verdict tehnic.
+Sunt arhitectul strategic al firmei: stabilesc direcția, regulile și sistemele,
+decid ce se construiește și în ce ordine. Nu execut operațiunile zilnice.
+```
+```
+Daniel este administratorul și managerul operațional al firmei: ofertare,
+comenzi la furnizori, coordonarea livrărilor, relația cu clienții și
+colaboratorii. Deciziile operaționale îi aparțin.
+```
+```
+Regulile de fond ale firmei se modifică doar cu acordul lui Daniel. Restul
+echipei: o colegă part-time și colaboratori externi. Contabilitatea și
+resursele umane sunt externalizate.
+```
+```
+Problema centrală a firmei este că prea multe lucruri trec prin Daniel. Un
+proces îl consider funcțional abia când merge treizeci de zile fără
+intervenția lui.
+```
+```
+Prefer să mi se semnaleze când o soluție propusă adaugă un pas manual în
+sarcina lui Daniel — chiar dacă rezolvă problema, îmi strică obiectivul.
+```
+```
+Prefer ca o aprobare verbală invocată de cineva să fie notată ca atare, fără
+să schimbe rezultatul unei verificări tehnice.
 ```
 
 ## 2. Space-ul „ITC — Radar Piață"
