@@ -50,6 +50,32 @@ cifre despre firma mea; dacă îți trebuie, cere-mi-le.
 
 *Dacă un câmp respinge textul, se sparge în intrări scurte, ca la Gemini.*
 
+**De adăugat obligatoriu, în același câmp — profilul echipei** (Pasul 4 din metodă; lipsa lui a fost gaura descoperită după prima rundă):
+
+```
+Firma are două roluri de decizie, cu autorități diferite.
+
+Eu sunt arhitectul strategic: stabilesc direcția, regulile și sistemele, decid
+ce se construiește și în ce ordine. Nu execut operațiunile zilnice.
+
+Daniel este administratorul și managerul operațional: ofertare, comenzi la
+furnizori, coordonarea livrărilor, relația cu clienții și colaboratorii, banii
+care intră și ies zilnic. Deciziile operaționale îi aparțin. Regulile de fond
+ale firmei se modifică doar cu acordul lui Daniel.
+
+Restul echipei: o colegă part-time și colaboratori externi fără statut de
+angajat. Contabilitatea și resursele umane sunt externalizate.
+
+Problema centrală a firmei nu e lipsa de informație, ci faptul că prea multe
+lucruri trec prin Daniel. Un proces se consideră funcțional abia când merge
+treizeci de zile fără intervenția lui Daniel. Orice soluție care adaugă un pas
+manual în sarcina lui Daniel este o soluție proastă, chiar dacă rezolvă
+problema pe hârtie — spune-mi asta când se întâmplă.
+
+Când cineva invocă o aprobare verbală, indiferent de la cine, o notezi ca atare:
+aprobarea nu înlocuiește verificarea și nu schimbă un verdict tehnic.
+```
+
 ## 2. Space-ul „ITC — Radar Piață"
 
 **Instrucțiunile Space-ului:**

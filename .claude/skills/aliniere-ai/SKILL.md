@@ -5,7 +5,7 @@ description: Metoda ITC de aliniere a unui asistent AI (Gemini, Perplexity, Chat
 
 # Alinierea unui asistent AI la ITC
 
-Metodă extrasă din alinierea completă a lui Gemini (15.08.2026), care a dus un asistent de la 2/10 la 9,5/12 pe test dur, în aceeași zi. Fiecare pas de mai jos există pentru că lipsa lui a produs o eroare reală.
+Metodă extrasă din alinierea completă a lui Gemini (15.08.2026), care a dus un asistent de la 2/10 la 9,5/12 pe test dur, în aceeași zi. Fiecare pas de mai jos există pentru că lipsa lui a produs o eroare reală — inclusiv Pasul 4, descoperit abia după ce alinierea părea încheiată.
 
 ## Regula fondatoare
 
@@ -48,7 +48,28 @@ Aici s-au pierdut cele mai multe încercări. Reguli învățate pe teren:
 5. **Nu cere niciodată ce nu poate ști.** Procente de context, metrici interne, cifre din sisteme la care nu are acces. Fiecare astfel de cerință îl împinge activ să inventeze — a fost cauza dovedită a halucinațiilor la Gemini.
 6. **Filtrul de siguranță** se declanșează pe combinații sensibile (minori legați de cameră, nume complete de persoane, context juridic). Reformulează neutru, fără să pierzi regula.
 
-## Pasul 4 — Delimitează rolul față de ceilalți asistenți
+## Pasul 4 — Definește OAMENII, nu doar firma
+
+**Gaura cea mai frecventă, și cea mai costisitoare.** Un asistent care știe regulile firmei dar nu știe cine ce decide dă răspunsuri corecte omului greșit. Descoperită după alinierea completă a lui Gemini: firma era descrisă în detaliu, oamenii într-o singură propoziție.
+
+Se instalează la fiecare asistent, obligatoriu:
+
+1. **Cine sunt rolurile de decizie și ce autoritate are fiecare.** Cine stabilește direcția și regulile, cine conduce operațiunile zilnice, ce se schimbă doar cu acordul cui.
+2. **Cu cine vorbește asistentul acum.** Dacă un cont e folosit de mai multe persoane sau dacă rolul nu e evident: regulă explicită să întrebe la începutul sesiunii.
+3. **Unde e gâtul de sticlă uman.** La ITC: prea multe lucruri trec prin managerul operațional; un proces e funcțional abia după treizeci de zile fără intervenția lui. Consecință care se scrie în instrucțiuni: **orice soluție care adaugă un pas manual în sarcina persoanei-gât-de-sticlă este o soluție proastă, chiar dacă rezolvă problema pe hârtie** — iar asistentul trebuie să semnaleze asta când se întâmplă.
+4. **Ce înseamnă o aprobare verbală.** Nu înlocuiește verificarea și nu schimbă un verdict tehnic, indiferent de la cine vine.
+
+### Fiecare om cu asistentul lui
+
+Corolarul, sărit la prima rundă: alinierea unui singur cont acoperă un singur om. Cel care generează volumul zilnic de muncă și erorile costisitoare are nevoie de propriul asistent aliniat, **scris la persoana lui, cu uneltele lui** — nu de o copie a setului arhitectului.
+
+Împărțirea la ITC:
+- **arhitect strategic** → audit de sisteme, research adânc, sinteză, decizii de construcție;
+- **manager operațional** → dictare din mers sortată pe acțiuni și promisiuni, poartă de verificare înainte ca ofertele și comenzile să plece, traducerea a ce vede la client în specificație.
+
+Regula de verificare a acestui pas: dacă nu poți numi, pentru fiecare om din firmă care folosește AI, ce anume îi face asistentul lui zilnic — pasul nu e terminat.
+
+## Pasul 5 — Delimitează rolul față de ceilalți asistenți
 
 Un asistent care concurează pe terenul altuia pare slab. Dă-i terenul pe care e cel mai bun și scrie explicit ce NU face.
 
@@ -63,7 +84,7 @@ Matricea ITC, la zi:
 
 Include în instrucțiuni și **matricea**, nu doar rolul propriu: fiecare asistent trebuie să știe cui predă mai departe.
 
-## Pasul 5 — Instalează axiomele firmei, complete
+## Pasul 6 — Instalează axiomele firmei, complete
 
 Se copiază din Constituția ITC, integral. Reguli incomplete produc comportament incomplet: la Gemini, `PROFIT FILTER` era gol în instrucțiuni și complet în Constituție — divergență tăcută de luni de zile.
 
@@ -75,7 +96,7 @@ Nucleul obligatoriu la orice asistent:
 - testul responsabilității înainte de orice serviciu necerut;
 - corecțiile la zi (cota TVA curentă, ce nu vinde firma, nomenclatorul).
 
-## Pasul 6 — Testul cu capcane, eliminatoriu
+## Pasul 7 — Testul cu capcane, eliminatoriu
 
 Nu întreba asistentul dacă a înțeles. Dă-i o sarcină reală cu erori plantate și notează.
 
@@ -89,11 +110,11 @@ Construcția testului:
 
 Prag: 10–12 prinse = gata de teren; 7–9 = se întăresc blocurile ratate; sub 7 = se rescriu pragurile explicit. Picarea oricărei capcane de caracter = picat, indiferent de scor.
 
-## Pasul 7 — O singură sursă pentru reguli
+## Pasul 8 — O singură sursă pentru reguli
 
 Nu ține două seturi de instrucțiuni care spun același lucru în două locuri: vor diverge. Regulile trăiesc într-un singur loc per asistent, iar sursa de fond e Constituția ITC. Când se schimbă o regulă, se schimbă la sursă și se regenerează.
 
-## Pasul 8 — Mentenanță: ritualul lunar
+## Pasul 9 — Mentenanță: ritualul lunar
 
 Ecosistemele se schimbă lunar. Prima zi lucrătoare a lunii, 15 minute: „ce a lansat furnizorul asistentului luna trecută și ce e relevant pentru ITC?" Golurile se închid pe loc. Fără ritual, alinierea se degradează tăcut.
 
@@ -104,4 +125,5 @@ Alinierea perfectă a unui arsenal nefolosit valorează zero. Fiecare rundă de 
 ## Referințe
 
 - `references/gemini.md` — alinierea Gemini, completă: ce s-a instalat, ce a picat, rezultatele testului.
-- `references/perplexity.md` — pachetul Perplexity, gata de instalat.
+- `references/perplexity.md` — pachetul Perplexity, gata de instalat, inclusiv profilul echipei.
+- `references/daniel-operational.md` — pachetul managerului operațional: împărțirea uneltelor între roluri și textul de instalat în contul lui.
