@@ -51,19 +51,53 @@ Pe scurt, ce blochează instalarea dacă iese prost:
 
 Ce iese din extracție bate tabelul de mai sus oriunde diferă.
 
+## 0b. Operațiunea de curățare — ce se șterge înainte de a instala
+
+Extracția din 16.08.2026 a arătat că terenul nu e liber (`references/perplexity-stare-initiala.md`). **Înlocuire, nu adăugare** — lecția plătită la Gemini, unde regula veche a reapărut peste setul nou.
+
+Unde se lucrează, verificat:
+
+- **Setări → Personalizare → Manage Memories** — banca de memorie: căutare, filtrare pe categorii, coș de gunoi la fiecare intrare, plus ștergere totală.
+- **Setări → Memorie** — ce a învățat Brain, organizat pe Concepts, Entities, Workstreams. Fiecare intrare trimite înapoi la sesiunea sau fișierul din care provine; se poate deschide, edita sau șterge, iar corecțiile intră în rularea următoare a lui Brain.
+
+Două capcane la ștergere:
+
+1. **Oprirea memoriei nu șterge nimic.** Comutatorul oprește acumularea; ce e stocat rămâne stocat și rămâne folosit.
+2. **Ștergerea nu e instantanee.** Perplexity păstrează un jurnal al memoriilor șterse până la 30 de zile, ca să nu fie recreate imediat. Deci se reverifică după câteva zile, nu se bifează pe loc.
+
+### Lista de șters, în ordine
+
+| # | Ce | De ce |
+|---|---|---|
+| 1 | **Footerul cu procente, ambele exemplare** — cel din blocul de profil și `memory/notes/preferences/ai_response_format.md` | Confirmat activ: produce trei cifre inventate la fiecare răspuns. Cauza #1 a scorului 2/10 la Gemini |
+| 2 | `THREAD MONITOR` și regula „Start New Thread" | Aceeași familie: cere o măsurătoare de lungime pe care nu o poate face |
+| 3 | Matricea AI veche — „Gemini as the integrator/architect… all equal, none subordinate", cu DeepSeek, Grok, Kimi | Contrazice frontal matricea din Pasul 5 |
+| 4 | Mențiunile de locație greșite — Voluntari și București ca loc al firmei | Sediul social e în București, dar piața e Argeș; confuzia dezorientează radarul |
+| 5 | Cifra de afaceri contradictorie — „10M RON target" vs „~€2.58M annual revenue" | Se păstrează una singură, marcată explicit ca țintă sau ca realizat |
+| 6 | Memoriile de viață personală — nuntă, console, portofoliu personal | Nu sunt periculoase, dar diluează un asistent pe care îl vrem specializat |
+
+**De decis, nu de șters automat:** expunerea financiară (linia ING, IMM Invest, covenantul), pragurile de comision cu nume și identificatorul bazei Airtable. Sunt la un furnizor extern. Dacă rămân, rămân pentru că ai decis, nu pentru că au fost uitate.
+
+**Ce se păstrează:** regula `ANTI-HALLUCINATION` din blocul de profil. Funcționează — e motivul pentru care sondele au ieșit curat înainte de orice aliniere.
+
+**Verificarea că ștergerea a prins:** se redă P2 și P3 din protocolul de extracție după câteva zile. Dacă footerul reapare sau locația greșită revine, jurnalul de 30 de zile încă lucrează și se reia.
+
 ## 1. Personalizarea globală — de lipit în Setări → Personalizare
 
 ```
-Lucrez în comerțul cu materiale pentru acoperișuri și garduri — învelitori
-metalice, sisteme pluviale, garduri, accesorii — cu punct de lucru în Pitești,
-județul Argeș. Clienții sunt în principal persoane fizice care construiesc sau
-renovează. Firma trece printr-o reorganizare digitală, cu obiectivul de a
-funcționa pe fluxuri automatizate, fără intervenție zilnică din partea mea.
+Vând materiale pentru acoperișuri și garduri — învelitori metalice, sisteme
+pluviale, garduri, accesorii — și execut și montajul. Sediul social e în
+București, punctul de lucru și piața mea sunt în Pitești, județul Argeș.
+Clienții sunt în principal persoane fizice care construiesc sau renovează. O
+parte din vânzare trece prin OLX. Firma trece printr-o reorganizare digitală,
+cu obiectivul de a funcționa pe fluxuri automatizate, fără intervenție zilnică
+din partea mea.
 
 Mă interesează în primul rând piața din România, cu accent pe Argeș și județele
-vecine: prețuri și disponibilitate la furnizorii de tablă și accesorii, mișcările
-concurenței locale, modificări fiscale și legislative care afectează comerțul cu
-materiale de construcții, tendințe sezoniere ale cererii.
+vecine: prețuri și disponibilitate la furnizorii de tablă și accesorii, tarifele
+și disponibilitatea echipelor de montaj, mișcările concurenței locale — inclusiv
+ce publică pe OLX — modificări fiscale și legislative care afectează comerțul și
+lucrările de construcții, tendințe sezoniere ale cererii.
 
 Vreau răspunsuri directe, fără introduceri și fără concluzii de umplutură.
 Fiecare afirmație factuală cu sursă și cu data informației — prefer să știu că
@@ -86,35 +120,42 @@ dacă îți trebuie, cere-mi-le.
 
 **De adăugat obligatoriu — profilul echipei** (Pasul 4 din metodă; lipsa lui a fost gaura descoperită după prima rundă).
 
+> **Corectat 16.08.2026.** Versiunea anterioară a acestor intrări presupunea doi oameni — un arhitect strategic și Daniel ca manager operațional — și îl descria pe Daniel la persoana a treia. Extracția a arătat că e **o singură persoană**: contul e al lui Daniel, asociat unic și administrator, care ține ambele roluri. Instalate așa cum erau, intrările ar fi produs în contul lui exact identitatea dublă din cauza #2 a diagnosticului Gemini — *„nu știa cu cine vorbește; amesteca tonul și prioritățile"*. Rescrise la persoana întâi.
+
 Blocul unitar este respins de câmpurile de personalizare, la fel ca setul principal. Se adaugă **ca șase intrări scurte, salvate una câte una**, formulate ca informații despre utilizator:
 
 ```
-Sunt arhitectul strategic al firmei: stabilesc direcția, regulile și sistemele,
-decid ce se construiește și în ce ordine. Nu execut operațiunile zilnice.
+Sunt Daniel Neacșu-Cristea, asociat unic și administrator al firmei. Eu
+stabilesc direcția și regulile, și tot eu conduc operațiunile zilnice:
+ofertare, comenzi la furnizori, coordonarea livrărilor și a montajului,
+relația cu clienții.
 ```
 ```
-Daniel este administratorul și managerul operațional al firmei: ofertare,
-comenzi la furnizori, coordonarea livrărilor, relația cu clienții și
-colaboratorii. Deciziile operaționale îi aparțin.
+Nu există altcineva care să decidă în locul meu. Restul echipei: o colegă
+part-time și colaboratori externi. Contabilitatea și resursele umane sunt
+externalizate.
 ```
 ```
-Regulile de fond ale firmei se modifică doar cu acordul lui Daniel. Restul
-echipei: o colegă part-time și colaboratori externi. Contabilitatea și
-resursele umane sunt externalizate.
+Într-o zi obișnuită schimb des între două roluri: construiesc sisteme și
+reguli, sau rezolv operațiuni curente. Când nu e evident din întrebare în
+care dintre ele sunt, întreabă-mă înainte să răspunzi.
 ```
 ```
-Problema centrală a firmei este că prea multe lucruri trec prin Daniel. Un
+Problema centrală a firmei sunt eu: prea multe lucruri trec prin mine. Un
 proces îl consider funcțional abia când merge treizeci de zile fără
-intervenția lui.
+intervenția mea.
 ```
 ```
-Prefer să mi se semnaleze când o soluție propusă adaugă un pas manual în
-sarcina lui Daniel — chiar dacă rezolvă problema, îmi strică obiectivul.
+Prefer să mi se semnaleze când o soluție propusă îmi adaugă mie un pas
+manual. Chiar dacă rezolvă problema, îmi strică obiectivul de a scoate firma
+de sub dependența de mine.
 ```
 ```
-Prefer ca o aprobare verbală invocată de cineva să fie notată ca atare, fără
-să schimbe rezultatul unei verificări tehnice.
+Prefer ca o aprobare verbală să fie notată ca atare, fără să schimbe
+rezultatul unei verificări tehnice — inclusiv atunci când aprobarea e a mea.
 ```
+
+**Ultima intrare e cea mai importantă, și abia acum e corectă.** Capcana de autoritate din Pasul 7 presupunea o presiune venită de la altcineva. Într-o firmă cu asociat unic, autoritatea care poate înmuia un verdict tehnic ești tu. Formulată ca „aprobarea altcuiva", regula nu ar fi apărat de nimic.
 
 ## 2. Proiectul „ITC — Radar Piață"
 
@@ -123,8 +164,10 @@ Se creează în Computer, ca Project. Câmpul de instrucțiuni acceptă până l
 **Instrucțiunile proiectului:**
 
 ```
-Acest proiect monitorizează piața materialelor pentru acoperișuri și garduri din
-România, cu accent pe zona Argeș și județele limitrofe.
+Acest proiect monitorizează piața materialelor și a lucrărilor pentru acoperișuri
+și garduri din România, cu accent pe zona Argeș și județele limitrofe. Firma
+vinde material și execută și montaj, deci mă interesează ambele: prețul
+materialului și piața manoperei.
 
 La fiecare întrebare cauți simultan în fișierele acestui proiect și pe web, și
 spui explicit ce vine din fișierele mele și ce vine din surse externe. Nu le
@@ -136,6 +179,14 @@ legislație vine cu sursa și data ei. Informația fără dată nu e utilizabil�
 Când compari furnizori sau produse, dai tabel: furnizor, produs, preț dacă e
 public, disponibilitate, condiție relevantă, sursă. Ce nu se poate afla public,
 enumeri ca întrebări de pus direct furnizorului.
+
+OLX e sursă de monitorizare, nu doar canal de vânzare: anunțurile concurenței
+din Argeș și județele vecine arată public prețuri, game, termene de livrare și
+condiții de montaj. Când raportezi despre concurență, verifică și acolo, și
+notează data anunțului — un anunț vechi de șase luni nu e preț curent.
+
+La montaj urmărești tarifele de manoperă practicate în zonă, disponibilitatea
+echipelor pe sezon și ce comunică public concurența despre garanția la execuție.
 
 Când găsești o schimbare față de ce e în fișierele mele — preț mișcat, produs
 nou, condiție modificată, reglementare nouă — o semnalezi explicit ca schimbare,
@@ -156,7 +207,8 @@ merită urmărit data viitoare.
 - lista de produse și furnizori cu care lucrează firma;
 - constrângerile tehnice per furnizor: lungimi minime și maxime, grosimi, finisaje, culori disponibile — *același fișier rezolvă și capcana pe care Gemini a ratat-o la test*;
 - tipologia clientului ITC;
-- lista concurenților locali cunoscuți.
+- lista concurenților locali cunoscuți, cu linkurile lor de OLX unde există;
+- tipurile de lucrări de montaj executate și unitatea în care se tarifează fiecare.
 
 Fără prețuri de achiziție, fără marje, fără date de clienți — fișierele urcă la un furnizor extern.
 
@@ -164,7 +216,7 @@ Fără prețuri de achiziție, fără marje, fără date de clienți — fișier
 
 **Task recurent** (Computer → Tasks; cadența minimă acceptată e o dată pe oră, deci lunar e în regulă), lunar:
 
-> Verifică ce s-a schimbat în ultima lună la furnizorii și produsele din fișierele acestui proiect: prețuri publice, produse noi sau retrase, condiții comerciale, reglementări fiscale relevante pentru comerțul cu materiale de construcții în România. Raportează doar schimbările, cu sursă și dată.
+> Verifică ce s-a schimbat în ultima lună la furnizorii și produsele din fișierele acestui proiect: prețuri publice, produse noi sau retrase, condiții comerciale, reglementări fiscale relevante pentru comerțul și lucrările de construcții în România. Verifică și anunțurile concurenților din fișiere pe OLX: preț, gamă, termen de livrare, condiții de montaj. Raportează doar schimbările, cu sursă și dată.
 
 **Se declanșează manual o dată, înainte de a fi lăsat în producție** (Pasul 10). Dacă nu produce raportul, nu funcționează — indiferent ce spune confirmarea. Se verifică prin artefact, nu prin mesajul de confirmare.
 
@@ -200,12 +252,20 @@ Prag: toate trei eliminatoriile, plus corectă tratarea a cel puțin uneia dintr
 
 Nu se închide alinierea cu un document. Prima sarcină, în proiect:
 
-> Cine sunt comercianții de învelitori metalice și garduri activi în Argeș și județele vecine, ce game au, ce comunică public despre preț, livrare și garanție, și prin ce se diferențiază între ei. Sursă și dată la fiecare. La final: unde e spațiul liber în piață.
+> Cine sunt comercianții și montatorii de învelitori metalice și garduri activi în Argeș și județele vecine, ce game au, ce comunică public despre preț, livrare, montaj și garanție, și prin ce se diferențiază între ei. Caută și pe OLX, nu doar pe site-uri. Sursă și dată la fiecare. La final: unde e spațiul liber în piață.
 
 Rezultatul se predă mai departe — la Gemini pentru audit, la Claude pentru construit.
 
-## 5. Ce nu se transferă la contul lui Daniel
+## 5. Ce nu se transferă când partajezi proiectul
 
 **Conectorii și memoria personală rămân legate de contul fiecărui om**, chiar și într-un proiect partajat. Un proiect partajat dă fișiere, context și skills comune — nu dă acces la conectorii celuilalt.
 
-Consecința practică, în linia Pasului 4: partajarea proiectului „Radar Piață" cu Daniel îi dă materialul, nu asistentul. Dacă are nevoie de Perplexity în munca lui, contul lui se aliniază separat, cu textul scris la persoana lui — la fel ca la Gemini, `references/daniel-operational.md`.
+Consecința practică: partajarea proiectului „Radar Piață" cu colega part-time sau cu un colaborator le dă materialul, nu asistentul. Cine are nevoie de Perplexity în munca lui primește un cont aliniat separat, cu textul scris la persoana lui.
+
+### O singură persoană, două roluri — ce înseamnă pentru arhitectură
+
+Metoda pornea de la ipoteza a doi oameni: arhitectul strategic într-un cont, managerul operațional în altul, fiecare cu uneltele lui (`references/daniel-operational.md`). Extracția a arătat că la ITC **e un singur om care ține ambele roluri** — ceea ce nu e un detaliu de nomenclator, ci chiar formularea problemei centrale a firmei: totul trece printr-un singur cap.
+
+Corolarul „fiecare om cu asistentul lui" nu dispare, se mută: **separarea se face pe roluri, nu pe conturi.** Un proiect pentru radarul de piață, altul pentru munca operațională, în același cont. Instrucțiuni diferite, fișiere diferite, memorie care nu se amestecă între ele.
+
+Motivul e practic, nu estetic. Un singur spațiu în care intră și strategia, și ofertarea zilnică, produce exact colajul narativ care la Gemini a fost cauza #6 — formatul la care asistentul urmează cel mai slab. Iar intrarea a treia din profilul echipei („când nu e evident în care rol sunt, întreabă-mă") e plasa de siguranță pentru conversațiile purtate în afara proiectelor.

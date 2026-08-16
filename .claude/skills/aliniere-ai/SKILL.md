@@ -74,18 +74,29 @@ Se instalează la fiecare asistent, obligatoriu:
 
 1. **Cine sunt rolurile de decizie și ce autoritate are fiecare.** Cine stabilește direcția și regulile, cine conduce operațiunile zilnice, ce se schimbă doar cu acordul cui.
 2. **Cu cine vorbește asistentul acum.** Dacă un cont e folosit de mai multe persoane sau dacă rolul nu e evident: regulă explicită să întrebe la începutul sesiunii.
-3. **Unde e gâtul de sticlă uman.** La ITC: prea multe lucruri trec prin managerul operațional; un proces e funcțional abia după treizeci de zile fără intervenția lui. Consecință care se scrie în instrucțiuni: **orice soluție care adaugă un pas manual în sarcina persoanei-gât-de-sticlă este o soluție proastă, chiar dacă rezolvă problema pe hârtie** — iar asistentul trebuie să semnaleze asta când se întâmplă.
+3. **Unde e gâtul de sticlă uman.** La ITC: totul trece prin asociatul unic, care ține deopotrivă direcția și operațiunile; un proces e funcțional abia după treizeci de zile fără intervenția lui. Consecință care se scrie în instrucțiuni: **orice soluție care adaugă un pas manual în sarcina persoanei-gât-de-sticlă este o soluție proastă, chiar dacă rezolvă problema pe hârtie** — iar asistentul trebuie să semnaleze asta când se întâmplă.
 4. **Ce înseamnă o aprobare verbală.** Nu înlocuiește verificarea și nu schimbă un verdict tehnic, indiferent de la cine vine.
 
 ### Fiecare om cu asistentul lui
 
 Corolarul, sărit la prima rundă: alinierea unui singur cont acoperă un singur om. Cel care generează volumul zilnic de muncă și erorile costisitoare are nevoie de propriul asistent aliniat, **scris la persoana lui, cu uneltele lui** — nu de o copie a setului arhitectului.
 
-Împărțirea la ITC:
+Rolurile de acoperit:
 - **arhitect strategic** → audit de sisteme, research adânc, sinteză, decizii de construcție;
 - **manager operațional** → dictare din mers sortată pe acțiuni și promisiuni, poartă de verificare înainte ca ofertele și comenzile să plece, traducerea a ce vede la client în specificație.
 
 Regula de verificare a acestui pas: dacă nu poți numi, pentru fiecare om din firmă care folosește AI, ce anume îi face asistentul lui zilnic — pasul nu e terminat.
+
+### Numără oamenii înainte să împarți rolurile
+
+**Corecție 16.08.2026, plătită pe cont propriu.** Metoda a tratat cele două roluri de mai sus ca doi oameni și a scris pachetele în consecință — profilul echipei îl descria pe manager la persoana a treia, ca despre altcineva. Extracția din contul Perplexity a arătat că la ITC **e o singură persoană**, asociat unic, care ține ambele roluri. Instalate așa, intrările ar fi băgat în contul lui exact identitatea dublă din cauza #2 a diagnosticului Gemini.
+
+Ce se învață din asta, transferabil:
+
+1. **Rolurile nu sunt oameni.** Se numără capetele întâi, se împart rolurile după. Un rol descris la persoana a treia într-un cont al cărui proprietar chiar îl ține produce un asistent care nu știe cu cine vorbește.
+2. **Când un om ține două roluri, separarea se mută de la conturi la spații.** Un proiect per rol, în același cont, cu instrucțiuni și fișiere care nu se amestecă — plus o regulă în profil care îi cere să întrebe în ce rol ești când nu e evident.
+3. **Un singur om cu toate rolurile nu e un caz particular, e diagnosticul.** Exact asta descrie gâtul de sticlă de la punctul 3 de mai sus. Dacă la numărătoare iese un singur cap pentru toate rolurile, ai găsit problema centrală a firmei înainte să scrii o instrucțiune.
+4. **Capcana de autoritate se rescrie.** Formulată ca „presiune de la altcineva", nu apără de nimic într-o firmă cu asociat unic — acolo autoritatea care poate înmuia un verdict tehnic e chiar utilizatorul, iar regula trebuie să o spună.
 
 **Formă:** profilul echipei se supune acelorași reguli ca restul (Pasul 3) — bloc unitar respins, șase intrări scurte acceptate, formulate ca informații despre utilizator, nu ca portrete la persoana a treia. Textele gata de folosit: `references/perplexity.md`.
 

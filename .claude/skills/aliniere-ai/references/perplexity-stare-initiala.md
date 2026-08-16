@@ -2,6 +2,8 @@
 
 Rezultatul Fazei 1 din `extractie-perplexity.md`, pe contul Pro. Faza 0 (ochii în interfață), sondele P4–P8 și P9 **nu sunt încă rulate** — concluziile de mai jos sunt valabile doar pe ce a ieșit din memorie.
 
+**Cele patru contradicții au fost lămurite de titularul contului pe 16.08.2026.** Răspunsurile sunt marcate ▸ la fiecare secțiune și au fost deja aplicate în `perplexity.md`.
+
 Verdict scurt: **terenul nu e liber.** Memoria e dens populată, conține două seturi de reguli care se contrazic, și — cel mai grav — **defectul care a dus Gemini la 2/10 este instalat aici, în două exemplare.**
 
 ---
@@ -35,7 +37,9 @@ ANTI-HALLUCINATION: nu inventa prețuri, discounturi, termene, stoc, legal.
 ```
 Setul conține deopotrivă interdicția de a inventa și obligația de a inventa trei cifre la fiecare răspuns. Asistentul nu poate respecta ambele.
 
-**De rezolvat înainte de orice instalare:** se șterg ambele exemplare. Înlocuire, nu adăugare — lecția din dosarul Gemini, unde footerul vechi a reapărut cu procente inventate chiar în raportul disciplinat.
+**▸ Confirmat activ.** Titularul contului a verificat: footerul apare în răspunsuri, cu procente completate. Nu e o regulă moartă în memorie — e halucinație în funcțiune, trei cifre inventate la fiecare răspuns, în ciuda regulii `ANTI-HALLUCINATION` din același bloc.
+
+**De rezolvat înainte de orice instalare:** se șterg ambele exemplare, plus `THREAD MONITOR`, care cere aceeași măsurătoare imposibilă. Înlocuire, nu adăugare — lecția din dosarul Gemini, unde footerul vechi a reapărut cu procente inventate chiar în raportul disciplinat. Procedura de ștergere: `perplexity.md`, secțiunea 0b.
 
 ---
 
@@ -54,7 +58,16 @@ Pachetul de aliniere din `perplexity.md` spune că utilizatorul **nu** este Dani
 
 Blocul `<summary>` sugerează a treia citire: *asistentul* e „STAT MAJOR / Architect Operațional", iar Daniel e „COMMANDER" — adică utilizatorul e Daniel, iar textul descrie persona asistentului, nu a omului.
 
-**Nu se instalează nimic din Pasul 4 până nu se lămurește.** Diagnosticul Gemini pentru exact această situație: *„Două identități contradictorii în același set → nu știa cu cine vorbește; amesteca tonul și prioritățile."* Cele șase intrări despre echipă, instalate peste memoria actuală, produc fix asta.
+**▸ Lămurit: memoria avea dreptate. Utilizatorul este Daniel** — asociat unic și administrator, care ține deopotrivă rolul strategic și pe cel operațional. Nu există un al doilea om.
+
+Consecințe, deja aplicate:
+
+- cele șase intrări din `perplexity.md` **rescrise la persoana întâi**; instalate în forma veche, ar fi produs în contul lui exact identitatea dublă din diagnosticul Gemini;
+- capcana de autoritate reformulată: într-o firmă cu asociat unic, autoritatea care poate înmuia un verdict tehnic e chiar utilizatorul, deci regula trebuie să-l numească pe el;
+- separarea rolurilor se mută de la conturi la proiecte, în același cont;
+- `SKILL.md`, Pasul 4, corectat: metoda trata cele două roluri ca doi oameni. Se numără capetele înainte de a împărți rolurile.
+
+Diagnosticul Gemini pentru exact această situație: *„Două identități contradictorii în același set → nu știa cu cine vorbește; amesteca tonul și prioritățile."*
 
 ---
 
@@ -78,9 +91,9 @@ Instalarea matricei noi fără ștergerea celei vechi = divergență tăcută, g
 | rezumat de sesiune | București |
 | pachetul din `perplexity.md` | punct de lucru Pitești, județul Argeș |
 
-Numărul de înmatriculare din memorie, `J40/4051/2015`, indică **registrul comerțului București** (J40). Ipoteza care împacă totul, de confirmat, nu de presupus: sediu social în București, punct de lucru în Pitești, administrator rezident în Voluntari.
+Numărul de înmatriculare din memorie, `J40/4051/2015`, indică **registrul comerțului București** (J40).
 
-Contează direct: radarul de piață monitorizează concurența dintr-un județ. Argeș și Ilfov/București sunt piețe complet diferite. Până la lămurire, radarul nu are graniță.
+**▸ Confirmat: sediu social în București, punct de lucru și piață în Pitești, județul Argeș.** Cele trei surse se împacă — Voluntari e reședința administratorului, nu a firmei. Radarul rămâne pe Argeș și județele vecine, cum era scris. Mențiunile care prezintă Voluntari sau București ca loc al firmei se șterg din memorie: nu sunt neutre, dezorientează un asistent pus să monitorizeze concurența locală.
 
 **De notat ca semn bun:** întrebat la P3, asistentul **nu a ales una** — a enumerat contradicția și a scris „NU ȘTIU cu certitudine". Comportamentul corect.
 
@@ -127,6 +140,8 @@ Pachetul din `perplexity.md` descrie ITC ca **comerț** cu materiale. Memoria ad
 
 - **montajul.** „IDENTITY: expert montator", „servicii de montaj", „roofing company". Dacă firma vinde și manoperă, radarul trebuie să urmărească și piața execuției, nu doar prețul materialului.
 - **OLX.** Apare de patru ori în memorie ca și canal de vânzare și temă de optimizare. Concurența locală se vede public pe OLX mai bine decât oriunde — e cea mai bogată sursă de monitorizare din piața asta și nu e menționată nicăieri în pachet.
+
+**▸ Confirmat: firma vinde material și execută și montajul.** Ambele intră în radar. Aplicat în `perplexity.md`: instrucțiunile proiectului acoperă acum tarifele de manoperă, disponibilitatea echipelor pe sezon și garanția la execuție; OLX devine sursă de monitorizare, cu regula ca fiecare anunț să fie raportat cu data lui — un anunț vechi de șase luni nu e preț curent.
 
 ---
 
