@@ -120,6 +120,20 @@ Nu ține două seturi de instrucțiuni care spun același lucru în două locuri
 
 Ecosistemele se schimbă lunar. Prima zi lucrătoare a lunii, 15 minute: „ce a lansat furnizorul asistentului luna trecută și ce e relevant pentru ITC?" Golurile se închid pe loc. Fără ritual, alinierea se degradează tăcut.
 
+## Pasul 10 — Infrastructura comună între asistenți
+
+Lecții plătite pe teren, la construirea punții dintre două conturi Google (16.08.2026). Se aplică oricând doi asistenți trebuie să lucreze pe același material.
+
+**Fiecare asistent scrie în fișiere pe care le deține el; ceilalți citesc prin partajare.** Invers nu funcționează: căutarea fiecărui cont indexează doar propriile fișiere. Un document creat de A, așezat în folderul lui B, rămâne invizibil pentru căutarea lui B. Linkul direct îl deschide, dar nu e un mecanism pe care să se bazeze un ritual zilnic.
+
+**Puntea între conturi diferite:** un folder creat pe contul asistentului, partajat cu celălalt cont cu drept de editare. Fișierele partajate se pot citi; conținutul unui document existent nu se poate modifica din exterior — se creează fișiere noi, datate.
+
+**Rutinele programate create prin conversație nu primesc conectori.** Rulează oarbe: fără acces la Drive, Airtable sau orice sursă externă, și nu pot nici măcar raporta eșecul. Verificarea e imediată — rutinele funcționale au conectori listați în configurație, cele oarbe au lista goală. Se creează din interfața web, sau se leagă de o sesiune existentă care deține deja conectorii.
+
+**Orice rutină se declanșează manual înainte de a fi lăsată în producție.** Dacă nu produce artefactul așteptat în câteva minute, nu funcționează — indiferent ce spune confirmarea. O rutină care eșuează tăcut e mai rea decât una care nu există: creezi dependență pe ceva mort. Se verifică prin artefact (fișierul apărut), nu prin mesajul de confirmare.
+
+**Fiecare pas al unei rutine primește o ramură de eșec** care lasă urmă scrisă în același loc cu succesul. Fără ea, o rutină moartă rămâne moartă luni de zile fără să observe nimeni.
+
 ## Capcana care închide totul
 
 Alinierea perfectă a unui arsenal nefolosit valorează zero. Fiecare rundă de aliniere se încheie cu **o misiune reală dată asistentului**, nu cu un document. Dacă nu poți numi sarcina pe care o preia mâine, alinierea nu s-a terminat.
