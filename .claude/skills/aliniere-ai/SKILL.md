@@ -19,8 +19,10 @@ Capabilitățile se schimbă lunar. Ce știi din antrenament e o fotografie vech
 - Fiecare afirmație despre ce poate: sursă oficială sau minim două surse independente.
 - Notează **arhitectura de personalizare** — e diferită la fiecare asistent și decide tot ce urmează:
   - *Gemini:* preferințe globale (soft) + Gems (reguli imperative) + memorie importată.
-  - *Perplexity:* Profil AI (global) + Spaces (instrucțiuni + fișiere + task-uri recurente).
+  - *Perplexity:* Personalizare (global) + Projects (instrucțiuni + fișiere + conectori) + Brain (memorie care se auto-scrie) + Tasks programate.
   - Altul: identifică echivalentele înainte de a scrie o literă.
+
+**Verifică și numele, nu doar existența.** Un strat redenumit e un strat pe care nu-l găsești în interfață și pe care asistentul nu-l recunoaște în instrucțiuni. Spaces au devenit Projects pe 30.07.2026; pachetul Perplexity al acestei metode a fost scris pe arhitectura veche două săptămâni mai târziu, fără ca cineva să observe.
 
 ## Pasul 2 — Bucla în doi: pune-l să se inventarieze din interiorul contului
 
@@ -119,6 +121,10 @@ Nu ține două seturi de instrucțiuni care spun același lucru în două locuri
 ## Pasul 9 — Mentenanță: ritualul lunar
 
 Ecosistemele se schimbă lunar. Prima zi lucrătoare a lunii, 15 minute: „ce a lansat furnizorul asistentului luna trecută și ce e relevant pentru ITC?" Golurile se închid pe loc. Fără ritual, alinierea se degradează tăcut.
+
+Ritmul e dovedit pe propriile fișiere ale metodei: pachetul Perplexity a ieșit din realitate în mai puțin de o lună de la scriere. **La fiecare reinstalare se reface Pasul 1, chiar dacă există un pachet gata scris** — pachetul e un punct de plecare, nu o sursă de adevăr.
+
+Unde asistentul are memorie care se auto-scrie (Brain la Perplexity), ritualul capătă o a doua întrebare: „ce ai reținut despre firma mea și de unde?" O regulă greșită intrată în memoria automată nu apare în niciun fișier pe care să-l deschizi.
 
 ## Pasul 10 — Infrastructura comună între asistenți
 
