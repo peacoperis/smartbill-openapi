@@ -39,6 +39,22 @@ marcat [MEMORIE — POSIBIL DATAT]. Unde nu ești sigur, scrii NESIGUR.
 
 Ce iese de aici este singura sursă de adevăr despre cont. La Gemini, bucla a scos că Drive și Maps nu erau conectate — invizibil din exterior.
 
+### Sondă, nu întrebare
+
+Corecție adusă acestui pas după ce formularea de mai sus s-a dovedit insuficientă: auto-declarația e cel mai slab canal, nu cel mai bun. Un asistent întrebat *ce poate* răspunde din documentație și din antrenament, cu încredere totală. Trei canale, în ordinea încrederii:
+
+1. **Ochii tăi în interfață** — pentru tot ce e afișat: plan, limite, comutatoare, liste de conectori, solduri. Nu se delegă niciodată.
+2. **Sonde comportamentale** — îl pui să *facă*, nu să *declare*. „Deschide ultimul fișier din Drive și spune-mi titlul exact" bate „ai acces la Drive?" de fiecare dată; un titlu inventat îți spune, în zece secunde, mai mult decât o pagină de auto-descriere.
+3. **Auto-declarația** — ultima, și doar cu separarea forțată de mai sus. Utilă pentru memoria stocată, nu pentru capabilități.
+
+**Extrage memoria înainte de a sonda.** Unde asistentul are memorie care se auto-scrie, fiecare probă adaugă un strat. Sondezi întâi, extragi propriile tale sonde și crezi că ai găsit starea inițială.
+
+**Măsoară linia de bază.** Testul cu capcane (Pasul 7) se dă și *înainte* de instalare. Cifra de pornire e ce transformă „pare mai bun" în „e mai bun cu atât" — Gemini a pornit de la 2/10.
+
+**Verifică ce costă, nu doar ce există.** Unde o funcție merge pe credite sau pe cotă, o automatizare se oprește tăcut când se termină. O funcție disponibilă pe hârtie și epuizabilă în practică nu e o fundație pentru un ritual — se citește soldul și regula de reîncărcare din cont înainte de a construi pe ea.
+
+Protocolul complet, aplicat: `references/extractie-perplexity.md`.
+
 ## Pasul 3 — Scrie instrucțiunile în forma pe care câmpul o acceptă
 
 Aici s-au pierdut cele mai multe încercări. Reguli învățate pe teren:
@@ -147,5 +163,6 @@ Alinierea perfectă a unui arsenal nefolosit valorează zero. Fiecare rundă de 
 ## Referințe
 
 - `references/gemini.md` — alinierea Gemini, completă: ce s-a instalat, ce a picat, rezultatele testului.
+- `references/extractie-perplexity.md` — protocolul de extracție a stării de pornire (Pasul 2), cu sondele comportamentale și fișa de pornire. Se rulează înaintea pachetului.
 - `references/perplexity.md` — pachetul Perplexity, gata de instalat, inclusiv profilul echipei.
 - `references/daniel-operational.md` — pachetul managerului operațional: împărțirea uneltelor între roluri și textul de instalat în contul lui.

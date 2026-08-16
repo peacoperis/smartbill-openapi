@@ -15,6 +15,8 @@ Patru straturi, nu trei:
 
 **Comet** (browserul cu asistent) e gratuit pe toate platformele — Mac, Windows, iOS, Android — de pe 29 iulie 2026, paywall-ul fiind eliminat complet. Rămâne opțional pentru ITC: verificarea concurenței direct pe pagină.
 
+**Pe Pro (20 €/lună), Computer merge pe credite.** Pro are acces la Computer din 12.03.2026, cu toate modelele, skills și conectorii. Dar munca autonomă în mai mulți pași consumă credite, iar la zero **task-ul programat se pune singur pe pauză și repornește abia când apar credite** — eșec tăcut, exact modul de la Pasul 10. Sursele publice se contrazic dacă pe Pro creditele se reîncarcă lunar sau sunt un pachet unic de ~4.000 dat la deschiderea accesului; pe Max sunt 10.000 pe lună, fără reportare. **Se citește din cont, nu de aici** — de asta depinde dacă radarul lunar se automatizează sau se rulează manual. Vezi `references/extractie-perplexity.md`.
+
 **Diferența care contează, neschimbată:** un Project caută simultan în fișierele tale și pe web. NotebookLM stă pe surse proprii; Deep Research stă pe web. Un Project ITC face amândouă într-o singură întrebare — asta e nișa lui Perplexity și motivul pentru care rolul din matrice se ridică de la „research rapid de suprafață" la **radar extern permanent, ancorat în realitatea ITC**.
 
 **Limitele de fișiere diferă pe plan și sursele publice se contrazic** (50 pe Pro personal, 500 la 50 MB fiecare pe Enterprise Pro, alte surse dau 100). Nu se planifică pe cifra din acest tabel — se citește din cont la Pasul 2.
@@ -37,22 +39,17 @@ Trei reguli, obligatorii la ITC:
 
 **Predarea:** ce găsește Perplexity merge la Gemini pentru audit sau la Claude pentru construit. Rapoartele se scriu ca să fie predate: concluzie, sursă, dată, ce se schimbă pentru ITC.
 
-## 0. Auto-inventarul în cont — înainte de orice instalare
+## 0. Extracția stării de pornire — înainte de orice instalare
 
-Pasul 2 din metodă. Documentația spune ce există în produs; numai contul spune ce e activ în contul tău. Se dă în Perplexity, înainte de a lipi o literă:
+Pasul 2 din metodă, în formă completă: **`references/extractie-perplexity.md`**. Nu se instalează nimic din ce urmează înainte ca fișa de pornire de acolo să fie completă.
 
-```
-Raportează DOAR ce poți verifica acum în contul acesta: planul meu și limitele
-lui afișate, câmpurile de personalizare disponibile și limitele lor de
-caractere, dacă am Projects și câte fișiere acceptă un proiect al meu,
-ce conectori sunt legați și activi, dacă Brain e pornit, unde se creează
-task-urile programate și ce cadență minimă acceptă.
+Pe scurt, ce blochează instalarea dacă iese prost:
 
-Ce provine din cunoștințele tale generale pune într-o secțiune separată,
-marcat [MEMORIE — POSIBIL DATAT]. Unde nu ești sigur, scrii NESIGUR.
-```
+- **căutarea unificată fișier + web nu funcționează** → designul proiectului nu se ține, se oprește;
+- **asistentul inventează** când i se cere textul de personalizare sau un fișier de la un conector → se rezolvă fabricația întâi;
+- **creditele de Computer sunt finite** → radarul se rulează manual, nu pe task automat.
 
-Ce iese de aici bate tabelul de mai sus oriunde diferă.
+Ce iese din extracție bate tabelul de mai sus oriunde diferă.
 
 ## 1. Personalizarea globală — de lipit în Setări → Personalizare
 
