@@ -1,0 +1,801 @@
+{
+  "schema": "peacoperis/caiet-de-lucru/reguli@1",
+  "versiune": "1.0.0",
+  "actualizat": "2026-08-19",
+  "domeniu": "Șipcă metalică - ofertare, calcul și montaj",
+  "nomenclator": {
+    "MNT": "Legile montajului - reguli fizice de execuție pe șantier",
+    "CALC": "Reguli de calcul - cantități, dimensiuni, rotunjiri",
+    "PRET": "Reguli de preț - marje, curs valutar, TVA",
+    "ACC": "Reguli accesorii - fixare, consumabile",
+    "CAT": "Reguli de catalog - disponibilitate configurații",
+    "OFR": "Reguli de ofertare - document, valabilitate, prezentare"
+  },
+  "stari": {
+    "activa": "Regulă confirmată, se aplică obligatoriu",
+    "propusa": "Regulă nouă, așteaptă validare de la coordonator",
+    "de-confirmat": "Valoarea numerică trebuie confirmată cu furnizorul/montatorul",
+    "retrasa": "Nu se mai aplică; se păstrează pentru istoric"
+  },
+  "prioritati": {
+    "blocanta": "Nu se emite ofertă / nu se montează dacă regula e încălcată",
+    "importanta": "Încălcarea produce cost sau reclamație; se notează în caiet",
+    "informativa": "Bună practică, se recomandă"
+  },
+  "implementare": {
+    "implementata": "Există în motorul de calcul",
+    "partiala": "Există dar incomplet sau inconsistent",
+    "neimplementata": "Nu există în cod; se aplică manual"
+  },
+  "reguli": [
+    {
+      "id": "MNT-001",
+      "titlu": "Orientarea montajului decide ce dimensiune devine lungimea șipcii",
+      "categorie": "MNT",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "La montaj VERTICAL lungimea comandată a șipcii este ÎNĂLȚIMEA segmentului, iar numărul de bucăți se calculează pe LUNGIMEA segmentului. La montaj ORIZONTAL se inversează: lungimea șipcii este LUNGIMEA segmentului, iar numărul de bucăți se calculează pe ÎNĂLȚIME.",
+      "formula": "vertical: len = h, baza_repartitie = L | orizontal: len = L, baza_repartitie = h",
+      "parametri": [
+        {
+          "nume": "L",
+          "descriere": "lungimea segmentului de gard",
+          "um": "m"
+        },
+        {
+          "nume": "h",
+          "descriere": "înălțimea segmentului de gard",
+          "um": "m"
+        }
+      ],
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:389-401"
+      },
+      "verificare": "Schimbă tipul montajului: numărul de bucăți și lungimea trebuie să se inverseze.",
+      "note": ""
+    },
+    {
+      "id": "MNT-002",
+      "titlu": "Pasul de repetiție = lățime utilă + interspațiu",
+      "categorie": "MNT",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Distanța dintre axele a două șipci consecutive (pasul) este lățimea utilă a modelului plus interspațiul ales. Lățimea utilă este cea din fișa modelului, NU lățimea totală a tablei.",
+      "formula": "pas_mm = w_useful_mm + gap_cm * 10",
+      "parametri": [
+        {
+          "nume": "w_useful",
+          "descriere": "lățime utilă model (72 / 90 / 96 / 105 / 107 / 115 / 118)",
+          "um": "mm",
+          "sursa": "MODELS_DB"
+        },
+        {
+          "nume": "gap",
+          "descriere": "interspațiu între șipci",
+          "um": "cm"
+        }
+      ],
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:394"
+      },
+      "verificare": "Pentru Y109 (72 mm) cu gap 2 cm, pasul = 92 mm.",
+      "note": ""
+    },
+    {
+      "id": "MNT-003",
+      "titlu": "Interspațiu admis 0-5 cm; peste 5 cm se cere confirmare scrisă",
+      "categorie": "MNT",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "Interspațiul standard este 2 cm. Sub 1 cm montajul devine sensibil la toleranțe și dilatare. Peste 5 cm gardul pierde intimitatea vizuală, iar clientul trebuie să confirme în scris pe ofertă că acceptă vizibilitatea rezultată.",
+      "conditii": [
+        "gap >= 0 cm",
+        "gap <= 5 cm fără confirmare"
+      ],
+      "exceptii": [
+        "Montaj tip jaluzea sau panou decorativ, unde gap-ul este parte din design"
+      ],
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "gap este liber în interfață"
+      },
+      "verificare": "Se notează în fișa de șantier valoarea gap agreată și cine a confirmat-o.",
+      "note": ""
+    },
+    {
+      "id": "MNT-004",
+      "titlu": "Restul de la capăt se redistribuie, nu se taie longitudinal",
+      "categorie": "MNT",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "Numărul de șipci se rotunjește în sus. Dacă ultima șipcă ar rămâne mai îngustă de 1/3 din lățimea utilă, NU se taie longitudinal: se redistribuie diferența mărind uniform interspațiul pe tot segmentul.",
+      "formula": "rest_mm = baza_mm - (pcs - 1) * pas_mm; dacă rest_mm < w_useful/3 => gap_real = (baza_mm - pcs * w_useful) / (pcs - 1)",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "codul aplică doar Math.ceil, fără redistribuire"
+      },
+      "verificare": "Segment 5.00 m, model 115 mm, gap 2 cm => pas 135 mm, pcs = 38, rest vizibil se distribuie.",
+      "note": ""
+    },
+    {
+      "id": "MNT-005",
+      "titlu": "Număr minim de rigle (traverse) în funcție de lungimea șipcii",
+      "categorie": "MNT",
+      "stare": "de-confirmat",
+      "prioritate": "blocanta",
+      "enunt": "Fiecare șipcă se sprijină pe minim 2 rigle. Pasul maxim între rigle este 1.20 m. Pentru șipci mai lungi de 2.40 m sunt obligatorii 3 rigle, iar peste 3.60 m sunt obligatorii 4 rigle.",
+      "formula": "nr_rigle = max(2, ceil(len_m / 1.20) + 1)",
+      "parametri": [
+        {
+          "nume": "pas_rigla_max",
+          "valoare": 1.2,
+          "um": "m"
+        }
+      ],
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "riglele nu sunt calculate în aplicație"
+      },
+      "verificare": "Șipcă de 1.65 m => 2 rigle. Șipcă de 2.50 m => 3 rigle.",
+      "note": "De confirmat pasul pentru grosimea 0.40 mm, care e mai flexibilă."
+    },
+    {
+      "id": "MNT-006",
+      "titlu": "Două puncte de prindere pe fiecare intersecție șipcă-riglă",
+      "categorie": "MNT",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "La fiecare intersecție dintre o șipcă și o riglă se execută 2 puncte de fixare (2 rânduri de prindere), pe cele două nervuri exterioare ale profilului.",
+      "formula": "puncte_pe_sipca = 2 * nr_rigle",
+      "implementare": {
+        "stare": "partiala",
+        "referinta": "calculator_sipca_v22_enterprise.html:421 (factorul 2 = 2 rânduri)"
+      },
+      "verificare": "Vezi ACC-001 pentru transformarea în cantitate de consumabile.",
+      "note": ""
+    },
+    {
+      "id": "MNT-007",
+      "titlu": "Sistemul de fixare este impus de model, nu ales de montator",
+      "categorie": "MNT",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Modelele cu fixType 'screw' se prind cu șuruburi autoforante cu garnitură EPDM. Modelele cu fixType 'rivet' (Tisa, Indiana) se prind cu pop-nituri 4.8x12. Nu se substituie sistemul fără acordul furnizorului, altfel se pierde garanția.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:103-114, 419-426"
+      },
+      "verificare": "Modelul din ofertă și consumabilul din deviz trebuie să corespundă.",
+      "note": ""
+    },
+    {
+      "id": "MNT-008",
+      "titlu": "Garnitura EPDM se comprimă ușor, fără deformarea profilului",
+      "categorie": "MNT",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Șurubul se strânge până când garnitura EPDM iese uniform 0.5-1 mm de sub șaibă. Strângerea excesivă deformează tabla, sparge stratul de vopsea și creează punct de coroziune.",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "regulă de execuție"
+      },
+      "verificare": "Control vizual la fiecare 10 șipci montate.",
+      "note": ""
+    },
+    {
+      "id": "MNT-009",
+      "titlu": "Distanța minimă de la sol: 50 mm",
+      "categorie": "MNT",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "Capătul inferior al șipcii se montează la minim 50 mm față de sol sau soclu, pentru a evita contactul permanent cu apa și pornirea coroziunii pe muchia tăiată.",
+      "formula": "h_sipca = h_gard - 0.05 m (dacă h_gard include cota de la sol)",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "aplicația folosește direct înălțimea introdusă"
+      },
+      "verificare": "La preluarea măsurătorii se notează dacă h include sau nu garda de 5 cm.",
+      "note": ""
+    },
+    {
+      "id": "MNT-010",
+      "titlu": "Găurile de fixare la minim 15 mm de marginea șipcii",
+      "categorie": "MNT",
+      "stare": "de-confirmat",
+      "prioritate": "importanta",
+      "enunt": "Punctul de fixare se execută la minim 15 mm de marginea longitudinală și minim 20 mm de capătul șipcii, pentru a nu rupe tabla în timp.",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "regulă de execuție"
+      },
+      "verificare": "Se verifică pe prima șipcă montată din fiecare segment.",
+      "note": "De confirmat cu fișa tehnică a fiecărui furnizor."
+    },
+    {
+      "id": "MNT-011",
+      "titlu": "Interdicție de tăiere cu disc abraziv (flex)",
+      "categorie": "MNT",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Șipca metalică NU se taie cu flexul. Temperatura arde stratul de zinc și vopseaua, iar scânteile se lipesc de suprafață. Se taie exclusiv cu foarfece de tablă, nibbler sau fierăstrău cu pânză pentru metal la turație mică.",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "regulă de execuție"
+      },
+      "verificare": "Tăietură cu margine curată, fără decolorare pe zona adiacentă.",
+      "note": "Tăierea cu flex anulează garanția anticorozivă la toți cei 4 furnizori."
+    },
+    {
+      "id": "MNT-012",
+      "titlu": "Retușarea obligatorie a muchiilor tăiate",
+      "categorie": "MNT",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Orice tăietură executată pe șantier se retușează cu vopsea de retuș în RAL-ul comenzii, în aceeași zi. Se aplică și pe capetele rezultate din debitare la lungime.",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "consumabil neinclus în deviz"
+      },
+      "verificare": "Se adaugă 1 tub retuș la fiecare RAL din comandă (vezi ACC-004).",
+      "note": ""
+    },
+    {
+      "id": "MNT-013",
+      "titlu": "Folia de protecție se îndepărtează imediat după montaj",
+      "categorie": "MNT",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Folia de protecție se îndepărtează cel târziu la finalul zilei de montaj și în maxim 30 de zile de la livrare. Depășirea termenului duce la lipirea adezivului de vopsea.",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "regulă de execuție"
+      },
+      "verificare": "Se consemnează în procesul-verbal de recepție.",
+      "note": ""
+    },
+    {
+      "id": "MNT-014",
+      "titlu": "Deschiderea maximă între stâlpi: 2.50 m",
+      "categorie": "MNT",
+      "stare": "de-confirmat",
+      "prioritate": "importanta",
+      "enunt": "Distanța între axele stâlpilor nu depășește 2.50 m. La montaj ORIZONTAL această valoare devine și lungimea maximă utilă a șipcii, deoarece șipca trebuie să reazeme pe stâlpi.",
+      "formula": "orizontal: len_sipca <= deschidere_stalpi <= 2.50 m",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "aplicația limitează doar la maxLen furnizor"
+      },
+      "verificare": "La montaj orizontal, segmentele mai lungi de 2.50 m se împart în tronsoane.",
+      "note": ""
+    },
+    {
+      "id": "MNT-015",
+      "titlu": "Sensul de montaj pentru profilele dublu vopsite și cu textură lemn",
+      "categorie": "MNT",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "La profilele 'Dublu Mat' ambele fețe sunt finisate și se montează cu fața de catalog spre exterior. La finisajele Wood (Stejar Auriu, Nuc) toate șipcile se montează cu textura în același sens, altfel modelul lemnului apare inversat.",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "paintType există în CATALOG_DATA, sensul nu e tratat"
+      },
+      "verificare": "Se marchează sensul pe prima șipcă și se folosește ca referință.",
+      "note": ""
+    },
+    {
+      "id": "MNT-016",
+      "titlu": "Verificarea verticalității la fiecare 5 șipci",
+      "categorie": "MNT",
+      "stare": "propusa",
+      "prioritate": "informativa",
+      "enunt": "Se trasează prima șipcă cu bolobocul și se verifică abaterea la fiecare 5 șipci montate. Abaterea admisă este 3 mm pe înălțimea gardului; peste această valoare se corectează prin interspațiu, nu prin înclinarea șipcii.",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "regulă de execuție"
+      },
+      "verificare": "Măsurare cu boloboc de 1 m sau fir cu plumb.",
+      "note": ""
+    },
+    {
+      "id": "CALC-001",
+      "titlu": "Număr de șipci pe segment",
+      "categorie": "CALC",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Numărul de șipci dintr-un segment se obține împărțind dimensiunea de repartiție (în mm) la pasul de repetiție și rotunjind în sus.",
+      "formula": "pcs = ceil(baza_mm / (w_useful_mm + gap_cm * 10))",
+      "parametri": [
+        {
+          "nume": "baza_mm",
+          "descriere": "L*1000 la vertical, h*1000 la orizontal",
+          "um": "mm"
+        }
+      ],
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:394-398"
+      },
+      "exemplu": "Segment 20 m vertical, model Oslo (115 mm), gap 2 cm => ceil(20000/135) = 149 buc",
+      "verificare": "Recalcul manual pe un segment din ofertă.",
+      "note": ""
+    },
+    {
+      "id": "CALC-002",
+      "titlu": "Ultima șipcă nu are interspațiu după ea",
+      "categorie": "CALC",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "Formula curentă rezervă un interspațiu și după ultima șipcă, ceea ce poate supraestima cantitatea cu 1 bucată pe segment. Formula corectă adaugă un gap la baza de calcul înainte de împărțire.",
+      "formula": "pcs = ceil((baza_mm + gap_mm) / (w_useful_mm + gap_mm))",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "abatere față de calculator_sipca_v22_enterprise.html:394"
+      },
+      "exemplu": "Segment 2.00 m, model 72 mm, gap 2 cm: actual ceil(2000/92)=22 buc; corect ceil(2020/92)=22 buc. Diferența apare la lungimi care cad exact pe pas.",
+      "verificare": "Se compară cele două formule pe 3 segmente reale înainte de a schimba motorul.",
+      "note": "Decizie de luat: se păstrează varianta acoperitoare sau se trece pe formula exactă + rezervă CALC-008."
+    },
+    {
+      "id": "CALC-003",
+      "titlu": "Metri liniari totali",
+      "categorie": "CALC",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Metrii liniari comandați de la furnizor sunt numărul de bucăți înmulțit cu lungimea unei șipci, însumat pe toate segmentele.",
+      "formula": "ml_total = suma(pcs_i * len_i)",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:406-412"
+      },
+      "verificare": "ml_total împărțit la pcs_total trebuie să dea lungimea medie a șipcii.",
+      "note": ""
+    },
+    {
+      "id": "CALC-004",
+      "titlu": "Prețul se calculează pe metru liniar, nu pe bucată",
+      "categorie": "CALC",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Prețurile din catalog sunt exprimate pe metru liniar de șipcă. Valoarea unei poziții se obține înmulțind numărul de bucăți cu lungimea și cu prețul pe metru liniar.",
+      "formula": "valoare = pcs * len * pret_ml",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:378, 405"
+      },
+      "verificare": "Preț/bucată afișat = pret_ml * len.",
+      "note": ""
+    },
+    {
+      "id": "CALC-005",
+      "titlu": "Lungimea comandată se rotunjește la multiplu de 10 cm",
+      "categorie": "CALC",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "Furnizorii debitează la pas de 10 cm. Lungimea rezultată din măsurătoare se rotunjește în sus la cel mai apropiat multiplu de 0.10 m înainte de a fi trimisă în comandă.",
+      "formula": "len_comanda = ceil(len_masurat * 10) / 10",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "aplicația acceptă orice zecimală"
+      },
+      "exemplu": "1.63 m măsurat => 1.70 m comandat",
+      "verificare": "Toate lungimile din comandă au o singură zecimală.",
+      "note": "De confirmat pasul de debitare la fiecare furnizor; unii lucrează la 1 cm."
+    },
+    {
+      "id": "CALC-006",
+      "titlu": "Lungime minimă comandabilă 0.50 m",
+      "categorie": "CALC",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Nicio poziție nu poate avea lungimea sub minLen-ul furnizorului (0.50 m la toți cei 4). Sub această valoare, poziția se comandă la 0.50 m și se debitează pe șantier.",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "minLen există în PROVIDERS dar nu este verificat nicăieri"
+      },
+      "verificare": "Se introduce o înălțime de 0.30 m: oferta trebuie să semnaleze regula.",
+      "note": "Abatere confirmată în cod - vezi abateri.md."
+    },
+    {
+      "id": "CALC-007",
+      "titlu": "Lungime maximă pe furnizor",
+      "categorie": "CALC",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Lungimea unei șipci nu poate depăși maxLen-ul furnizorului: Caretta 6.00 m, TPS 6.00 m, Arkada 6.00 m, Bilka 2.50 m. Modelele care depășesc limita se marchează indisponibile, nu se împart automat.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:331-350"
+      },
+      "verificare": "Înălțime 3 m => toate modelele Bilka trebuie să iasă din listă.",
+      "note": ""
+    },
+    {
+      "id": "CALC-008",
+      "titlu": "Rezervă de manoperă 3% pe cantitate",
+      "categorie": "CALC",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "La cantitatea rezultată din calcul se adaugă o rezervă de 3% (minim 2 bucăți per comandă) pentru pierderi la debitare, deteriorări la transport și corecții de aliniere.",
+      "formula": "pcs_comanda = pcs + max(2, ceil(pcs * 0.03))",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "nu există factor de rezervă în motor"
+      },
+      "exemplu": "149 buc calculate => 149 + max(2, 5) = 154 buc comandate",
+      "verificare": "Rezerva se afișează ca poziție distinctă în ofertă, nu se ascunde în cantitate.",
+      "note": "De agreat procentul: 3% la garduri drepte, propunere 5% la garduri cu pante sau unghiuri."
+    },
+    {
+      "id": "CALC-009",
+      "titlu": "Segmentele se calculează independent și se însumează la final",
+      "categorie": "CALC",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Fiecare segment se calculează separat (are propriul număr de bucăți și propria lungime). Nu se însumează lungimile segmentelor înainte de calcul, pentru că restul de la capăt se pierde pe fiecare segment în parte.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:386-419"
+      },
+      "verificare": "2 segmente de 10 m dau cu 1-2 bucăți mai mult decât 1 segment de 20 m. Este corect.",
+      "note": ""
+    },
+    {
+      "id": "CALC-010",
+      "titlu": "Maxim 10 segmente per ofertă",
+      "categorie": "CALC",
+      "stare": "activa",
+      "prioritate": "informativa",
+      "enunt": "O ofertă conține maxim 10 segmente. Peste această limită lucrarea se împarte pe tronsoane cu oferte separate, pentru trasabilitate la montaj.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:513-517"
+      },
+      "verificare": "Butonul de adăugare segment se blochează la 10.",
+      "note": ""
+    },
+    {
+      "id": "CALC-011",
+      "titlu": "Modul cantitate directă ocolește regulile de repartiție",
+      "categorie": "CALC",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "În modul 'cantitate directă' se folosesc bucățile și lungimea introduse manual. Regulile MNT-002, MNT-004 și CALC-001 nu se aplică; rămân valabile CALC-006, CALC-007 și toate regulile de preț.",
+      "formula": "valoare = pcs_introdus * len_introdusa * pret_ml",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:381-393"
+      },
+      "verificare": "Se folosește doar pentru recomandă sau completare, nu pentru ofertare de la zero.",
+      "note": ""
+    },
+    {
+      "id": "CALC-012",
+      "titlu": "Rotunjirea monetară se face doar la afișare",
+      "categorie": "CALC",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Toate calculele intermediare (curs valutar, marje) se păstrează cu precizie completă. Rotunjirea la 2 zecimale se aplică exclusiv la afișare și la tipărirea ofertei.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "toFixed(2) apare doar în randare"
+      },
+      "verificare": "Suma pozițiilor rotunjite poate diferi cu maxim 0.05 RON de totalul rotunjit; diferența e acceptabilă.",
+      "note": ""
+    },
+    {
+      "id": "CALC-013",
+      "titlu": "Cantitățile se rotunjesc întotdeauna în sus",
+      "categorie": "CALC",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Bucăți, șuruburi, nituri și cutii se rotunjesc în sus (ceil), niciodată la cel mai apropiat întreg. O jumătate de bucată nu se poate comanda.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:394, 398, 421-425"
+      },
+      "verificare": "Nicio cantitate din ofertă nu are zecimale.",
+      "note": ""
+    },
+    {
+      "id": "CALC-014",
+      "titlu": "Măsurătoarea de teren se ia pe fiecare tronson, cu 3 cote pe verticală",
+      "categorie": "CALC",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "Pentru fiecare segment se măsoară lungimea între axele stâlpilor de capăt și înălțimea în 3 puncte (stânga, mijloc, dreapta). Se folosește în calcul înălțimea MAXIMĂ. Diferența dintre cote se notează în fișa de șantier; peste 5 cm terenul se tratează în trepte.",
+      "formula": "h_calcul = max(h_stanga, h_mijloc, h_dreapta)",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "aplicația acceptă o singură înălțime per segment"
+      },
+      "verificare": "Fișa de șantier conține 3 cote pentru fiecare segment.",
+      "note": ""
+    },
+    {
+      "id": "PRET-001",
+      "titlu": "Conversia valutară se aplică înainte de orice marjă",
+      "categorie": "PRET",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Pentru furnizorii cu preț în EUR (Bilka), prețul de catalog se convertește în RON cu cursul din fișa furnizorului, apoi se aplică marjele. Nu se aplică marja pe valoarea în EUR.",
+      "formula": "pret_ron = pret_eur * curs",
+      "parametri": [
+        {
+          "nume": "curs",
+          "valoare": 4.97,
+          "um": "RON/EUR",
+          "sursa": "PROVIDERS.Bilka.exchange"
+        }
+      ],
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:370-373"
+      },
+      "verificare": "Bilka Sofia 0.96 EUR/ml => 4.77 RON/ml înainte de marjă.",
+      "note": ""
+    },
+    {
+      "id": "PRET-002",
+      "titlu": "Cursul valutar se revizuiește lunar și se blochează pe durata ofertei",
+      "categorie": "PRET",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "Cursul folosit este cel din fișa furnizorului, actualizat în prima zi lucrătoare a lunii. Cursul valabil la data emiterii se blochează pentru perioada de valabilitate a ofertei (OFR-002). Dacă cursul BNR crește cu peste 2% față de cel din fișă, oferta se recalculează.",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "cursul este constantă hardcodată"
+      },
+      "verificare": "Data ultimei actualizări a cursului se notează în caiet la fiecare revizie.",
+      "note": "Curs în fișă la 2026-08-19: 4.97 RON/EUR."
+    },
+    {
+      "id": "PRET-003",
+      "titlu": "Marja de furnizor se aplică multiplicativ pe prețul în RON",
+      "categorie": "PRET",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Prețul de cost se obține aplicând marja fixă a furnizorului: Caretta 10.00%, Bilka 6.98%, TPS 8.50%, Arkada 10.00%.",
+      "formula": "pret_cost = pret_ron * (1 + marja_furnizor / 100)",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:376"
+      },
+      "verificare": "Marjele se modifică doar din panoul Admin, cu consemnare în caiet.",
+      "note": ""
+    },
+    {
+      "id": "PRET-004",
+      "titlu": "Marja de partener se compune peste prețul de cost, nu peste cel de catalog",
+      "categorie": "PRET",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Marja partenerului (ghost margin) se aplică peste prețul de cost, deci marjele se compun multiplicativ, nu se adună. Marja de partener nu este vizibilă clientului.",
+      "formula": "pret_vanzare = pret_ron * (1 + marja_furnizor/100) * (1 + marja_partener/100)",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:379"
+      },
+      "exemplu": "Marjă furnizor 10% + partener 10% => 21% total, nu 20%.",
+      "verificare": "Se compară prețul de vânzare cu prețul de cost afișat în panoul Admin.",
+      "note": ""
+    },
+    {
+      "id": "PRET-005",
+      "titlu": "Prețurile din ofertă sunt fără TVA",
+      "categorie": "PRET",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Toate valorile calculate și afișate sunt fără TVA. TVA-ul (19%) se aplică o singură dată, la emiterea proformei/facturii, pe totalul general. Mențiunea 'fără TVA' este obligatorie pe orice document trimis clientului.",
+      "formula": "total_cu_tva = total_fara_tva * (1 + 19/100)",
+      "implementare": {
+        "stare": "partiala",
+        "referinta": "cota există (adminSettings.defaultVAT) dar nu se aplică nicăieri în calcul; PDF-ul afișează corect 'fără TVA'"
+      },
+      "verificare": "Totalul din proforma SmartBill = total ofertă * 1.19.",
+      "note": ""
+    },
+    {
+      "id": "PRET-006",
+      "titlu": "Transportul și manopera nu sunt incluse în prețul din calculator",
+      "categorie": "PRET",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Calculatorul returnează exclusiv valoarea materialului și a consumabilelor de fixare. Transportul, manopera de montaj și structura de susținere se ofertează separat și se menționează explicit ca neincluse.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:1472 (mențiune în subsol)"
+      },
+      "verificare": "Subsolul ofertei conține mențiunea.",
+      "note": ""
+    },
+    {
+      "id": "ACC-001",
+      "titlu": "Consumul de fixare se calculează pe puncte reale de prindere",
+      "categorie": "ACC",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "Numărul de șuruburi sau nituri este numărul de șipci înmulțit cu numărul de rigle (MNT-005) și cu 2 puncte pe intersecție (MNT-006). Formula actuală folosește un consum pe metru liniar înmulțit cu 2, fără a ține cont de lungimea șipcii, ceea ce subestimează consumul la șipci lungi.",
+      "formula": "buc_fixare = pcs * nr_rigle * 2",
+      "implementare": {
+        "stare": "partiala",
+        "referinta": "calculator_sipca_v22_enterprise.html:420-425 foloseste pcs * screwsPerM * 2"
+      },
+      "exemplu": "149 șipci de 1.65 m, 2 rigle => 149 * 2 * 2 = 596 șuruburi. Formula actuală dă 149 * 6 * 2 = 1788.",
+      "verificare": "Se compară consumul estimat cu cel real de pe ultimele 3 șantiere înainte de schimbarea formulei.",
+      "note": "Abatere dimensională confirmată: screwsPerM este declarat pe metru dar nu se înmulțește cu lungimea."
+    },
+    {
+      "id": "ACC-002",
+      "titlu": "Ambalarea consumabilelor: șuruburile la cutie, niturile la bucată",
+      "categorie": "ACC",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Șuruburile autoforante se comandă în cutii de 250 bucăți, la 45 RON cutia, cu rotunjire în sus la cutie întreagă. Pop-niturile 4.8x12 se comandă la bucată, 0.25 RON/bucată.",
+      "formula": "cutii = ceil(buc_suruburi / 250); valoare = cutii * 45 | valoare_nituri = buc_nituri * 0.25",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:180-183, 422-425"
+      },
+      "verificare": "596 șuruburi => 3 cutii => 135 RON.",
+      "note": ""
+    },
+    {
+      "id": "ACC-003",
+      "titlu": "Culoarea consumabilelor urmează RAL-ul comenzii",
+      "categorie": "ACC",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Șuruburile și niturile se comandă vopsite în RAL-ul șipcii. Dacă RAL-ul nu este disponibil la consumabil, se alege cea mai apropiată nuanță și se consemnează în ofertă, cu acordul clientului.",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "prețul consumabilului este unic, indiferent de culoare"
+      },
+      "verificare": "RAL-ul consumabilului apare pe comanda către furnizor.",
+      "note": "De verificat dacă există diferență de preț pe RAL-uri speciale (Wood)."
+    },
+    {
+      "id": "ACC-004",
+      "titlu": "Un tub de vopsea de retuș per RAL din comandă",
+      "categorie": "ACC",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "Fiecare comandă include minim un tub de vopsea de retuș pentru fiecare RAL comandat, necesar pentru aplicarea MNT-012. La comenzi peste 500 ml se adaugă câte un tub la fiecare 500 ml.",
+      "formula": "tuburi = nr_RAL_distincte + floor(ml_total / 500)",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "consumabil inexistent în ACCESSORIES"
+      },
+      "verificare": "Poziția apare pe deviz chiar dacă nu se prevăd tăieri.",
+      "note": "De adăugat prețul de achiziție în fișa de accesorii."
+    },
+    {
+      "id": "CAT-001",
+      "titlu": "Combinația grosime + finisaj + culoare trebuie să existe la furnizor",
+      "categorie": "CAT",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Un model este ofertabil doar dacă furnizorul lui are în catalog exact combinația grosime + finisaj selectată, iar culoarea cerută se află în lista acelei combinații. Nu se substituie grosimea sau finisajul fără acordul clientului.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:322-330"
+      },
+      "verificare": "Modelele indisponibile rămân vizibile în listă, cu motivul afișat.",
+      "note": ""
+    },
+    {
+      "id": "CAT-002",
+      "titlu": "Filtrele se aplică în cascadă: vopsire -> grosime -> finisaj -> culoare",
+      "categorie": "CAT",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Selecțiile se fac strict în ordinea vopsire, grosime, finisaj, culoare. Schimbarea unui filtru din amonte resetează automat filtrele din aval, pentru a nu rămâne cu o combinație imposibilă.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:274-300"
+      },
+      "verificare": "Schimbă grosimea: finisajul și culoarea trebuie să se golească dacă nu mai sunt valide.",
+      "note": ""
+    },
+    {
+      "id": "CAT-003",
+      "titlu": "Modelele nu dispar niciodată din listă",
+      "categorie": "CAT",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Toate cele 10 modele rămân afișate indiferent de filtre. Cele care nu satisfac configurația se marchează 'indisponibil' cu motivul explicit. Ascunderea modelelor împiedică agentul să propună alternative.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:309, 429-440"
+      },
+      "verificare": "Lista are mereu 10 rânduri.",
+      "note": ""
+    },
+    {
+      "id": "CAT-004",
+      "titlu": "Dublu vopsit se cere obligatoriu când gardul e vizibil pe ambele fețe",
+      "categorie": "CAT",
+      "stare": "propusa",
+      "prioritate": "importanta",
+      "enunt": "Dacă la preluarea comenzii se constată că gardul este vizibil din ambele părți (gard la stradă, între vecini, balustradă), se ofertează exclusiv finisaje cu paintType 'double'. Ofertarea unui profil single în această situație este eroare de ofertare, nu opțiune de preț.",
+      "implementare": {
+        "stare": "partiala",
+        "referinta": "filtrul există (filterPaintType) dar alegerea nu este condiționată de context"
+      },
+      "verificare": "Fișa de șantier are câmpul 'vizibil pe ambele fețe: DA/NU' completat obligatoriu.",
+      "note": ""
+    },
+    {
+      "id": "OFR-001",
+      "titlu": "Comparația de prețuri este validă doar între modele cu status disponibil",
+      "categorie": "OFR",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Sortarea afișează întâi modelele disponibile, apoi cele incomplete, apoi cele indisponibile. Statisticile de tip 'cel mai ieftin' se referă exclusiv la modelele disponibile și sunt corecte doar când sortarea este crescătoare după preț.",
+      "implementare": {
+        "stare": "partiala",
+        "referinta": "calculator_sipca_v22_enterprise.html:442-455, 460-466 (quickStats ia primul rezultat, indiferent de sortare)"
+      },
+      "verificare": "Comută sortarea pe descrescător: eticheta 'cel mai ieftin' nu mai corespunde.",
+      "note": "Abatere confirmată - vezi abateri.md."
+    },
+    {
+      "id": "OFR-002",
+      "titlu": "Valabilitatea ofertei este de 7 zile calendaristice",
+      "categorie": "OFR",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Orice ofertă are valabilitate 7 zile de la data emiterii. După expirare, prețurile se recalculează cu catalogul și cursul curente. Valabilitatea se modifică doar din panoul Admin, cu consemnare în caiet.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:207, 1351, 1471"
+      },
+      "verificare": "Data emiterii și termenul apar pe documentul PDF.",
+      "note": ""
+    },
+    {
+      "id": "OFR-003",
+      "titlu": "Oferta conține defalcarea pe segmente, nu doar totalul",
+      "categorie": "OFR",
+      "stare": "activa",
+      "prioritate": "importanta",
+      "enunt": "Documentul trimis clientului listează fiecare segment cu dimensiunile, numărul de bucăți, lungimea și valoarea. Totalul general include consumabilele de fixare dacă acestea au fost bifate.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "calculator_sipca_v22_enterprise.html:1400-1465"
+      },
+      "verificare": "Suma valorilor pe segmente + consumabile = total general.",
+      "note": ""
+    },
+    {
+      "id": "OFR-004",
+      "titlu": "Prețul de cost nu părăsește aplicația",
+      "categorie": "OFR",
+      "stare": "activa",
+      "prioritate": "blocanta",
+      "enunt": "Prețul de cost și marja de partener se afișează exclusiv în panourile protejate și nu apar niciodată în documentul PDF, în proforma SmartBill sau în comunicarea cu clientul.",
+      "implementare": {
+        "stare": "implementata",
+        "referinta": "adminSettings.showCostPrice controlează doar afișarea internă"
+      },
+      "verificare": "Se generează un PDF cu showCostPrice activ: costul nu trebuie să apară.",
+      "note": ""
+    },
+    {
+      "id": "OFR-005",
+      "titlu": "Trecerea în proformă păstrează exact valorile din ofertă",
+      "categorie": "OFR",
+      "stare": "propusa",
+      "prioritate": "blocanta",
+      "enunt": "La emiterea proformei prin SmartBill, denumirea, cantitatea și prețul unitar se preiau identic din oferta acceptată. Cantitatea trimisă este în metri liniari, iar prețul unitar este prețul de vânzare pe metru liniar, fără TVA.",
+      "formula": "products[i].quantity = ml_pozitie; products[i].price = pret_vanzare_ml",
+      "implementare": {
+        "stare": "neimplementata",
+        "referinta": "smartbill_proforma_openapi (1).json - schema ProformaRequest"
+      },
+      "verificare": "Totalul proformei fără TVA = totalul ofertei.",
+      "note": "De stabilit convenția pentru codul produsului (products[].code) - propunere: MODEL-GROSIME-RAL."
+    }
+  ]
+}
