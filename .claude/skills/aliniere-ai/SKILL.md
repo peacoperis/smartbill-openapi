@@ -19,8 +19,9 @@ Capabilitățile se schimbă lunar. Ce știi din antrenament e o fotografie vech
 - Fiecare afirmație despre ce poate: sursă oficială sau minim două surse independente.
 - Notează **arhitectura de personalizare** — e diferită la fiecare asistent și decide tot ce urmează:
   - *Gemini:* preferințe globale (soft) + Gems (reguli imperative) + memorie importată.
-  - *Perplexity:* Profil AI (global) + Spaces (instrucțiuni + fișiere + task-uri recurente).
+  - *Perplexity:* Profil AI — **un singur câmp compact**, o salvare — + memorie + Spaces (instrucțiuni imperative, fișiere, task-uri programate) + conectori de plan (Gmail, Drive, Notion).
   - Altul: identifică echivalentele înainte de a scrie o literă.
+- **Documentarea se termină înainte de a începe scrisul.** Alinierea Perplexity a fost ratată o dată exact aici: pachetul a fost scris pe analogia cu Gemini, fără documentare proprie, și a ieșit în formatul greșit — intrări scurte pentru un câmp care e unul singur. Costul reparației e mai mare decât al documentării.
 
 ## Pasul 2 — Bucla în doi: pune-l să se inventarieze din interiorul contului
 
@@ -47,6 +48,8 @@ Aici s-au pierdut cele mai multe încercări. Reguli învățate pe teren:
 4. **Sparge în intrări scurte** (200–400 de caractere) și salvează-le una câte una. Un bloc lung e respins integral; 15 intrări scurte trec, se respectă mai bine și permit reparație chirurgicală — rescrii doar intrarea care nu prinde.
 5. **Nu cere niciodată ce nu poate ști.** Procente de context, metrici interne, cifre din sisteme la care nu are acces. Fiecare astfel de cerință îl împinge activ să inventeze — a fost cauza dovedită a halucinațiilor la Gemini.
 6. **Filtrul de siguranță** se declanșează pe combinații sensibile (minori legați de cameră, nume complete de persoane, context juridic). Reformulează neutru, fără să pierzi regula.
+7. **Formatul îl dictează câmpul, nu obiceiul tău.** Unde există intrări multiple, se sparge; unde există un câmp unic și compact, se scrie un bloc dens și scurt. La Perplexity motivul e tehnic și documentat oficial: instrucțiunile sunt recitite la fiecare tură, deci balastul se compune și degradează răspunsul — invers decât la Gemini, unde 15 intrări scurte se respectă mai bine decât una lungă.
+8. **Dă-i explicit permisiunea să spună că nu a găsit.** Fără o propoziție care autorizează golul — „dacă după reformulări nu găsești, spune-mi asta în loc să estimezi" — asistentul umple. E aceeași regulă ca „NU AM DATA ASTA", și e recomandarea oficială din ghidul de prompting Perplexity, nu o invenție ITC.
 
 ## Pasul 4 — Definește OAMENII, nu doar firma
 
@@ -134,6 +137,10 @@ Lecții plătite pe teren, la construirea punții dintre două conturi Google (1
 
 **Fiecare pas al unei rutine primește o ramură de eșec** care lasă urmă scrisă în același loc cu succesul. Fără ea, o rutină moartă rămâne moartă luni de zile fără să observe nimeni.
 
+## Regula de livrare
+
+**Pachetul se predă finit, nu ca discuție.** O sesiune care începe alinierea punând întrebări în loc să livreze textele de lipit a eșuat deja: omul are contul deschis și două minute, nu un chestionar. Ce nu se știe se acoperă cu o ipoteză scrisă explicit în livrabil („dacă planul e Pro, conectorul Drive există; dacă nu, se sare peste secțiunea 7"), nu cu o întrebare care blochează. Livrabilul minim al oricărei runde: textul de lipit, locul exact unde se lipește, testul care verifică.
+
 ## Capcana care închide totul
 
 Alinierea perfectă a unui arsenal nefolosit valorează zero. Fiecare rundă de aliniere se încheie cu **o misiune reală dată asistentului**, nu cu un document. Dacă nu poți numi sarcina pe care o preia mâine, alinierea nu s-a terminat.
@@ -141,5 +148,5 @@ Alinierea perfectă a unui arsenal nefolosit valorează zero. Fiecare rundă de 
 ## Referințe
 
 - `references/gemini.md` — alinierea Gemini, completă: ce s-a instalat, ce a picat, rezultatele testului.
-- `references/perplexity.md` — pachetul Perplexity, gata de instalat, inclusiv profilul echipei.
+- `references/perplexity.md` — dosarul Perplexity complet: arhitectura verificată, regulile de scriere din documentația oficială, slăbiciunea de 37% citări neconforme și pachetul gata de instalat (profil compact, Space, test).
 - `references/daniel-operational.md` — pachetul managerului operațional: împărțirea uneltelor între roluri și textul de instalat în contul lui.
