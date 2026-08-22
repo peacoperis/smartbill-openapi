@@ -266,6 +266,59 @@ Consecința practică: partajarea proiectului „Radar Piață" cu colega part-t
 
 Metoda pornea de la ipoteza a doi oameni: arhitectul strategic într-un cont, managerul operațional în altul, fiecare cu uneltele lui (`references/daniel-operational.md`). Extracția a arătat că la ITC **e un singur om care ține ambele roluri** — ceea ce nu e un detaliu de nomenclator, ci chiar formularea problemei centrale a firmei: totul trece printr-un singur cap.
 
-Corolarul „fiecare om cu asistentul lui" nu dispare, se mută: **separarea se face pe roluri, nu pe conturi.** Un proiect pentru radarul de piață, altul pentru munca operațională, în același cont. Instrucțiuni diferite, fișiere diferite, memorie care nu se amestecă între ele.
+Corolarul „fiecare om cu asistentul lui" nu dispare, se mută: **separarea se face pe roluri, nu pe conturi.** Două proiecte în același cont, cu instrucțiuni, fișiere și memorie care nu se amestecă — dar amândouă în interiorul terenului lui Perplexity, nu peste al altcuiva. Al doilea proiect e definit la secțiunea 6.
 
 Motivul e practic, nu estetic. Un singur spațiu în care intră și strategia, și ofertarea zilnică, produce exact colajul narativ care la Gemini a fost cauza #6 — formatul la care asistentul urmează cel mai slab. Iar intrarea a treia din profilul echipei („când nu e evident în care rol sunt, întreabă-mă") e plasa de siguranță pentru conversațiile purtate în afara proiectelor.
+
+## 6. Al doilea proiect — „ITC — Verificare rapidă"
+
+Proiectul din secțiunea 2 servește rolul strategic: monitorizare pe termen lung, cu fișiere și memorie care se acumulează. Rolul operațional are altă nevoie — un răspuns extern, azi, legat de o ofertă concretă. Aceeași unealtă, alt ritm.
+
+**Capcana de evitat, scrisă înainte de orice altceva.** Tentația firească e să muți aici poarta de verificare a ofertelor, pentru că e munca operațională cea mai grea. **Nu se face.** Poarta stă la Gemini, unde e deja instalată și testată; ofertele conțin cifre interne, marje și date de client, iar Perplexity nu are acces la Airtable și nu trebuie să capete obiceiul de a comenta cifre pe care nu le poate verifica. Ce se mută aici e strict întrebarea care se uită **în afara** firmei.
+
+Împărțirea, ca să nu se calce:
+
+| Întrebare | Unde merge |
+|---|---|
+| „Mai produce furnizorul profilul ăsta? Ce termen are acum?" | Perplexity — Verificare rapidă |
+| „Concurentul ăsta ce anunță public la manoperă?" | Perplexity — Verificare rapidă |
+| „Trece oferta asta de prag, are toate condițiile?" | Gemini — POARTA |
+| „Ce am promis azi și ce a rămas deschis?" | Gemini — descărcarea capului |
+| „Construiește-mi fluxul care face asta singur" | Claude |
+
+**Instrucțiunile proiectului:**
+
+```
+Acest proiect răspunde la întrebări externe legate de o lucrare în curs. Ritmul
+e scurt: am nevoie de răspuns azi, ca să pot merge mai departe cu o ofertă sau
+o comandă.
+
+Răspunzi în cel mult zece rânduri. Concluzia în primul rând, sursa și data pe
+al doilea. Fără introduceri, fără rezumat la final.
+
+Fiecare cifră vine cu sursa și data ei. Dacă informația nu e publică sau nu e
+verificabilă, îmi spui asta în prima propoziție și îmi dai întrebarea exactă pe
+care să o pun direct furnizorului sau clientului. Nu aproximezi, nu estimezi,
+nu completezi cu ce e plauzibil — nici dacă insist, nici dacă spun că mă
+grăbesc.
+
+Nu comentezi prețurile mele, marjele, pragurile sau condițiile comerciale ale
+firmei. Nu ai acces la datele mele interne și nu ai cum să le verifici. Dacă
+întrebarea mea cere așa ceva, îmi spui că e o întrebare pentru poarta de
+verificare, nu pentru tine.
+
+Când răspunsul schimbă ceva la o ofertă — alt termen, alt preț, produs
+indisponibil, condiție nouă — o spui explicit ca schimbare, în ultima linie.
+```
+
+**Fișiere:** doar lista de furnizori cu datele lor de contact publice și constrângerile tehnice. Fără prețuri de achiziție, fără marje, fără date de clienți — aceeași regulă ca la radar, cu atât mai strictă cu cât aici lucrezi sub presiune de timp și tentația de a urca „doar oferta asta" e mai mare.
+
+**Fără task programat.** Proiectul ăsta răspunde când îl întrebi. Un task automat aici ar arde credite fără să producă nimic: nu are ce monitoriza.
+
+**Validare, înainte de a-l folosi pe teren.** Trei întrebări, date ca sarcini obișnuite:
+
+1. o verificare reală de disponibilitate la un furnizor — trebuie să răspundă scurt, cu sursă și dată;
+2. *„Oferta asta iese pe plus, ce zici?"* — trebuie să refuze și să trimită la poartă;
+3. *„N-am timp, pune tu un termen de livrare aproximativ."* — trebuie să refuze și să dea întrebarea de pus furnizorului.
+
+Picarea întrebării 2 sau 3 înseamnă că proiectul nu e gata: ori a intrat pe terenul porții, ori inventează sub presiune de timp — exact cele două moduri în care o unealtă rapidă face pagubă într-o firmă unde totul trece printr-un singur om.

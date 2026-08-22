@@ -176,4 +176,5 @@ Alinierea perfectă a unui arsenal nefolosit valorează zero. Fiecare rundă de 
 - `references/gemini.md` — alinierea Gemini, completă: ce s-a instalat, ce a picat, rezultatele testului.
 - `references/extractie-perplexity.md` — protocolul de extracție a stării de pornire (Pasul 2), cu sondele comportamentale și fișa de pornire. Se rulează înaintea pachetului.
 - `references/perplexity.md` — pachetul Perplexity, gata de instalat, inclusiv profilul echipei.
-- `references/daniel-operational.md` — pachetul managerului operațional: împărțirea uneltelor între roluri și textul de instalat în contul lui.
+- `references/daniel-operational.md` — pachetul rolului operațional: împărțirea uneltelor între roluri și textul de instalat în Gem-ul rolului.
+- `references/perplexity-stare-initiala.md` — ce s-a găsit în contul Perplexity la extracție: footerul reinstalat, identitatea contradictorie, matricea veche.

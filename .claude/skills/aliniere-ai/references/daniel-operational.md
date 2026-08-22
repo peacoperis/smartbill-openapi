@@ -1,12 +1,23 @@
-# Pachetul managerului operațional — asistentul lui Daniel
+# Pachetul rolului operațional
 
-Golul descoperit după ce alinierea părea încheiată: fusese echipat arhitectul, nu operatorul. Daniel generează cea mai mare parte din munca zilnică și din erorile costisitoare, iar reorganizarea are ca țintă chiar reducerea intervenției lui — deci este omul cu cea mai mare nevoie de asistent aliniat.
+Golul descoperit după ce alinierea părea încheiată: fusese echipat arhitectul, nu operatorul. Munca zilnică și erorile costisitoare vin din partea operațională, iar reorganizarea are ca țintă chiar reducerea intervenției manuale — deci e rolul cu cea mai mare nevoie de asistent aliniat.
 
-Se instalează **în contul lui Daniel**, scris la persoana lui. Nu e o copie a setului arhitectului: uneltele diferă, pentru că munca diferă.
+> **Corectat 16.08.2026.** Versiunea anterioară a acestui fișier presupunea că arhitectul strategic și managerul operațional sunt doi oameni, cu două conturi. Extracția din contul Perplexity a arătat că e **o singură persoană** — asociatul unic — care ține ambele roluri. Consecința nu e cosmetică: fișierul cerea instalarea acestui set în „setări generale" la Gemini, exact câmpul în care `gemini.md` are deja instalat setul complet al arhitectului, validat cu 9,5/12. Două seturi de reguli pentru același om, în același câmp, este fix divergența pe care o interzice Pasul 8 — iar al doilea l-ar fi surpat pe primul.
 
-## Împărțirea uneltelor
+## Unde se instalează, corectat
 
-| Unealtă | Arhitect strategic | Manager operațional |
+Nu ca al doilea set în setări generale. Separarea se face pe roluri, în același cont, pe două straturi:
+
+- **Setările generale** rămân ce sunt în `gemini.md`: identitatea firmei, axiomele, matricea, regulile de rundă. Valabile în ambele roluri, o singură copie, o singură sursă.
+- **Un Gem pentru rolul operațional** primește textul de mai jos. `gemini.md` constatase că Gems au devenit opționale odată ce setul general s-a ținut singur; aici își recapătă rostul — nu ca dublură a regulilor, ci ca spațiu al unui rol, cu instrucțiunile lui de lucru.
+
+Din textul de mai jos **se scot, la instalare, regulile deja prezente în setările generale** — pragul, contractul și avansul, Airtable, TVA-ul, tâmplăria PVC. Se repetă acolo doar dacă setările generale nu le conțin. Ce rămâne în Gem e munca: dictarea, poarta, camera, tonul.
+
+Simetria cu Perplexity e intenționată: acolo, personalizarea globală ține identitatea și două proiecte țin cele două roluri (`perplexity.md`, secțiunile 2 și 6). Aceeași formă, alt furnizor.
+
+## Împărțirea uneltelor — pe roluri, nu pe conturi
+
+| Unealtă | Rolul strategic | Rolul operațional |
 |---|---|---|
 | Audit de sisteme, research adânc, sinteză | ✅ | — |
 | Descărcarea capului prin dictare din mers | — | ✅ |
@@ -14,9 +25,9 @@ Se instalează **în contul lui Daniel**, scris la persoana lui. Nu e o copie a 
 | Traducerea de la client la specificație | — | ✅ |
 | Memoria vie — greșeala devine regulă | ✅ | ✅ (alimentare) |
 
-Acțiunea programată de seară — „ce a rămas deschis azi și ce am promis cuiva" — aparține contului operațional, nu celui strategic.
+Acțiunea programată de seară — „ce a rămas deschis azi și ce am promis cuiva" — aparține rolului operațional. Când un singur om ține ambele roluri, ea devine mai importantă, nu mai puțin: e singurul moment din zi în care rolul operațional se închide explicit, ca cel strategic să aibă loc.
 
-## Textul de instalat (Gemini, setări generale)
+## Textul de instalat (Gemini, în Gem-ul rolului operațional)
 
 ```
 Sunt administratorul și managerul operațional al unei firme de comerț cu
