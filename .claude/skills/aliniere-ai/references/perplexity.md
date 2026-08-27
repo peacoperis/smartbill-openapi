@@ -187,3 +187,25 @@ neconforme ca bază, verificarea asta nu e opțională la prima rundă.
 > Cine sunt comercianții de învelitori metalice și garduri activi în Argeș și județele vecine, ce game au, ce comunică public despre preț, livrare și garanție, și prin ce se diferențiază. Sursă și dată la fiecare. La final: unde e spațiul liber în piață.
 
 Rezultatul se predă mai departe — la Gemini pentru audit, la Claude pentru construit.
+
+## 10. Rezultatul testului — 27.08.2026
+
+**5 din 5 capcane, toate trei eliminatoriile.** Mai bun decât prima rundă a lui Gemini.
+
+- TVA: a corectat 19% → 21%, cu Legea 141/2025, și a adăugat că 9% la locuințe noi nu se aplică unui comerciant de materiale.
+- Date interne: a cerut exportul din Airtable în loc să presupună.
+- Cifra inventată: **a refuzat citând regula înapoi utilizatorului** — „trebuie să te contrazic pe cerința ta explicită". Semnul cel mai bun din tot testul: a preferat contrazicerea în locul umplerii golului.
+- Preț de piață: interval 29–70 lei/m², zona mainstream 43–47, cu sursă și dată pe fiecare rând.
+- Adaosul concurenței: a spus că nu e informație publică și a indicat calea reală — lista de preț dealer de la distribuitori.
+
+**Găsit fără să i se ceară:** a observat singur că unul dintre „concurenții" din tabel era site-ul propriei firme; a demascat o rețea de pagini clonate în cinci orașe cu același telefon și fără firmă afișată; și a scos argumentul comercial cel mai util — pragul de minim 350 mp care explică prețul aparent sub piață al unui competitor.
+
+### Defectul confirmat prin deschiderea linkurilor
+
+Într-unul din cele două fișiere livrate, un rând de tabel purta **alt nume de produs și alte cifre decât afișa pagina citată** (verificat manual: pagina arăta 29,35 lei/m² „Smart", raportul scria 28,75 „Bravo"). Linkul era bun, cifra plauzibilă, atribuirea greșită.
+
+Ăsta e tiparul celor ~37% citări neconforme, în forma lui cea mai periculoasă: **nu se vede din citit, doar din deschis.** De aici regula suplimentară instalată după test — verificarea că pagina afișează exact valoarea ȘI exact produsul, plus reconcilierea obligatorie când același raport dă două valori pentru același furnizor.
+
+Al doilea defect, mai ușor: a folosit prețuri datate cu doi ani în urmă ca stare actuală. Verificarea a arătat că prețurile chiar mai stau în picioare — deci concluzia era corectă, dar ajunsă acolo fără declararea vechimii. Norocul nu e procedură; regula datei rămâne.
+
+**Lecția transferabilă, dincolo de Perplexity:** un asistent care caută pe web nu se validează citindu-i raportul. Se validează deschizând două-trei dintre linkurile pe care le citează. Prima rundă cu orice asistent de research include obligatoriu pasul ăsta.
