@@ -34,6 +34,13 @@ Măsurat pe septembrie–jumătatea lui octombrie (săptămâni închise curat, 
 
 Jurnalul walk-in decide separat valoarea prezenței de 8h la birou: dacă clienții intrați + conversia justifică prezența, full-time are argument obiectiv; dacă nu, part-time.
 
+## Perioada de rodaj (Antonia în concediu — septembrie 2026)
+
+Cât timp Antonia e în concediu, sistemul rulează pe Daniel: el primește ambele mesaje, execută rutina și rafinează rapoartele. Reguli pentru această perioadă:
+- **Zilele de concediu NU intră în scorul ei.** Măsurarea pentru decizie începe în prima ei zi de lucru cu sistemul pornit (briefing pe Telegramul ei + rutina prezentată).
+- Rodajul e și **baseline pentru walk-in**: clienții intrați cât Daniel e la birou se înregistrează la fel în `Jurnal Antonia` (Tip = Client birou, „Daniel prezent?" bifat) — termenul de comparație pentru valoarea prezenței.
+- Dacă întoarcerea ei lasă mai puțin de ~5 săptămâni de date până la 20 octombrie, data deciziei se mută cu atât cât e nevoie ca măsurarea să acopere minim 4 săptămâni pline de lucru — dar se mută O SINGURĂ dată și se scrie aici.
+
 ## Calendar — fix, în calendar, nu în intenție
 
 - **Septembrie:** sistemul rulează; Daniel nu intervine pe proces, doar citește rapoartele și ține discuția de vineri.
