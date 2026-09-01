@@ -53,6 +53,30 @@ Consum Make: ~30 operații/zi din limita de 10.000/lună — nesemnificativ. Fă
 - Bifele și jurnalul walk-in sunt auto-raportate de persoana evaluată. Sondajul de vineri e contramăsura.
 - Septembrie e luna de vârf — scorul se interpretează cu acest context.
 
+
+## Curățenie 01.09.2026 — OLX pus la naftalină
+
+**Șters din Airtable (5 tabele):** OLX_Orase (25), OLX_Categorii (4), OLX_Anunturi_Planificate (44),
+OLX_Analiza_Zilnica (7), OLX_Performanta (0). Niciunul nu avea legături cu restul bazei.
+Baza a scăzut de la **20 la 15 tabele**.
+
+**Șters din Make (8 scenarii):** OLX_S1_Analiza_Concurenta, OLX_S2_Postare_Dimineata,
+OLX_S3_Postare_Seara, OLX_S4_Raport_Zilnic, OLX_AUTO_Dimineata, OLX_AUTO_Seara,
+S0 — OLX Auto-Post FINAL (×2). Toate cu 0 execuții. Make a scăzut de la **22 la 14 scenarii**.
+
+**Backup complet înainte de ștergere:** `airtable-backup-2026-09-01.tar.gz` (20 tabele,
+2.360 înregistrări + schema), livrat lui Daniel. Nu se păstrează în repo — conține date personale.
+
+**Infrastructura e documentată integral** în `naftalina/OLX-SISTEM-ARHIVAT.md`: schema celor 5 tabele,
+cele 25 de orașe cu OLX_City_ID, cele 4 categorii cu ID-uri și bugete, șabloanele de titlu, logica
+scenariilor și pragurile de decizie. Poate fi reconstruită identic.
+
+**Cauza reală a morții, găsită la arhivare:** interogarea OLX folosea text liber
+(`?query={categorie} {oras}`) în loc de `city_id` + `category_id`, deși ambele ID-uri erau stocate
+corect în tabele. Deci numărul de „concurenți" era totalul pe țară (205–1000), nu pe oraș — iar
+pragul „peste 40 = roșu" respingea automat fiecare anunț. Sistemul nu a eșuat tehnic, s-a
+autoblocat logic: 4 postate, 33 blocate în PLANIFICAT, 5 respinse.
+
 ## Rămâne UMAN (nu se automatizează)
 - Măsurători, ofertare complexă, negociere — Daniel.
 - Clienți walk-in, montaj video, relația zilnică cu clienții de birou — Antonia.
