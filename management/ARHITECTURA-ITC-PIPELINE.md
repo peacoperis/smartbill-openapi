@@ -47,4 +47,5 @@ Caietul de sarcini al lui Daniel (COMENZI SSoT + FACTURI_FURNIZORI + PLATI_BANCA
 | Data | Componentă | Stare |
 |---|---|---|
 | 31.08.2026 | Punte: PUNTE 1/2/3 (Make) + automatizare Airtable (draft) + câmpuri sistem + `Jurnal Antonia` | Activ (automatizarea Airtable: de pornit de Daniel, 1 click) |
+| 01.09.2026 | Audit + hardening: filtru anti-injecție pe mailhook, linie-santinelă, indicatori de trunchiere | Activ, testat (vezi HARTA-AUTOMATIZARE.md § Audit) |
 | — | D2 / A / B / C | Neîncepute — în ordinea de mai sus |

@@ -34,6 +34,25 @@ Consum Make: ~30 operații/zi din limita de 10.000/lună — nesemnificativ. Fă
 5. **Extinderi SmartBill** (după A–C): trimitere PDF pe email client, sincronizare încasări.
 6. **OLX reactivat ca automatizare** — doar când Daniel îi pune dată de pornire.
 
+## Audit 01.09.2026 — fix-uri aplicate și puncte rămase deschise
+
+**Aplicate și testate:**
+- Filtru anti-injecție pe PUNTE 1: doar emailurile cu subiect «🚚 LIVRARE MÂINE» ajung pe Telegram (test cu email fals: blocat — 1 operație, fără mesaj).
+- Linie-santinelă «🔧 Sistem: OK» în ambele rapoarte: distinge „zi curată" de „citire Airtable ruptă" (zerourile nu mai pot minți silențios).
+- Indicatori de trunchiere: când o listă atinge plafonul (20/15), raportul spune explicit „sunt mai multe".
+
+**Deschise (proprietar: Daniel):**
+1. Automatizarea Airtable «PUNTE — Livrare mâine» e încă NEPORNITĂ (draft) — fără click-ul de deploy, alerta instant nu există.
+2. Briefing-ul de dimineață merge la Daniel, nu la Antonia — ea trebuie să dea /start botului, apoi se mută chat ID-ul (o singură modificare).
+3. Securitate: scriptul F2.3 conține credențialele SmartBill în clar, iar blueprint-urile vechi Make conțin un token Airtable în clar — vizibile oricui are acces la bază. De rotit ambele și de mutat în conexiuni/secrets.
+4. Actul adițional la Regulamentul Intern — fără el, pragurile din PLAN-ANTONIA.md nu au forță legală (termen: 15 septembrie).
+5. NU redenumiți statusurile din Airtable («Livare maine », «🟡 Verifică», «⚠️ De Clasificat») — rapoartele caută după aceste nume exacte.
+
+**Limite asumate ale măsurării (de ținut minte la decizia din 20 octombrie):**
+- Scorul măsoară starea tabelelor, nu autorul muncii — dacă Daniel face el sarcinile, ziua iese tot „curată". Corecție: la discuția de vineri, 2 verificări prin sondaj (o bifă → factura chiar e atașată?; un rând de jurnal → captura există?).
+- Bifele și jurnalul walk-in sunt auto-raportate de persoana evaluată. Sondajul de vineri e contramăsura.
+- Septembrie e luna de vârf — scorul se interpretează cu acest context.
+
 ## Rămâne UMAN (nu se automatizează)
 - Măsurători, ofertare complexă, negociere — Daniel.
 - Clienți walk-in, montaj video, relația zilnică cu clienții de birou — Antonia.
