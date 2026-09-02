@@ -155,13 +155,32 @@ Câmpuri — toate existente: `Id Client operational`, `Nume Beneficiar`, `Locat
 `Status Oferta F1`, `Factura_Furnizor_OK`. Aceeași formă de rând se aplică și în briefingul de
 dimineață (PUNTE 2) la livrări.
 
-## Cele două întrebări pentru Daniel
+## Deciziile lui Daniel (02.09, seara)
 
-1. **„Cine le dă"** înseamnă colaboratorul de la care vine comanda (Mugurel, Dumitru — **se poate de
-   mâine**), sau cine a tastat-o în Airtable (Daniel / Antonia — **doar după ce adaugă câmpul
-   Created by**)? Sau amândouă?
-2. **Bifa `Factura_Furnizor_OK`** e goală pe toate cele 518 rânduri. O folosește cineva (Antonia, când
-   vine factura Bilka), sau scoatem avertismentul din raport până când e folosită?
+1. **„Cine le dă" = doar cine a tastat-o (Daniel / Antonia).** Nu colaboratorul. Deci gruparea
+   comenzilor se face **exclusiv** după `Created by` — câmp care **nu există** și pe care API-ul nu-l
+   poate crea. **Secțiunea COMENZI DATE AZI nu se poate construi în forma cerută până nu adaugă el
+   câmpul.** Până atunci, dacă se construiește ceva, comenzile apar ca listă simplă (ID + telefon,
+   localitate, nume), fără grupare, cu rândul ℹ️ care spune de ce.
+
+   Pașii lui, o singură dată: Airtable → tabelul `Ofertare` → butonul **+** din capul tabelului →
+   tip **Created by** → nume `Creat de` → Create. Airtable îl completează **retroactiv** pentru toate
+   cele 518 rânduri. Opțional, la fel pentru **Last modified by** → `Modificat de`.
+
+   Regula de atribuire în Make, în ordine: (1) `Responsabil Comanda` = Daniel/Antonia → acea persoană
+   „(prin Telegram)"; (2) altfel `Creat de`; (3) restul → „Altcineva / necunoscut", niciodată omis.
+   Regula (1) e obligatorie: înregistrările create prin API (PUNTE 4) primesc la `Created by` contul
+   token-ului, nu expeditorul — deci fără ea, tot ce trimite Antonia pe Telegram ar apărea sub Daniel.
+
+2. **Bifa `Factura_Furnizor_OK` rămâne; o va bifa Antonia** când vine factura Bilka. În raport: o
+   singură linie sub lista de livrări („toate 3: fără factură furnizor bifată" / sau sub fiecare, când
+   doar unele lipsesc). Intră în rutina ei (RUTINA-ANTONIA.md, blocul „Pregătirea zilei de mâine").
+
+## Ce blochează construcția
+
+Un singur lucru: câmpul `Created by` în `Ofertare`. Restul machetei (livrări, de ridicat, telefoane
+normalizate, a treia livrare, secțiunile comasate) se poate construi oricând — dar Daniel a cerut
+„macheta întâi, Make după ce cade la cheie", iar forma încă nu a primit un „da" explicit.
 
 ## Verificare (după aprobare)
 
