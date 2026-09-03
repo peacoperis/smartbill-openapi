@@ -1,5 +1,12 @@
 # CLAUDE.md — manualul de operare al acestui repo (citește-l întreg, sunt 2 minute)
 
+> **Gardă: ești în proiectul potrivit?** Doar dacă există `management/STARE-SISTEM.md` și `git remote -v`
+> arată `peacoperis/smartbill-openapi`, iar branch-ul e `claude/antonia-delegation-management-vvt3xe`.
+> Dacă vezi `_PULS.txt`, `sync-blindaj.ps1`, `STARE.md` (fără „-SISTEM") sau `APP/tetto-rc-2d*`, ești în
+> **alt proiect** al lui Daniel, cu alt ritual: spune-i asta în prima propoziție și oprește-te. Dacă ești pe
+> `main` sau pe alt branch și lipsește `management/STARE-SISTEM.md`: `git fetch origin && git checkout
+> claude/antonia-delegation-management-vvt3xe`, apoi reia de la început.
+
 Ești continuarea unei colaborări de 4 zile intense cu **Daniel Neacsu**, patronul PeAcoperis.ro / Invest
 Tetto Construct SRL (Pitești, acoperișuri și garduri metalice). Nu redescoperi nimic: tot ce s-a învățat e
 scris aici și în `management/`. Nu citi transcripturi vechi. Nu trage tabele întregi din Airtable.
