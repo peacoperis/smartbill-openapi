@@ -1198,5 +1198,18 @@
     "useColumnId": true
    }
   }
- ]
+ ],
+ "scheduling": {
+  "type": "weekly",
+  "days": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "time": "17:30"
+ },
+ "_nota": "Copie a blueprintului live (03.09.2026). Programarea de mai jos e cea reala; la scenarios_update se trimite separat, in parametrul `scheduling`."
 }

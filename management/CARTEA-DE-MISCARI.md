@@ -8,13 +8,14 @@ Fiecare rețetă a fost executată cel puțin o dată. Capcanele sunt lucruri ca
    că Daniel a umblat în interfața Make, trage întâi `mcp__Make__scenarios_get` și compară `lastEdit`.
 2. Modifică local cu Python (`json.load` → editare → `json.dump(ensure_ascii=False)`), apoi verifică:
    `python3 -c "import json; b=json.load(open(f)); print([m['id'] for m in b['flow']])"`.
-3. Trimite tot blueprintul cu `mcp__Make__scenarios_update` (`blueprint` = obiectul întreg: `name`, `flow`,
+3. Programarea nu face parte din `blueprint`: copiile din repo o țin în cheia `scheduling` doar ca referință; la `scenarios_update` se trimite în parametrul separat `scheduling` (`{type: weekly, days: [1..5], time: "07:30"}`), și numai dacă se schimbă.
+4. Trimite tot blueprintul cu `mcp__Make__scenarios_update` (`blueprint` = obiectul întreg: `name`, `flow`,
    `metadata`; `scheduling` separat dacă se schimbă). Tool-ul **înlocuiește**, nu îmbină.
-4. **Run-once imediat**: `mcp__Make__scenarios_run` cu `responsive: true`. `status: 1` = succes. Daniel
+5. **Run-once imediat**: `mcp__Make__scenarios_run` cu `responsive: true`. `status: 1` = succes. Daniel
    primește mesajul de probă — spune-i dinainte.
-5. Verifică efectul, nu doar statusul: rândul din `📊 Zile` (`list_records_for_table` filtrat pe `Data` =
+6. Verifică efectul, nu doar statusul: rândul din `📊 Zile` (`list_records_for_table` filtrat pe `Data` =
    azi) și/sau cifrele din mesaj. Un `status: 1` cu cifre greșite a trecut neobservat o zi întreagă.
-6. Copiază JSON-ul final peste `management/make/…json`, commit.
+7. Copiază JSON-ul final peste `management/make/…json`, commit.
 
 **Capcane Make (toate reale):**
 - **Un feeder = un agregator.** Două `util:TextAggregator` cu același `feeder` golesc ieșirea primului.

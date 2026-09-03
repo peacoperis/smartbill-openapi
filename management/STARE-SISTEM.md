@@ -117,6 +117,12 @@ scratchpad-ul sesiunii (`airtable-backup-2026-09-01.tar.gz`) — **nu în repo**
 Check-in Claude Code: `trig_01Ud4qJuoinakP8Yh5z6tBT8` la 2026-09-03T15:00Z (verifică `Created by` și
 rulările). Poate fi șters dacă sesiunea se schimbă.
 
+## Necunoscute (nu sunt nicăieri în documente, pentru că nu le știe nimeni încă)
+
+Chat ID-ul Telegram al Antoniei (după `/start`) · data întoarcerii ei · adresa și programul biroului ·
+convenția de subiect a mailurilor către furnizori. Data „15.09" pentru actul adițional venea din calendarul
+inițial din `PLAN-ANTONIA.md` (31.08) și a fost înlocuită la audit cu „prima ei zi de lucru".
+
 ## Deschise (detaliile în `CLICURI-DANIEL.md`)
 
 Token SmartBill în `⚙️ Config` · instalarea motoarelor 0/A/B · mail-exemplu către furnizor pentru captura
