@@ -55,6 +55,7 @@ scris aici și în `management/`. Nu citi transcripturi vechi. Nu trage tabele �
 | Ce e fiecare tabel Airtable, ce s-a șters și de ce | `management/INVENTAR-AIRTABLE.md`, `naftalina/` |
 | Antonia: rutina, planul, praguri, legal | `RUTINA-ANTONIA.md`, `PLAN-ANTONIA.md`, `PROTOCOL-DISCIPLINAR.md` |
 | Arhitectura țintă a pipeline-ului (motoare A–D) | `management/ARHITECTURA-ITC-PIPELINE.md` |
+| Ce a făcut fiecare sesiune + protocolul evaluării de seară | `management/JURNAL-SESIUNI.md` |
 
 ## Primele 10 minute ale unei sesiuni noi
 
@@ -64,6 +65,7 @@ scris aici și în `management/`. Nu citi transcripturi vechi. Nu trage tabele �
    (`tblJ0IUiG4uQ5VNYM`); lista automatizărilor Airtable (ce e deployed).
 3. Salută-l pe Daniel cu starea într-un singur mesaj scurt: ce a rulat, ce e roșu, ce are de apăsat. Nu
    povesti ce ai citit.
+4. **La închiderea sesiunii**: adaugă intrarea ta în `management/JURNAL-SESIUNI.md` (format acolo) și comite.
 
 ## Economia de tokeni (motivul pentru care exiști tu și nu predecesorul)
 
