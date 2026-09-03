@@ -112,7 +112,13 @@ Branch `claude/antonia-delegation-management-vvt3xe`, fără PR. **Din 03.09 `ma
 branch-ul** (merge fast-forward), ca să nu mai depindă predarea de alegerea branch-ului; munca rămâne pe
 branch. Ultimele commit-uri: 7a124ee (jurnalul sesiunii locale), a2e68af (decizia #12 + garda + rândul 14),
 8c322aa (jurnalul + protocolul de seară), 73a54f2, 44ecc77. Backup-urile Airtable cu date personale au fost
-doar în scratchpad-ul sesiunii (`airtable-backup-2026-09-01.tar.gz`) — **nu în repo**; se refac prin API.
+doar în scratchpad-ul sesiunii (`airtable-backup-2026-09-01.tar.gz`) — **nu în repo**. ⚠ **Corecție 03.09:
+„se refac prin API" e fals pentru tabelele ȘTERSE pe 02.09.** Backupul lor real există, dar în celălalt hub
+al lui Daniel: `peacoperis/itc-hub`, branch **`arhiva-airtable`**, folderul `ARHIVA_AIRTABLE_TESTCRM/`
+(snapshot **2026-08-31**, deci dinainte de ștergeri: 1804 înregistrări, 17 tabele, schema completă și
+inventarul celor 1607 atașamente; manifestul e oglindit și în Google Drive). Se citește cu
+`git show origin/arhiva-airtable:<cale>`. Branch-ul e la 203 commit-uri în urma lui `master` — **nu se
+merge-uiește niciodată**, doar se citește.
 
 **Clona locală** (03.09): `C:\Users\danie\repos\smartbill-openapi`, deliberat în afara OneDrive (git și
 sincronizarea OneDrive se corup reciproc). Identitatea git se setează local: `Daniel ITC`.

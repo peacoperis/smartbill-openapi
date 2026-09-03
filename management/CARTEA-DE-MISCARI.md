@@ -115,3 +115,21 @@ Fiecare rețetă a fost executată cel puțin o dată. Capcanele sunt lucruri ca
 - Make: 10.000 op/lună; consum curent ~1.700. Airtable AI: Automation 1 + motorul 0 consumă credite AI ale
   bazei. Telegram: 4.096 caractere/mesaj.
 - Sesiune Claude: nu re-citi; nu trage `Ofertare` întreg; un audit = un critic, nu un workflow.
+
+## 10. Un singur scriitor în sistemele din afara git-ului (03.09)
+
+Git are lacăt: dacă două sesiuni scriu în paralel, a doua primește „fetch first", rezolvi și nu pierzi nimic.
+**Airtable, Make, SmartBill și Telegram nu au lacăt.** Acolo două sesiuni execută amândouă, în tăcere.
+
+Dovezile, din aceeași zi:
+- `⚙️ Config` a ajuns cu **16 rânduri în loc de 8**: același lot de chei creat de două ori, la 05:56 și 09:42.
+  Nimeni nu a fost avertizat; motoarele A/B citesc ultima potrivire, deci tokenul pus în rândul „greșit" ar fi
+  fost ignorat tăcut.
+- Două briefinguri PUNTE 2 trimise la 3 minute distanță (vezi `AUDIT-4-SCAUNE.md`).
+- În sens invers, git și-a făcut treaba: un push a fost respins pentru că sesiunea din aplicație împinsese
+  între timp jurnalul; s-a rezolvat cu un rebase.
+
+**Regula:** la un moment dat, o singură sesiune are voie să *scrie* în Airtable / Make / SmartBill / Telegram.
+Celelalte citesc. Dacă nu ești sigur că ești tu aceea, întreabă-l pe Daniel înainte de prima scriere, nu după.
+Baza `appdbikkM2awYhpoM` e folosită și din celălalt hub (`itc-hub`, veriga „B4 · TRANSMISIE"), deci întrebarea
+nu e retorică.

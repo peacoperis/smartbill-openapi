@@ -87,6 +87,12 @@ de harness se adaugă automat; nu pune identificatori de model în commit-uri sa
 
 ## Ce e în afara repo-ului
 
+**Celălalt hub al lui Daniel** (`peacoperis/itc-hub`, local `C:\Users\danie\OneDrive\Documente\ITC`):
+acolo trăiesc regulile de meserie, ofertarea, dosarele clienților, aplicația TETTO-RC și **arhiva bazei
+Airtable dinainte de ștergerile din 02.09** (branch `arhiva-airtable`). Din 03.09 acest repo e înregistrat
+acolo la adresa 70 din `00_HARTA-ATELIER.md`. Sesiuni separate, dar **aceeași bază Airtable**: vezi regula
+scriitorului unic din `CARTEA-DE-MISCARI.md`, punctul 10.
+
 Baza Airtable „test #" `appdbikkM2awYhpoM` (conector MCP Airtable); echipa Make 1521547 (conector MCP
 Make); botul Telegram (chat Daniel `7486183573`); dashboardul «Comenzi în lucru»
 `https://airtable.com/appdbikkM2awYhpoM/pagW48gNn8LNQ9eS7`; SmartBill (CIF RO34325848, serie facturi
