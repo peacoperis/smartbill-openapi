@@ -16,7 +16,7 @@ schimbă, stările da. Spațiile finale din numele câmpurilor și opțiunilor s
 | `Ponou Control` | `tblsyvGhneA5VWVis` | catalog produse (numele e o scăpare, e „Produse") | 54 |
 | `Jurnal Antonia` | `tbl6H1TRCP60uAGUM` | dovezi zilnice (câmpuri: Data, Tip, Rezumat, Link Dovadă) | 1 (test) |
 | `📊 Zile` | `tblJ0IUiG4uQ5VNYM` | snapshot zilnic scris de PUNTE 3 | 2 |
-| `⚙️ Config` | `tbltvlIAmooZTDU0c` | setări motoare (Cheie fldf2FklZGAZCTV5R / Valoare fldpRsEJDGQoLiwyF / Notă fldKdK50vTK4a7IGq) | 8 rânduri; `SB_EMAIL` și `SB_TOKEN` **goale, de completat de Daniel** |
+| `⚙️ Config` | `tbltvlIAmooZTDU0c` | setări motoare (Cheie fldf2FklZGAZCTV5R / Valoare fldpRsEJDGQoLiwyF / Notă fldKdK50vTK4a7IGq) | **16 rânduri = 8 chei × 2** (loturi identice la 05:56 și 09:42 pe 03.09). Motoarele A/B fac `m[Cheie]=Valoare` peste toate rândurile, deci ultima potrivire câștigă: tokenul pus în rândul „greșit" e ignorat tăcut. De șters lotul 05:56 — clicul **0c**. `SB_EMAIL` și `SB_TOKEN` **goale, de completat de Daniel** |
 | `Încasări Clienți`, `Clienți`, `Cheltuieli Operaționale` | — | importate o dată, abandonate; vezi INVENTAR | |
 
 Șterse la 02.09 (documentate în `naftalina/TABELE-ARHIVATE.md`): Loturi/Retururi/Alocări Paleți, Inbox
@@ -108,9 +108,14 @@ de Daniel) și, temporar, în scriptul F2.3. Nu se pun niciodată în apeluri de
 
 ## Repo
 
-Branch `claude/antonia-delegation-management-vvt3xe`, fără PR. Ultimele commit-uri: af5cd06 (motoare),
-2d977ad (audit + raport v3), 151824c (raport v2). Backup-urile Airtable cu date personale au fost doar în
-scratchpad-ul sesiunii (`airtable-backup-2026-09-01.tar.gz`) — **nu în repo**; se refac prin API la nevoie.
+Branch `claude/antonia-delegation-management-vvt3xe`, fără PR. **Din 03.09 `main` are aceeași ștampilă ca
+branch-ul** (merge fast-forward), ca să nu mai depindă predarea de alegerea branch-ului; munca rămâne pe
+branch. Ultimele commit-uri: 7a124ee (jurnalul sesiunii locale), a2e68af (decizia #12 + garda + rândul 14),
+8c322aa (jurnalul + protocolul de seară), 73a54f2, 44ecc77. Backup-urile Airtable cu date personale au fost
+doar în scratchpad-ul sesiunii (`airtable-backup-2026-09-01.tar.gz`) — **nu în repo**; se refac prin API.
+
+**Clona locală** (03.09): `C:\Users\danie\repos\smartbill-openapi`, deliberat în afara OneDrive (git și
+sincronizarea OneDrive se corup reciproc). Identitatea git se setează local: `Daniel ITC`.
 
 ## Programări externe
 

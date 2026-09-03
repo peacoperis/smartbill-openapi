@@ -8,6 +8,9 @@ Fiecare rețetă a fost executată cel puțin o dată. Capcanele sunt lucruri ca
    că Daniel a umblat în interfața Make, trage întâi `mcp__Make__scenarios_get` și compară `lastEdit`.
 2. Modifică local cu Python (`json.load` → editare → `json.dump(ensure_ascii=False)`), apoi verifică:
    `python3 -c "import json; b=json.load(open(f)); print([m['id'] for m in b['flow']])"`.
+   **Atenție (03.09):** pe calculatorul local al lui Daniel **Python nu e instalat** (doar scurtătura din
+   Microsoft Store, care nu rulează nimic). Ruta asta merge doar din sesiunile care au Python; de pe local,
+   blueprint-ul se editează cu alt instrument sau din interfața Make.
 3. Programarea nu face parte din `blueprint`: copiile din repo o țin în cheia `scheduling` doar ca referință; la `scenarios_update` se trimite în parametrul separat `scheduling` (`{type: weekly, days: [1..5], time: "07:30"}`), și numai dacă se schimbă.
 4. Trimite tot blueprintul cu `mcp__Make__scenarios_update` (`blueprint` = obiectul întreg: `name`, `flow`,
    `metadata`; `scheduling` separat dacă se schimbă). Tool-ul **înlocuiește**, nu îmbină.
