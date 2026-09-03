@@ -14,6 +14,7 @@
 | PUNTE 2 — briefing | Make | v3 (03.09): 07:30 cât merge la Daniel (rodaj), 08:50 când trece la Antonia; filtru 7 zile + „cele mai vechi 3 din backlog"; text fix doar lunea; șabloane WhatsApp; retry pe citiri |
 | PUNTE 3 — raport 17:30 | Make | v3 (03.09), L–S: comenzi/livrări/de ridicat/restanțe 7 zile + **ÎN LUCRU pe etape** + link dashboard + delta backlog; **sâmbătă „Săptămâna în cifre"**; snapshot zilnic în `📊 Zile` (upsert) |
 | `Etapă comandă` + dashboard «Comenzi în lucru» | Airtable (formulă + interfață) | 03.09: etapa fiecărei comenzi (comandată → livrare → facturat → încasat) și lista celor deschise, pe file. https://airtable.com/appdbikkM2awYhpoM/pagW48gNn8LNQ9eS7 |
+| Motoare 0 / A / B — PDF → câmpuri, CNP → proformă, dovadă → factură de avans + De comandat | Airtable (AI + scripturi) | **scrise 03.09, neinstalate** (`management/motoare/`); credențialele SmartBill se citesc din `⚙️ Config`. Astea sunt piesele care dau timp înapoi |
 | `📊 Zile` | Airtable | un rând pe zi scris de PUNTE 3: comenzi, livrări, facturi client, încasări, oferte noi, facturi furnizor intrate, restanțe, backlog — contorul săptămânal |
 
 Consum Make: ~30 operații/zi din limita de 10.000/lună — nesemnificativ. Fără polling.
