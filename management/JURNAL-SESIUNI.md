@@ -64,7 +64,16 @@ ce e verificat, ce nu. Seara, sesiunea de evaluare citește doar acest fișier +
   `CLAUDE.md` „blueprint-urile se editează cu un script Python local" nu funcționează de aici.
 - Commit-uri: a2e68af (decizia #12 + garda + rândul 14, pe branch și pe `main`), plus commit-ul acestei
   intrări.
-- Deschis pentru următorul: curățarea `⚙️ Config`; clicurile neatinse 0a, 0b, #6, #7; rularea programată
+- Încercat și RESPINS (14:00): `delete_records_for_table` pentru cele 8 dubluri din `⚙️ Config` și
+  `get_create_automation_instructions` (apel read-only), amândouă blocate de clasificatorul modului de
+  permisiuni al sesiunii. Deci blocajul descris de predecesor ca „filtrul blochează `create_automation`"
+  e mai larg: prinde și ștergerile, și un apel de citire. „Permite acțiunea în sesiune" nu rezolvă;
+  ori se schimbă modul de permisiuni, ori Daniel instalează manual. Clicul 0b a fost rescris în consecință.
+- Commit-uri: a2e68af (decizia #12 + garda + rândul 14), 7a124ee (această intrare), 3acf8bb (clicul 0c cu
+  ID-urile dublurilor, `STARE-SISTEM` corectat la 16 rânduri, capcana Python). Toate și pe `main`.
+- Deschis pentru următorul: clicul **0c** (dedup `⚙️ Config`) blochează 0a — de făcut în ordinea 0c → 0a →
+  0b; clicurile #6 și #7 (1,5 minute în total) neatinse; rularea programată PUNTE 3 de azi 14:30 UTC nu se
+  produsese încă la ora acestei intrări.
   PUNTE 3 de azi 14:30 UTC nu se produsese încă la ora acestei intrări.
 
 ---
