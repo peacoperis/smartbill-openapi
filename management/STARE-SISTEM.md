@@ -16,7 +16,7 @@ schimbă, stările da. Spațiile finale din numele câmpurilor și opțiunilor s
 | `Ponou Control` | `tblsyvGhneA5VWVis` | catalog produse (numele e o scăpare, e „Produse") | 54 |
 | `Jurnal Antonia` | `tbl6H1TRCP60uAGUM` | dovezi zilnice (câmpuri: Data, Tip, Rezumat, Link Dovadă) | 1 (test) |
 | `📊 Zile` | `tblJ0IUiG4uQ5VNYM` | snapshot zilnic scris de PUNTE 3 | 2 |
-| `⚙️ Config` | `tbltvlIAmooZTDU0c` | setări motoare (Cheie fldf2FklZGAZCTV5R / Valoare fldpRsEJDGQoLiwyF / Notă fldKdK50vTK4a7IGq) | 0 — **de completat** |
+| `⚙️ Config` | `tbltvlIAmooZTDU0c` | setări motoare (Cheie fldf2FklZGAZCTV5R / Valoare fldpRsEJDGQoLiwyF / Notă fldKdK50vTK4a7IGq) | 8 rânduri; `SB_EMAIL` și `SB_TOKEN` **goale, de completat de Daniel** |
 | `Încasări Clienți`, `Clienți`, `Cheltuieli Operaționale` | — | importate o dată, abandonate; vezi INVENTAR | |
 
 Șterse la 02.09 (documentate în `naftalina/TABELE-ARHIVATE.md`): Loturi/Retururi/Alocări Paleți, Inbox
