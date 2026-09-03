@@ -71,6 +71,16 @@ ce e verificat, ce nu. Seara, sesiunea de evaluare citește doar acest fișier +
   ori se schimbă modul de permisiuni, ori Daniel instalează manual. Clicul 0b a fost rescris în consecință.
 - Commit-uri: a2e68af (decizia #12 + garda + rândul 14), 7a124ee (această intrare), 3acf8bb (clicul 0c cu
   ID-urile dublurilor, `STARE-SISTEM` corectat la 16 rânduri, capcana Python). Toate și pe `main`.
+- Auditul celor două huburi (cerut de Daniel, 14:30): baza `appdbikkM2awYhpoM` era folosită de **două
+  huburi care nu se cunoșteau**. Găsite și reparate: (1) `itc-hub` avea 0 referințe la acest repo, iar
+  harta lui interzice scrisul „fără adresă" — acum are adresele 70 (repo-ul ăsta) și 80 (arhiva);
+  (2) `STARE.md` din `itc-hub` planifica veriga B4 pe „19 tabele, `Ofertare` 78 câmpuri", structura de
+  dinainte de ștergerile din 02.09 — marcat depășit, cu trimitere aici; (3) `STARE-SISTEM.md` de aici
+  scria că backupurile „se refac prin API", **fals pentru tabelele șterse** — arhiva lor reală e în
+  `itc-hub`, branch `arhiva-airtable`, snapshot 2026-08-31 (1804 înreg., 17 tabele, schemă, inventar de
+  1607 atașamente); (4) branch-ul ăla e la 203 commit-uri în urmă și un merge ar șterge `_KNOWLEDGE/` —
+  marcat „nu se merge-uiește" în ambele huburi; (5) scrisă regula scriitorului unic (CARTEA, punctul 10).
+  Commit-uri: `8daf7cc` în `itc-hub`, `86175fc` aici.
 - Deschis pentru următorul: clicul **0c** (dedup `⚙️ Config`) blochează 0a — de făcut în ordinea 0c → 0a →
   0b; clicurile #6 și #7 (1,5 minute în total) neatinse; rularea programată PUNTE 3 de azi 14:30 UTC nu se
   produsese încă la ora acestei intrări.
