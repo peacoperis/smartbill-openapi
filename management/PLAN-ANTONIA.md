@@ -12,7 +12,7 @@ Scorul NU vine din bife auto-raportate, ci din starea reală a tabelelor, colect
 - **Alertă instant:** comandă mutată în «Livrare mâine» → Daniel e anunțat automat (cu avertisment dacă lipsește factura furnizorului).
 - **Dovezi:** `Jurnal Antonia` — analiza Facebook, video postat (link), clienți walk-in. Fără rând = nefăcut.
 
-**Scor săptămânal (vineri):** din 5 zile, câte zile s-au închis curat = restanțe «zero» + dovezile zilei în jurnal. 5/5 și 4/5 = săptămână bună; 3/5 = discuție punctuală; sub 3 = consemnare scrisă (vezi PROTOCOL-DISCIPLINAR.md).
+**Scor săptămânal (vineri):** din 5 zile, câte zile s-au închis curat = restanțe «zero» la 7 zile (**doar atât — decizie 03.09**: „dovezi în jurnal > 0" ca gardă zilnică ar penaliza ziua liniștită și ar împinge spre dovezi fabricate; dovezile intră în sondajul de vineri). Snapshot-ul zilnic e în tabelul `📊 Zile`; *formula `Zi curată` din Airtable încă cere și dovezi — schimbarea a fost refuzată la permisiune și se face când Daniel confirmă.* **Cât e în concediu, scorul nu se trimite.** 5/5 și 4/5 = săptămână bună; 3/5 = discuție punctuală; sub 3 = consemnare scrisă (vezi PROTOCOL-DISCIPLINAR.md).
 
 ## Reguli de delegare (pentru Daniel)
 
@@ -37,14 +37,15 @@ Jurnalul walk-in decide separat valoarea prezenței de 8h la birou: dacă clien�
 ## Perioada de rodaj (Antonia în concediu — septembrie 2026)
 
 Cât timp Antonia e în concediu, sistemul rulează pe Daniel: el primește ambele mesaje, execută rutina și rafinează rapoartele. Reguli pentru această perioadă:
-- **Zilele de concediu NU intră în scorul ei.** Măsurarea pentru decizie începe în prima ei zi de lucru cu sistemul pornit (briefing pe Telegramul ei + rutina prezentată).
-- Rodajul e și **baseline pentru walk-in**: clienții intrați cât Daniel e la birou se înregistrează la fel în `Jurnal Antonia` (Tip = Client birou, „Daniel prezent?" bifat) — termenul de comparație pentru valoarea prezenței.
+- **Zilele de concediu NU intră în scorul ei.** Măsurarea pentru decizie începe în prima ei zi de lucru cu sistemul pornit (briefing pe Telegramul ei + rutina prezentată) **și cu procedura de evaluare deja comunicată** — vezi termenul actului adițional mai jos.
+- **Data întoarcerii: NECUNOSCUTĂ la 03.09** — fără ea nu se poate aplica regula de mai jos. E punctul 2 din CLICURI-DANIEL.md.
+- Rodajul e și **baseline pentru walk-in**: clienții intrați cât Daniel e la birou se înregistrează la fel în `Jurnal Antonia` (Tip = Client birou, „Daniel prezent?" bifat) — termenul de comparație pentru valoarea prezenței. **Stare 03.09: 0 rânduri.** Fără rânduri din septembrie, ramura „valoarea prezenței la birou" a deciziei rămâne fără termen de comparație.
 - Dacă întoarcerea ei lasă mai puțin de ~5 săptămâni de date până la 20 octombrie, data deciziei se mută cu atât cât e nevoie ca măsurarea să acopere minim 4 săptămâni pline de lucru — dar se mută O SINGURĂ dată și se scrie aici.
 
 ## Calendar — fix, în calendar, nu în intenție
 
 - **Septembrie:** sistemul rulează; Daniel nu intervine pe proces, doar citește rapoartele și ține discuția de vineri.
-- **Până la 15 septembrie:** actul adițional la Regulamentul Intern (procedura de evaluare) — semnat, cu luare la cunoștință (vezi protocolul; fără el, orice verdict e neexecutabil legal).
+- **Înainte de prima ei zi de lucru (nu „15 septembrie"):** actul adițional la Regulamentul Intern (procedura de evaluare) — semnat, cu luare la cunoștință. Procedura trebuie să existe și să fie comunicată **înainte de perioada evaluată** (art. 242 lit. i, art. 63 Codul Muncii); datele culese înainte nu au valoare pentru această cale. Part-time-ul cere acordul ei (art. 41). Până la comunicare, niciun mesaj către ea nu conține limbaj de scor. Informarea că e evaluată prin rapoarte automate intră în același pachet.
 - **20 octombrie: DECIZIA.** Pe cifre: % zile curate + jurnal walk-in. Una din cele 3 variante de mai sus, fără amânare.
 - **15 octombrie – 15 noiembrie:** fereastra de implementare (sezonul se închide, sarcina administrativă scade natural — momentul corect pentru schimbare de normă).
 

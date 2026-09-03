@@ -1,7 +1,11 @@
-# Raportul de seară v2 — machetă în așteptarea aprobării
+# Raportul de seară v2 — machetă (aprobată 02.09, construită 03.09)
 
-> **Stare la 02.09.2026: PROPUNERE.** Nimic nu e construit în Make. Se construiește o singură dată,
-> după ce Daniel aprobă forma și răspunde la cele două întrebări de la final.
+> Datele personale (nume, telefoane, ID-uri operaționale) au fost anonimizate la 03.09.2026 — vezi AUDIT-4-SCAUNE.md, B12.
+> Istoricul git anterior le conține încă; rescrierea istoricului e decizia lui Daniel.
+
+> **Stare la 03.09.2026: CONSTRUIT (v3).** Aprobat 02.09; construit și rulat de probă 03.09, cu modificările
+> din AUDIT-4-SCAUNE.md (fără cele 3 linii ℹ️ zilnice, șablon WhatsApp util, linia ÎN LUCRU, sâmbătă
+> „Săptămâna în cifre"). Macheta de mai jos e cea aprobată; forma live e în blueprintul Make PUNTE 3.
 > Regula lui: „măsurăm de 100 de ori, tăiem o dată".
 
 ## De ce s-a refăcut
@@ -20,14 +24,14 @@ datelor și fezabilitate Make) și un sintetizator: 12 probleme confirmate, 10 r
 | `Data Comanda` = 02.09 | **4** înregistrări, toate `Comandata`, create direct așa (comenzi de colaboratori) |
 | Modificate azi | aceleași 4 |
 | View „Comenzi efectuate" | 14 total: 4 azi · 5 ieri · 2 pe 31.08 · 3 mai vechi |
-| Livrări mâine | **3**, nu 2 — „Scafa - Sipca Tuca" are status `COMANDA PARTIALA / LIVARE MAINE`, nefiltrat de raportul vechi |
+| Livrări mâine | **3**, nu 2 — „S. (client, șipcă)" are status `COMANDA PARTIALA / LIVARE MAINE`, nefiltrat de raportul vechi |
 | Toate 3 livrările | puse pe «livrare mâine» **ieri, 01.09** (ultima modificare 15:24–15:26) |
-| `LIVRATA DE RIDICAT` | 1: Stoenescu Gheorghe, 150 lei, Pitesti Birou — nu apărea nicăieri |
+| `LIVRATA DE RIDICAT` | 1: S. G. (client), 150 lei, Pitesti Birou — nu apărea nicăieri |
 | `Factura_Furnizor_OK` bifat | **0 din 518** — avertismentul apărea la fiecare livrare, mereu |
-| `Responsabil Comanda` pe cele 4 | Mugurel Colabortor, Dumitru Marian ×2, Mihai Targoviste = **de la cine vine comanda**, nu cine a tastat |
-| `Id Client operational` | **există**: `UPPER(LEFT(nume,3) & RIGHT(cifre telefon,5))` → `HOD52528`. Exact convenția din mailuri |
+| `Responsabil Comanda` pe cele 4 | M. Colabortor (colaborator), D. M. (colaborator) ×2, M. T. (colaborator) = **de la cine vine comanda**, nu cine a tastat |
+| `Id Client operational` | **există**: `UPPER(LEFT(nume,3) & RIGHT(cifre telefon,5))` → `HOD0001x`. Exact convenția din mailuri |
 | `Creat de` / `Modificat de` | **nu există**; API-ul nu le poate crea. Singura cale spre „cine a tastat" |
-| Telefon Scafa / Stoenescu | stocate `(072) 129-7391`, `(072) 341-1035` — alt format decât restul |
+| Telefoanele a 2 clienți | stocate `(07x) xxx-xxxx`, `(07x) xxx-xxxx` — alt format decât restul |
 
 **Eroarea reală din raportul vechi:** cele 4 comenzi de azi apăreau la „OFERTE NOI" deși erau deja
 `Comandata`. Nu număra greșit — eticheta greșit. Dacă s-au dat mai multe comenzi decât 4, ele nu sunt
@@ -43,39 +47,39 @@ aprobat trebuie să fie identic cu ce va primi.
 
 📦 COMENZI DATE AZI (4)
 (împărțite după «Responsabil Comanda» = de la cine vine comanda, nu cine a tastat-o)
-👤 Mugurel Colabortor (1)
-▪️ HOD52528   +40740552528
+👤 M. Colabortor (colaborator) (1)
+▪️ HOD0001x   +4070000001x
    Smeura
-   HODOBAȘA IONUT COSMIN
-👤 Dumitru Marian (2)
-▪️ DUM39727   +40742539727
+   H. I. C. (client)
+👤 D. M. (colaborator) (2)
+▪️ DUM0002x   +4070000002x
    Hintesti
-   Dumitru Marian
-▪️ DUM39727   +40742539727
+   D. M. (colaborator)
+▪️ DUM0002x   +4070000002x
    Pitesti
-   Dumitru Marian
+   D. M. (colaborator)
    (a 2-a comandă, același client)
-👤 Mihai Targoviste (1)
-▪️ MIH66162   +40736066162
+👤 M. T. (colaborator) (1)
+▪️ MIH0003x   +4070000003x
    Targoviste
-   Mihai Targoviste
+   M. T. (colaborator)
 ℹ️ În view «Comenzi efectuate» sunt 14 rânduri; cu Data Comanda = azi sunt exact 4, restul sunt din zilele trecute. Raportul vede doar ce e tastat în Airtable.
 ℹ️ Cine le-a TASTAT (tu / Antonia) nu se vede încă: lipsește câmpul «Created by», pe care doar tu îl poți adăuga (tabelul Ofertare → + câmp → tip Created by). Din ziua următoare, raportul le împarte și pe persoană.
 
 🆕 Azi: nicio ofertă nouă rămasă la Ofertat, nicio altă schimbare la oferte mai vechi, niciun rând nou în Jurnal Antonia.
 
 🚚 LIVRĂRI MÂINE — 03.09 (3)
-▪️ FLA74171   +40754474171
+▪️ FLA0004x   +4070000004x
    Pitesti
-   Flavius profile hala
+   F. (client, hală)
    1.680 lei
-▪️ GEO03167   +40745803167
+▪️ GEO0005x   +4070000005x
    Vulpesti
-   George Vulpesti
+   G. (client)
    3.870 lei
-▪️ SCA97391   +40721297391
+▪️ SCA0006x   +4070000006x
    Negrasi
-   Scafa - Sipca Tuca
+   S. (client, șipcă)
    ⚠️ comandă parțială
    ⚠️ valoare lipsă — completeaz-o în Airtable
 ⚠️ toate 3 sunt pe «livrare mâine» încă de ieri (01.09) — dacă s-au livrat deja, schimbă-le statusul
@@ -83,9 +87,9 @@ aprobat trebuie să fie identic cu ce va primi.
 👉 confirmă transport/șofer pentru fiecare
 
 🏢 DE RIDICAT DE LA BIROU (1)
-▪️ STO11035   +40723411035
+▪️ STO0007x   +4070000007x
    Pitesti Birou
-   Stoenescu Gheorghe
+   S. G. (client)
    150 lei
 👉 anunță clientul că poate ridica
 
@@ -185,12 +189,12 @@ normalizate, a treia livrare, secțiunile comasate) se poate construi oricând �
 ## Verificare (după aprobare)
 
 - Run-once pe PUNTE 3; mesajul de pe Telegram se compară cu macheta aprobată rând cu rând.
-- Cele 4 comenzi la COMENZI, nu la OFERTE; cele 3 livrări toate prezente; Stoenescu la DE RIDICAT.
+- Cele 4 comenzi la COMENZI, nu la OFERTE; cele 3 livrări toate prezente; clientul S. G. la DE RIDICAT.
 - Toate telefoanele în același format; niciun „·" pe rândurile de date.
 
 ## Corecturi de date semnalate (ale lui Daniel, nu se fac prin raport)
 
-- Telefoanele Scafa și Stoenescu în alt format în Airtable — raportul le normalizează, dar ar fi bine
+- Telefoanele clientul S. și clientul S. G. în alt format în Airtable — raportul le normalizează, dar ar fi bine
   corectate în tabel.
-- „Mugurel Colabortor" — typo în opțiunile câmpului `Responsabil Comanda`.
-- Scafa: `Valoare Oferta acceptata` necompletată.
+- „M. Colabortor (colaborator)" — typo în opțiunile câmpului `Responsabil Comanda`.
+- clientul S.: `Valoare Oferta acceptata` necompletată.

@@ -49,7 +49,8 @@
 ## După-amiază — Pregătirea zilei de mâine
 1. Când sosesc facturile furnizorilor pentru livrările de mâine: leagă factura de comandă și bifează `Factura_Furnizor_OK`.
 2. Mută comenzile respective din `Comandată` → `Livrare mâine` **până la 16:30**.
-3. Mutarea trimite automat alerta către Daniel (transport/șofer) — nu mai trebuie anunțat verbal.
+3. Mutarea **va** trimite automat alerta către Daniel (transport/șofer) — **doar după ce automatizarea Airtable «PUNTE — Livrare mâine» e pornită (clic al lui Daniel; la 03.09 încă nu era)**. Până atunci, anunță-l verbal.
+4. Bifa `Factura_Furnizor_OK` e ce citește raportul de seară al lui Daniel: nebifată = „fără factură furnizor" în raport și în dashboardul «Comenzi în lucru». Se bifează doar când factura furnizorului e legată de comandă.
 
 **Gata când:** toate comenzile cu livrare confirmată mâine sunt mutate și cu factura furnizorului bifată.
 
@@ -57,4 +58,4 @@
 - Proforme la `Procedura de avans`; facturare când statusul devine plătit; completarea `ID_Proforma_SmartBill` / `Nr. Factură Finală`.
 
 ---
-**Regula zilei:** ziua e închisă când briefing-ul de dimineață ar afișa «zero» la punctele 1–4 și jurnalul are dovezile de azi.
+**Regula zilei:** ziua e închisă când briefing-ul de dimineață ar afișa «zero» la punctele 1–3 (inclusiv cele câte 3 din backlog). Dovezile din jurnal rămân sarcină, nu condiție a scorului zilnic (vezi PLAN-ANTONIA.md, actualizat 03.09).

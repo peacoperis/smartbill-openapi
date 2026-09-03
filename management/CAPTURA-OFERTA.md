@@ -21,7 +21,9 @@ Exemplu: `/o Ion Popescu | 0722111222 | Pitesti | 4500`
 - Nume Beneficiar, Telefon, Locație proiect, Valoare
 - Data Ofertării = azi
 - Status = `Ofertat`
-- **Responsabil Comanda = cine a trimis mesajul** (Daniel sau Antonia, după contul de Telegram)
+- **`Introdus prin` = cine a trimis mesajul** („Telegram — Daniel" / „Telegram — Antonia", după contul de Telegram). *Corectat 02.09:* PUNTE 4 **nu mai scrie** `Responsabil Comanda` — acel câmp înseamnă „de la ce colaborator vine comanda".
+- `/c Nume | telefon | localitate | valoare` = aceeași captură, dar direct ca `Comandata ` cu `Data Comanda` = azi.
+- **Stare 03.09:** botul a rulat o singură dată de la lansare (test). Următorul pas nu e botul, ci **captura din mail**: fiecare comandă pleacă oricum prin mail către furnizor; Make poate urmări folderul „Trimise" și crea rândul singur (vezi AUDIT-4-SCAUNE.md, B2). Botul rămâne pentru oferte.
 - Observații = numele real al expeditorului + mesajul original (urmă de audit)
 
 Primești confirmare pe Telegram cu datele înregistrate. Dacă nu vine confirmarea, mesajul n-a
