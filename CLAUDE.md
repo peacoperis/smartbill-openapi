@@ -1,3 +1,8 @@
+> # ⛔ REPO ÎNGHEȚAT — 03.09.2026
+> **Nu lucra aici.** Conținutul viu e în `peacoperis/itc-hub`, folderul `AUTOMATIZARE/` (adresa 70 din
+> `00_HARTA-ATELIER.md`). Dacă ai aterizat aici, oprește-te și spune-i asta lui Daniel în prima propoziție.
+> Manualul de mai jos e păstrat doar ca istoric; adevărul curent e `AUTOMATIZARE/CLAUDE.md` din `itc-hub`.
+
 # CLAUDE.md — manualul de operare al acestui repo (citește-l întreg, sunt 2 minute)
 
 > **Gardă: ești în proiectul potrivit?** Doar dacă există `management/STARE-SISTEM.md` și `git remote -v`
