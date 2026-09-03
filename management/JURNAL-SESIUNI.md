@@ -38,13 +38,34 @@ ce e verificat, ce nu. Seara, sesiunea de evaluare citește doar acest fișier +
   14 coloane, adresă birou, notificări Make, decizia pe istoric, testul `/c`); pasul „pachetul pe `main`"
   (recomandat da, fără PR); check-in-ul remote de la 18:00 a fost șters — nu mai trezește sesiunea scumpă.
 
-### 2026-09-03 · local-Opus · (de completat de instanța locală la închidere)
+### 2026-09-03 · local (sesiunea de pe calculatorul lui Daniel) · ~12:50–14:00 EEST
 
-- Făcut:
-- Verificat (cu ce):
-- Nefăcut / picat / de ce:
-- Commit-uri:
-- Deschis pentru următorul:
+- Făcut: clonat repo-ul (nu exista local) în `C:\Users\danie\repos\smartbill-openapi`, deliberat în afara
+  OneDrive; închis clicul #12 cu „nu" (motivul mutat în `CLICURI-DANIEL.md` → Făcute); adus garda din
+  `CLAUDE.md` și rândul 14 la zi, pentru că după merge testul „lipsește `STARE-SISTEM.md`" devenea fals pe
+  `main`; **pachetul e acum și pe `main`** (fast-forward, fără PR): `main` și branch-ul arată același
+  commit. Rândul 14 spune acum explicit: Claude Code se pornește din directorul repo-ului, nu din
+  `C:\Users\danie`.
+- Verificat (cu ce): `git merge-base --is-ancestor` (ff curat) · `git ls-tree origin/main` (`CLAUDE.md` și
+  `management/` vizibile fără alegerea branch-ului) · grep-ul de telefoane din `CARTEA-DE-MISCARI` → doar
+  exemplele permise · PUNTE 2 rulare programată 04:30 UTC, status 1, 19 op · PUNTE 3 ultima rulare 05:34
+  UTC, status 1, 46 op · `📊 Zile` 03.09 = comenzi 0, restanțe 0, dovezi 0, livrări mâine 3, fără factură
+  3, backlog 94/51 · `list_automations`.
+- Nefăcut / picat / de ce: primul răspuns al sesiunii a fost despre celălalt proiect al lui Daniel (ITC),
+  pentru că sesiunea a pornit din `C:\Users\danie`, unde hook-ul încarcă harta ITC. Garda prinde exact
+  cazul, dar abia după ce ești în repo-ul ăsta; de aceea contează pornirea din director. Primul push a fost
+  respins (remote avansase cu jurnalul) și commit-ul a picat pe identitate git neconfigurată în clona nouă;
+  reparate prin rebase și `user.name`/`user.email` setate local.
+- Descoperit, NEREPARAT: **`⚙️ Config` are 16 rânduri, nu 8** — toate cele 8 chei sunt dublate (un lot la
+  05:56, unul identic la 09:42). Motoarele A și B fac `m[Cheie] = Valoare` peste toate rândurile, deci
+  ultima potrivire din ordinea vizualizării câștigă: tokenul pus în rândul „greșit" e ignorat tăcut, iar
+  motorul cere un token care e deja completat. De șters un lot, cu acordul lui Daniel. Al doilea:
+  **Python nu e instalat** pe calculatorul local (doar scurtătura Microsoft Store), deci ruta din
+  `CLAUDE.md` „blueprint-urile se editează cu un script Python local" nu funcționează de aici.
+- Commit-uri: a2e68af (decizia #12 + garda + rândul 14, pe branch și pe `main`), plus commit-ul acestei
+  intrări.
+- Deschis pentru următorul: curățarea `⚙️ Config`; clicurile neatinse 0a, 0b, #6, #7; rularea programată
+  PUNTE 3 de azi 14:30 UTC nu se produsese încă la ora acestei intrări.
 
 ---
 
