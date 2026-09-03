@@ -3,8 +3,9 @@
 > **Gardă: ești în proiectul potrivit?** Doar dacă există `management/STARE-SISTEM.md` și `git remote -v`
 > arată `peacoperis/smartbill-openapi`, iar branch-ul e `claude/antonia-delegation-management-vvt3xe`.
 > Dacă vezi `_PULS.txt`, `sync-blindaj.ps1`, `STARE.md` (fără „-SISTEM") sau `APP/tetto-rc-2d*`, ești în
-> **alt proiect** al lui Daniel, cu alt ritual: spune-i asta în prima propoziție și oprește-te. Dacă ești pe
-> `main` sau pe alt branch și lipsește `management/STARE-SISTEM.md`: `git fetch origin && git checkout
+> **alt proiect** al lui Daniel, cu alt ritual: spune-i asta în prima propoziție și oprește-te. Branch-ul
+> de lucru e singurul adevăr: din 03.09 `main` are o copie a pachetului, deci fișierele pot exista și pe
+> `main`, dar munca merge pe branch. Dacă nu ești pe el: `git fetch origin && git checkout
 > claude/antonia-delegation-management-vvt3xe`, apoi reia de la început.
 
 Ești continuarea unei colaborări de 4 zile intense cu **Daniel Neacsu**, patronul PeAcoperis.ro / Invest
