@@ -1,0 +1,26 @@
+{
+ "name": "PUNTE 4 — Captură ofertă / comandă din Telegram → Airtable",
+ "_nota": "Copie a blueprintului live la 03.09.2026 (lastEdit 02.09 19:34 UTC). Scenariu 9743378, hook 4347890 (Telegram WatchUpdates). Instant. Filtru: mesaje care incep cu '/o ' sau '/c '. Scrie in Ofertare: nume|telefon|localitate|valoare; /c => status 'Comandata ' + Data Comanda = azi; 'Introdus prin' dupa id-ul expeditorului. NU mai scrie Responsabil Comanda.",
+ "metadata": {"instant": true, "version": 1},
+ "flow": [
+  {"id": 1, "module": "telegram:WatchUpdates", "version": 1, "parameters": {"__IMTHOOK__": 4347890}},
+  {"id": 2, "module": "airtable:ActionCreateRecord", "version": 3, "parameters": {"__IMTCONN__": 13998011},
+   "filter": {"name": "Doar /o sau /c", "conditions": [[{"a": "{{1.message.text}}", "b": "/o ", "o": "text:startwith"}], [{"a": "{{1.message.text}}", "b": "/c ", "o": "text:startwith"}]]},
+   "mapper": {"base": "appdbikkM2awYhpoM", "table": "tblgxij0sB0YHP2rz", "typecast": true, "useColumnId": true,
+    "record": {
+     "fldMlCOY3FaPt44zs": "{{trim(get(split(replace(1.message.text; \"/^\\\\/[oc]\\\\s/\"; \"\"); \"|\"); 1))}}",
+     "fldKWuLdPcw9hf0jO": "{{trim(get(split(replace(1.message.text; \"/^\\\\/[oc]\\\\s/\"; \"\"); \"|\"); 2))}}",
+     "fld4ETUmNFXDHFdla": "{{trim(get(split(replace(1.message.text; \"/^\\\\/[oc]\\\\s/\"; \"\"); \"|\"); 3))}}",
+     "fldT1qmpXFurkB6qM": "{{trim(get(split(replace(1.message.text; \"/^\\\\/[oc]\\\\s/\"; \"\"); \"|\"); 4))}}",
+     "fldt1AVA5FEvMCbMS": "{{if(substring(1.message.text; 0; 2) = \"/c\"; \"Comandata \"; \"Ofertat\")}}",
+     "fldDjffRJC8tcCU65": "{{formatDate(now; \"YYYY-MM-DD\"; \"Europe/Bucharest\")}}",
+     "fldEcDByQHberYRxA": "{{if(substring(1.message.text; 0; 2) = \"/c\"; formatDate(now; \"YYYY-MM-DD\"; \"Europe/Bucharest\"); ignore)}}",
+     "fldz7XPlJ9i0LYxiO": "{{if(1.message.from.id = \"7486183573\"; \"Telegram — Daniel\"; \"Telegram — Antonia\")}}",
+     "fld653IfpqyJc30rQ": "{{if(substring(1.message.text; 0; 2) = \"/c\"; \"Comandă\"; \"Ofertă\")}} prinsă din Telegram de: {{1.message.from.first_name}} {{1.message.from.last_name}} (id {{1.message.from.id}})\nMesaj original: {{1.message.text}}"
+    }}},
+  {"id": 3, "module": "telegram:SendReplyMessage", "version": 1, "parameters": {"__IMTCONN__": 13294170},
+   "filter": {"name": "Doar după creare", "conditions": [[{"a": "{{2.id}}", "o": "exist"}]]},
+   "mapper": {"chatId": "{{1.message.chat.id}}",
+    "text": "{{if(substring(1.message.text; 0; 2) = \"/c\"; \"✅ Comandă salvată în Airtable — status Comandata, Data Comanda = azi. Apare diseară la COMENZI DATE AZI.\"; \"✅ Ofertă salvată în Airtable — status Ofertat. Când clientul acceptă → mută la «Procedura de avans».\")}}\n👤 {{trim(get(split(replace(1.message.text; \"/^\\\\/[oc]\\\\s/\"; \"\"); \"|\"); 1))}}\n📞 {{trim(get(split(replace(1.message.text; \"/^\\\\/[oc]\\\\s/\"; \"\"); \"|\"); 2))}}\n📍 {{trim(get(split(replace(1.message.text; \"/^\\\\/[oc]\\\\s/\"; \"\"); \"|\"); 3))}}\n💰 {{trim(get(split(replace(1.message.text; \"/^\\\\/[oc]\\\\s/\"; \"\"); \"|\"); 4))}} lei\n✍️ introdus de: {{1.message.from.first_name}}"}}
+ ]
+}

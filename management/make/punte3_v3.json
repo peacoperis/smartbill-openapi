@@ -1,0 +1,1202 @@
+{
+ "name": "PUNTE 3 — Raport de seară → Daniel (17:30, L–S)",
+ "metadata": {
+  "instant": false,
+  "version": 1,
+  "scenario": {
+   "roundtrips": 1,
+   "maxErrors": 3,
+   "autoCommit": true,
+   "autoCommitTriggerLast": true,
+   "sequential": false,
+   "confidential": true,
+   "dataloss": false,
+   "dlq": true,
+   "freshVariables": false
+  }
+ },
+ "flow": [
+  {
+   "id": 40,
+   "module": "util:SetVariables",
+   "version": 1,
+   "mapper": {
+    "scope": "roundtrip",
+    "variables": [
+     {
+      "name": "antonia_in_concediu",
+      "value": "da"
+     },
+     {
+      "name": "e_luni",
+      "value": "{{if(formatDate(now; \"dddd\"; \"Europe/Bucharest\") = \"Monday\"; \"da\"; \"nu\")}}"
+     },
+     {
+      "name": "e_sambata",
+      "value": "{{if(formatDate(now; \"dddd\"; \"Europe/Bucharest\") = \"Saturday\"; \"da\"; \"nu\")}}"
+     },
+     {
+      "name": "azi",
+      "value": "{{formatDate(now; \"YYYY-MM-DD\"; \"Europe/Bucharest\")}}"
+     },
+     {
+      "name": "maine_zi",
+      "value": "{{switch(formatDate(addDays(now; 1); \"dddd\"; \"Europe/Bucharest\"); \"Monday\"; \"luni\"; \"Tuesday\"; \"marți\"; \"Wednesday\"; \"miercuri\"; \"Thursday\"; \"joi\"; \"Friday\"; \"vineri\"; \"Saturday\"; \"sâmbătă\"; \"Sunday\"; \"duminică\"; \"mâine\")}}"
+     },
+     {
+      "name": "sablon_livrare_1",
+      "value": "Bună ziua, sunt Daniel de la PeAcoperis.ro. Mâine, "
+     },
+     {
+      "name": "sablon_livrare_2",
+      "value": ", ajungem cu materialele la "
+     },
+     {
+      "name": "sablon_livrare_3",
+      "value": ". E cineva să preia? Are camionul loc să intre? (ref. "
+     },
+     {
+      "name": "sablon_livrare_4",
+      "value": ")"
+     },
+     {
+      "name": "sablon_ridicare_1",
+      "value": "Bună ziua, sunt Daniel de la PeAcoperis.ro. Comanda dvs. (ref. "
+     },
+     {
+      "name": "sablon_ridicare_2",
+      "value": ") e pregătită și poate fi ridicată de la biroul nostru din Pitești. Când v-ar conveni să treceți?"
+     },
+     {
+      "name": "dashboard",
+      "value": "https://airtable.com/appdbikkM2awYhpoM/pagW48gNn8LNQ9eS7"
+     }
+    ]
+   }
+  },
+  {
+   "id": 23,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "IS_SAME({Data Comanda}, '{{40.azi}}', 'day')",
+    "maxRecords": 15
+   },
+   "onerror": [
+    {
+     "id": 201,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 24,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 23,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{23.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "▪️ <code>{{ifempty(escapeHTML(23.`Id Client operational`); \"—\")}}</code>   <code>{{if(length(replace(23.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\")) = 0; \"fără telefon\"; if(substring(replace(23.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 2) = \"40\"; \"+\" + replace(23.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); if(substring(replace(23.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 1) = \"0\"; \"+4\" + replace(23.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); \"+\" + replace(23.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"))))}}</code>\n   {{escapeHTML(trim(23.`Locatie proiect`))}}\n   {{escapeHTML(trim(23.`Nume Beneficiar `))}}"
+   }
+  },
+  {
+   "id": 1,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "FIND('LIVARE MAINE', UPPER({Status Oferta F1} & '')) > 0",
+    "maxRecords": 10
+   },
+   "onerror": [
+    {
+     "id": 202,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 1,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{1.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "▪️ <code>{{ifempty(escapeHTML(1.`Id Client operational`); \"—\")}}</code>   <code>{{if(length(replace(1.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\")) = 0; \"fără telefon\"; if(substring(replace(1.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 2) = \"40\"; \"+\" + replace(1.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); if(substring(replace(1.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 1) = \"0\"; \"+4\" + replace(1.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); \"+\" + replace(1.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"))))}}</code>\n   {{escapeHTML(trim(1.`Locatie proiect`))}}\n   {{escapeHTML(trim(1.`Nume Beneficiar `))}}\n   {{if(1.`Valoare Oferta acceptata `; formatNumber(1.`Valoare Oferta acceptata `; 0; \",\"; \".\") + \" lei\"; \"⚠️ valoare lipsă — completeaz-o în Airtable\")}}{{if(contains(1.`Status Oferta F1`; \"PARTIALA\"); newline + \"   ⚠️ comandă parțială\"; emptystring)}}{{if(formatDate(1.`ultima modificare`; \"YYYY-MM-DD\"; \"Europe/Bucharest\") != 40.azi; newline + \"   (pe «livrare mâine» din \" + formatDate(1.`ultima modificare`; \"DD.MM\"; \"Europe/Bucharest\") + \")\"; emptystring)}}{{if(length(replace(1.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\")) = 0; emptystring; newline + \"   <a href='https://wa.me/\" + if(substring(replace(1.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 1) = \"0\"; \"4\" + replace(1.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); replace(1.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\")) + \"?text=\" + encodeURL(40.sablon_livrare_1 + 40.maine_zi + 40.sablon_livrare_2 + trim(1.`Locatie proiect`) + 40.sablon_livrare_3 + 1.`Id Client operational` + 40.sablon_livrare_4) + \"'>✉️ scrie-i pe WhatsApp</a>\")}}"
+   }
+  },
+  {
+   "id": 33,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "AND(FIND('LIVARE MAINE', UPPER({Status Oferta F1} & '')) > 0, NOT({Factura_Furnizor_OK}))",
+    "maxRecords": 10
+   },
+   "onerror": [
+    {
+     "id": 221,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 32,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 33,
+    "rowSeparator": ""
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{33.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "x"
+   }
+  },
+  {
+   "id": 27,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "{Status Oferta F1}='LIVRATA DE RIDICAT '",
+    "maxRecords": 10
+   },
+   "onerror": [
+    {
+     "id": 203,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 28,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 27,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{27.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "▪️ <code>{{ifempty(escapeHTML(27.`Id Client operational`); \"—\")}}</code>   <code>{{if(length(replace(27.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\")) = 0; \"fără telefon\"; if(substring(replace(27.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 2) = \"40\"; \"+\" + replace(27.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); if(substring(replace(27.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 1) = \"0\"; \"+4\" + replace(27.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); \"+\" + replace(27.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"))))}}</code>\n   {{escapeHTML(trim(27.`Locatie proiect`))}}\n   {{escapeHTML(trim(27.`Nume Beneficiar `))}}\n   {{if(27.`Valoare Oferta acceptata `; formatNumber(27.`Valoare Oferta acceptata `; 0; \",\"; \".\") + \" lei\"; \"⚠️ valoare lipsă — completeaz-o în Airtable\")}}{{if(length(replace(27.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\")) = 0; emptystring; newline + \"   <a href='https://wa.me/\" + if(substring(replace(27.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 1) = \"0\"; \"4\" + replace(27.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); replace(27.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\")) + \"?text=\" + encodeURL(40.sablon_ridicare_1 + 27.`Id Client operational` + 40.sablon_ridicare_2) + \"'>✉️ anunță-l pe WhatsApp</a>\")}}"
+   }
+  },
+  {
+   "id": 17,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "AND(IS_SAME(CREATED_TIME(), '{{40.azi}}', 'day'), OR({Status Oferta F1}='Ofertat', {Status Oferta F1}='De ofertat'))",
+    "maxRecords": 15
+   },
+   "onerror": [
+    {
+     "id": 204,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 18,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 17,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{17.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "▪️ <code>{{ifempty(escapeHTML(17.`Id Client operational`); \"—\")}}</code>   <code>{{if(length(replace(17.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\")) = 0; \"fără telefon\"; if(substring(replace(17.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 2) = \"40\"; \"+\" + replace(17.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); if(substring(replace(17.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 1) = \"0\"; \"+4\" + replace(17.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); \"+\" + replace(17.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"))))}}</code>\n   {{escapeHTML(trim(17.`Locatie proiect`))}}\n   {{escapeHTML(trim(17.`Nume Beneficiar `))}}\n   sursă client: {{ifempty(escapeHTML(17.`Sursa Client `); \"—\")}}"
+   }
+  },
+  {
+   "id": 3,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "AND(IS_SAME(LAST_MODIFIED_TIME({Status Oferta F1}), '{{40.azi}}', 'day'), NOT(IS_SAME(CREATED_TIME(), '{{40.azi}}', 'day')), NOT(IS_SAME({Data Comanda}, '{{40.azi}}', 'day')))",
+    "maxRecords": 20
+   },
+   "onerror": [
+    {
+     "id": 205,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 3,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{3.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "▪️ <code>{{ifempty(escapeHTML(3.`Id Client operational`); \"—\")}}</code>   <code>{{if(length(replace(3.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\")) = 0; \"fără telefon\"; if(substring(replace(3.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 2) = \"40\"; \"+\" + replace(3.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); if(substring(replace(3.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); 0; 1) = \"0\"; \"+4\" + replace(3.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"); \"+\" + replace(3.`Telefon / Nr Contact`; \"/[^0-9]/g\"; \"\"))))}}</code>\n   {{escapeHTML(trim(3.`Nume Beneficiar `))}} → {{escapeHTML(trim(3.`Status Oferta F1`))}}"
+   }
+  },
+  {
+   "id": 5,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tbl6H1TRCP60uAGUM",
+    "formula": "IS_SAME({Data}, TODAY(), 'day')",
+    "maxRecords": 20
+   },
+   "onerror": [
+    {
+     "id": 206,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 5,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{5.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "• [{{escapeHTML(5.`Tip`)}}] {{escapeHTML(5.`Rezumat`)}} {{escapeHTML(5.`Link Dovadă`)}}"
+   }
+  },
+  {
+   "id": 7,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tbloIxkL2GlphhRRj",
+    "formula": "AND({Destinație}='⚠️ De Clasificat', IS_AFTER({DATA NIR }, DATEADD(TODAY(), -7, 'days')))",
+    "sort": [
+     {
+      "field": "DATA NIR ",
+      "direction": "asc"
+     }
+    ],
+    "maxRecords": 15
+   },
+   "onerror": [
+    {
+     "id": 207,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 7,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{7.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "• {{ifempty(formatDate(7.`DATA NIR `; 'DD.MM'); '?')}} — {{escapeHTML(7.`Furnizor`)}} — {{7.`Valoare Factură`}} lei"
+   }
+  },
+  {
+   "id": 19,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tbloIxkL2GlphhRRj",
+    "formula": "AND({Destinație}='⚠️ De Clasificat', NOT(IS_AFTER({DATA NIR }, DATEADD(TODAY(), -7, 'days'))))",
+    "sort": [
+     {
+      "field": "DATA NIR ",
+      "direction": "asc"
+     }
+    ],
+    "maxRecords": 200
+   },
+   "onerror": [
+    {
+     "id": 208,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 20,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 19,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{19.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "{{ifempty(formatDate(19.`DATA NIR `; 'DD.MM.YYYY'); 'fără dată')}}"
+   }
+  },
+  {
+   "id": 9,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "AND(OR({💰 Status Financiar REZIDUAL}='🔴 Încasat - Nefacturat (Urgent Factură)', {💰 Status Financiar REZIDUAL}='De emis factura'), IS_AFTER({Data Comanda}, DATEADD(TODAY(), -7, 'days')))",
+    "sort": [
+     {
+      "field": "Data Comanda",
+      "direction": "asc"
+     }
+    ],
+    "maxRecords": 15
+   },
+   "onerror": [
+    {
+     "id": 209,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 10,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 9,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{9.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "• {{ifempty(formatDate(9.`Data Comanda`; 'DD.MM'); '?')}} — {{escapeHTML(trim(9.`Nume Beneficiar `))}}"
+   }
+  },
+  {
+   "id": 21,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "AND(OR({💰 Status Financiar REZIDUAL}='🔴 Încasat - Nefacturat (Urgent Factură)', {💰 Status Financiar REZIDUAL}='De emis factura'), NOT(IS_AFTER({Data Comanda}, DATEADD(TODAY(), -7, 'days'))))",
+    "sort": [
+     {
+      "field": "Data Comanda",
+      "direction": "asc"
+     }
+    ],
+    "maxRecords": 200
+   },
+   "onerror": [
+    {
+     "id": 210,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 22,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 21,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{21.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "{{ifempty(formatDate(21.`Data Comanda`; 'DD.MM.YYYY'); 'fără dată')}}"
+   }
+  },
+  {
+   "id": 11,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tbloIxkL2GlphhRRj",
+    "formula": "AND({Palet Deschis} > 0, {Zile Palet} > 30, {🔗 Furnizor} != '')",
+    "sort": [
+     {
+      "field": "Zile Palet",
+      "direction": "desc"
+     }
+    ],
+    "maxRecords": 10
+   },
+   "onerror": [
+    {
+     "id": 211,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 12,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 11,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{11.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "• {{escapeHTML(11.`Locatie`)}} — {{11.`Palet Deschis`}} palet(i) de {{11.`Zile Palet`}} zile (fact. {{escapeHTML(11.`NIR Numar factura`)}})"
+   }
+  },
+  {
+   "id": 15,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "NOT({Status Oferta F1} = '')",
+    "maxRecords": 1
+   },
+   "onerror": [
+    {
+     "id": 212,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 16,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 15,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{15.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "OK"
+   }
+  },
+  {
+   "id": 34,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "AND(IS_SAME(LAST_MODIFIED_TIME({Status Oferta F1}), '{{40.azi}}', 'day'), OR({Status Oferta F1}='Livrata ', {Status Oferta F1}='Livrata Partia', {Status Oferta F1}='LIVRATA DE RIDICAT ', {Status Oferta F1}='FINALIZATA '))",
+    "maxRecords": 50
+   },
+   "onerror": [
+    {
+     "id": 213,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 35,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 34,
+    "rowSeparator": ""
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{34.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "x"
+   }
+  },
+  {
+   "id": 36,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "AND({Nr. Factură Finală} != '', IS_SAME(LAST_MODIFIED_TIME({Nr. Factură Finală}), '{{40.azi}}', 'day'))",
+    "maxRecords": 50
+   },
+   "onerror": [
+    {
+     "id": 214,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 37,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 36,
+    "rowSeparator": ""
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{36.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "x"
+   }
+  },
+  {
+   "id": 38,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "AND(IS_SAME(LAST_MODIFIED_TIME({💰 Status Financiar REZIDUAL}), '{{40.azi}}', 'day'), FIND('ncasat', {💰 Status Financiar REZIDUAL} & '') > 0, NOT(FIND('Nefacturat', {💰 Status Financiar REZIDUAL} & '')))",
+    "maxRecords": 50
+   },
+   "onerror": [
+    {
+     "id": 215,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 39,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 38,
+    "rowSeparator": ""
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{38.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "x"
+   }
+  },
+  {
+   "id": 41,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tbloIxkL2GlphhRRj",
+    "formula": "IS_SAME({DATA NIR }, '{{40.azi}}', 'day')",
+    "maxRecords": 50
+   },
+   "onerror": [
+    {
+     "id": 216,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 42,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 41,
+    "rowSeparator": ""
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{41.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "x"
+   }
+  },
+  {
+   "id": 43,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblgxij0sB0YHP2rz",
+    "formula": "OR(LEFT({Etapă comandă}, 1)='2', LEFT({Etapă comandă}, 1)='3', LEFT({Etapă comandă}, 1)='4', LEFT({Etapă comandă}, 1)='5', LEFT({Etapă comandă}, 1)='6', LEFT({Etapă comandă}, 1)='7')",
+    "maxRecords": 400
+   },
+   "onerror": [
+    {
+     "id": 217,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 44,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 43,
+    "rowSeparator": ""
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{43.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "{{if(contains(43.`Etapă comandă`; \"necompletat\"); \"n\"; substring(43.`Etapă comandă`; 0; 1))}}"
+   }
+  },
+  {
+   "id": 45,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblJ0IUiG4uQ5VNYM",
+    "formula": "IS_BEFORE({Data}, '{{40.azi}}')",
+    "sort": [
+     {
+      "field": "Data",
+      "direction": "desc"
+     }
+    ],
+    "maxRecords": 1
+   },
+   "onerror": [
+    {
+     "id": 218,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 46,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 45,
+    "rowSeparator": ""
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{45.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "{{45.`Backlog facturi`}}|{{45.`Backlog de emis`}}|{{formatDate(45.`Data`; \"DD.MM\")}}"
+   }
+  },
+  {
+   "id": 29,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblJ0IUiG4uQ5VNYM",
+    "formula": "AND('{{formatDate(now; \"dddd\"; \"Europe/Bucharest\")}}' = 'Saturday', IS_AFTER({Data}, DATEADD(TODAY(), -6, 'days')), NOT(IS_SAME({Data}, TODAY(), 'day')))",
+    "sort": [
+     {
+      "field": "Data",
+      "direction": "asc"
+     }
+    ],
+    "maxRecords": 6
+   },
+   "onerror": [
+    {
+     "id": 219,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 30,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 29,
+    "rowSeparator": "\n"
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{29.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "{{switch(formatDate(29.`Data`; \"ddd\"); \"Mon\"; \"L\"; \"Tue\"; \"Ma\"; \"Wed\"; \"Mi\"; \"Thu\"; \"J\"; \"Fri\"; \"V\"; \"Sat\"; \"S\"; \"?\")}} {{formatDate(29.`Data`; \"DD.MM\")}}: {{ifempty(29.`Comenzi azi`; \"–\")}} · {{ifempty(29.`Livrari facute`; \"–\")}} · {{ifempty(29.`Facturi client emise`; \"–\")}} · {{ifempty(29.`Incasari`; \"–\")}} · {{ifempty(29.`Oferte noi`; \"–\")}} · {{ifempty(29.`Restante 7 zile`; \"–\")}}"
+   }
+  },
+  {
+   "id": 14,
+   "module": "util:SetVariable2",
+   "version": 1,
+   "mapper": {
+    "name": "raport",
+    "scope": "roundtrip",
+    "value": "🌙 <b>RAPORT ZI — {{formatDate(now; \"DD.MM.YYYY\"; \"Europe/Bucharest\")}}</b> · sistem {{ifempty(16.text; \"⚠️ EROARE CITIRE AIRTABLE — nu te încrede în zerouri\")}}\n\n📦 <b>COMENZI DATE AZI ({{length(split(24.text; \"▪️\"))}})</b>\n{{ifempty(24.text; \"— niciuna\")}}{{if(length(split(24.text; \"▪️\")) >= 15; newline + \"…și încă altele — vezi dashboardul\"; emptystring)}}\n❓ Lipsește o comandă? Răspunde: <code>/c Nume | telefon | localitate | valoare</code>\n{{if(40.e_luni = \"da\"; \"ℹ️ Cine a tastat fiecare comandă se va vedea când există câmpul «Created by» în Ofertare (un clic al tău — vezi lista de clicuri).\" + newline; emptystring)}}\n{{if(length(18.text) = 0 and length(4.text) = 0 and length(6.text) = 0; \"🆕 Azi: nicio ofertă nouă rămasă la Ofertat, nicio altă schimbare la oferte mai vechi, niciun rând nou în Jurnal Antonia.\" + newline + newline; emptystring)}}{{if(length(18.text) > 0; \"🆕 <b>OFERTE NOI AZI</b> (rămase la Ofertat)\" + newline + 18.text + newline + newline; emptystring)}}{{if(length(4.text) > 0; \"✏️ <b>ALTE SCHIMBĂRI AZI</b> (oferte mai vechi)\" + newline + 4.text + newline + newline; emptystring)}}{{if(length(6.text) > 0; \"📸 <b>DOVEZI ÎN JURNAL AZI</b>\" + newline + 6.text + newline + newline; emptystring)}}🚚 <b>LIVRĂRI MÂINE — {{formatDate(addDays(now; 1); \"DD.MM\"; \"Europe/Bucharest\")}} ({{length(split(2.text; \"▪️\"))}})</b>\n{{ifempty(2.text; \"— nimic pe «livrare mâine»\")}}\n{{if(length(replace(32.text; \"/[^x]/g\"; \"\")) > 0; \"⚠️ \" + if(length(replace(32.text; \"/[^x]/g\"; \"\")) = length(split(2.text; \"▪️\")); \"toate \" + length(split(2.text; \"▪️\")); length(replace(32.text; \"/[^x]/g\"; \"\")) + \" din \" + length(split(2.text; \"▪️\"))) + \": fără factură furnizor bifată\" + newline; emptystring)}}{{if(length(2.text) > 0; \"👉 confirmă transport/șofer pentru fiecare\" + newline; emptystring)}}\n{{if(length(28.text) > 0; \"🏢 <b>DE RIDICAT DE LA BIROU (\" + length(split(28.text; \"▪️\")) + \")</b>\" + newline + 28.text + newline + \"👉 anunță clientul că poate ridica\" + newline + newline; emptystring)}}{{if(length(8.text) = 0 and length(10.text) = 0 and length(12.text) = 0; \"✅ ULTIMELE 7 ZILE: nimic de rezolvat (facturi furnizori neclasificate 0 · de emis factură 0 · paleți deschiși peste 30 de zile 0)\"; \"⚠️ <b>DE REZOLVAT — ULTIMELE 7 ZILE</b>\" + if(length(8.text) > 0; newline + \"▪️ Facturi furnizori neclasificate:\" + newline + 8.text; emptystring) + if(length(10.text) > 0; newline + \"▪️ De emis factură / încasat-nefacturat:\" + newline + 10.text; emptystring) + if(length(12.text) > 0; newline + \"▪️ Paleți deschiși peste 30 de zile:\" + newline + 12.text; emptystring))}}\n\n🔄 <b>ÎN LUCRU: {{length(44.text)}} comenzi</b>\n{{length(replace(44.text; \"/[^2]/g\"; \"\"))}} avans/de comandat · {{length(replace(44.text; \"/[^3]/g\"; \"\"))}} comandate · {{length(replace(44.text; \"/[^4]/g\"; \"\"))}} livrare mâine · {{length(replace(44.text; \"/[^5]/g\"; \"\"))}} parțiale · <b>{{length(replace(44.text; \"/[^6]/g\"; \"\"))}} de facturat</b> · <b>{{length(replace(44.text; \"/[^7]/g\"; \"\"))}} facturate, neîncasate</b> · {{length(replace(44.text; \"/[^n]/g\"; \"\"))}} livrate fără status financiar\n<a href='{{40.dashboard}}'>deschide «Comenzi în lucru»</a>{{if(40.e_luni = \"da\" or length(46.text) = 0 or length(split(20.text; newline)) != parseNumber(ifempty(get(split(46.text; \"|\"); 1); \"-1\"); \".\") or length(split(22.text; newline)) != parseNumber(ifempty(get(split(46.text; \"|\"); 2); \"-1\"); \".\"); newline + newline + \"📦 Backlog vechi (peste 7 zile): facturi neclasificate \" + length(split(20.text; newline)) + if(length(46.text) > 0; \" (la \" + get(split(46.text; \"|\"); 3) + \": \" + ifempty(get(split(46.text; \"|\"); 1); \"?\") + \")\"; emptystring) + \" · de emis factură \" + length(split(22.text; newline)) + if(length(46.text) > 0; \" (la \" + get(split(46.text; \"|\"); 3) + \": \" + ifempty(get(split(46.text; \"|\"); 2); \"?\") + \")\"; emptystring); emptystring)}}{{if(40.e_sambata = \"da\"; newline + newline + \"📊 <b>SĂPTĂMÂNA ÎN CIFRE</b> — pe zi: comenzi · livrări · facturi client · încasări · oferte noi · restanțe\" + newline + ifempty(30.text; \"— fără date din zilele trecute\") + newline + \"S \" + formatDate(now; \"DD.MM\"; \"Europe/Bucharest\") + \": \" + length(split(24.text; \"▪️\")) + \" · \" + length(replace(35.text; \"/[^x]/g\"; \"\")) + \" · \" + length(replace(37.text; \"/[^x]/g\"; \"\")) + \" · \" + length(replace(39.text; \"/[^x]/g\"; \"\")) + \" · \" + length(split(18.text; \"▪️\")) + \" · \" + (length(split(8.text; newline)) + length(split(10.text; newline))); emptystring)}}"
+   }
+  },
+  {
+   "id": 13,
+   "module": "telegram:SendReplyMessage",
+   "version": 1,
+   "parameters": {
+    "__IMTCONN__": 13294170
+   },
+   "mapper": {
+    "text": "{{if(length(14.raport) > 4000; \"⚠️ Raportul de azi are \" + length(14.raport) + \" caractere — prea lung pentru un mesaj Telegram. Deschide dashboardul: \" + 40.dashboard; 14.raport)}}",
+    "chatId": "7486183573",
+    "parseMode": "HTML"
+   }
+  },
+  {
+   "id": 47,
+   "module": "airtable:ActionSearchRecords",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblJ0IUiG4uQ5VNYM",
+    "formula": "IS_SAME({Data}, '{{40.azi}}', 'day')",
+    "maxRecords": 1
+   },
+   "onerror": [
+    {
+     "id": 220,
+     "module": "builtin:Break",
+     "version": 1,
+     "parameters": {
+      "retry": true,
+      "count": 3,
+      "interval": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": 48,
+   "module": "util:TextAggregator",
+   "version": 1,
+   "parameters": {
+    "feeder": 47,
+    "rowSeparator": ""
+   },
+   "filter": {
+    "name": "Rânduri reale",
+    "conditions": [
+     [
+      {
+       "a": "{{47.id}}",
+       "o": "exist"
+      }
+     ]
+    ]
+   },
+   "mapper": {
+    "value": "{{47.id}}"
+   }
+  },
+  {
+   "id": 31,
+   "module": "airtable:upsertRecord",
+   "version": 3,
+   "parameters": {
+    "__IMTCONN__": 13998011
+   },
+   "mapper": {
+    "base": "appdbikkM2awYhpoM",
+    "table": "tblJ0IUiG4uQ5VNYM",
+    "recordId": "{{48.text}}",
+    "record": {
+     "fldILoP5ogBtM6RMs": "{{40.azi}}",
+     "fldVzquV3SyxaYuOu": "{{length(split(24.text; \"▪️\"))}}",
+     "fldhOguVc10A5JdAg": "{{length(split(8.text; newline)) + length(split(10.text; newline))}}",
+     "fldV6aUDJuOmpStTq": "{{length(split(6.text; newline))}}",
+     "fldtysLkMVqfMq7aK": "{{length(split(2.text; \"▪️\"))}}",
+     "fldNXrYmKOSWyl6nb": "{{length(replace(32.text; \"/[^x]/g\"; \"\"))}}",
+     "fldGMpE31CkuOKnfD": "{{length(split(20.text; newline))}}",
+     "fldLnSJOeU7HZOeln": "{{length(split(22.text; newline))}}",
+     "fldedVHo9T6uMtvgO": "{{length(replace(35.text; \"/[^x]/g\"; \"\"))}}",
+     "fldNplYcLYNToCULM": "{{length(replace(37.text; \"/[^x]/g\"; \"\"))}}",
+     "fldTWR5VoXBkFAJnc": "{{length(replace(39.text; \"/[^x]/g\"; \"\"))}}",
+     "fldyVWi9l5HI5JZdF": "{{length(split(18.text; \"▪️\"))}}",
+     "fldSBP7fWe3X0zK5T": "{{length(replace(42.text; \"/[^x]/g\"; \"\"))}}"
+    },
+    "typecast": true,
+    "useColumnId": true
+   }
+  }
+ ]
+}

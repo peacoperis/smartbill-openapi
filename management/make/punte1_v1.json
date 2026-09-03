@@ -1,0 +1,11 @@
+{
+ "name": "PUNTE 1 — Alertă Livrare mâine → Telegram Daniel",
+ "_nota": "Copie a blueprintului live la 03.09.2026 (lastEdit 01.09 03:30 UTC). Scenariu 9737372, mailhook 4345579. Instant. Primeste emailul trimis de automatizarea Airtable «PUNTE — Livrare maine» (inca UNDEPLOYED, deci alerta nu exista) si il trimite pe Telegram doar daca subiectul contine «🚚 LIVRARE MÂINE» (filtru anti-injectie).",
+ "metadata": {"instant": true, "version": 1},
+ "flow": [
+  {"id": 1, "module": "gateway:CustomMailHook", "version": 1, "parameters": {"hook": 4345579, "maxResults": 1}},
+  {"id": 2, "module": "telegram:SendReplyMessage", "version": 1, "parameters": {"__IMTCONN__": 13294170},
+   "filter": {"name": "Doar alerte PUNTE reale", "conditions": [[{"a": "{{1.subject}}", "b": "🚚 LIVRARE MÂINE", "o": "text:contain"}]]},
+   "mapper": {"text": "{{1.subject}}\n{{1.text}}", "chatId": "7486183573"}}
+ ]
+}

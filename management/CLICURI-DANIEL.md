@@ -20,6 +20,7 @@
 | 12 | Decizie: **rescriem istoricul git** pentru datele personale din `RAPORT-SEARA-V2.md` (comise 02.09, anonimizate 03.09)? | GDPR: repo privat, dar istoricul le păstrează | un „da"/„nu" | când poți |
 | 0a | **Motoarele fluxului de comandă** (`management/motoare/`): completează `SB_EMAIL` și `SB_TOKEN` în tabelul `⚙️ Config` (tokenul din SmartBill → Integrări → API) | fără ele motorul A și B nu pot vorbi cu SmartBill; parolele nu mai stau în cod | Airtable → ⚙️ Config → coloana Valoare | 2 min |
 | 0b | **Instalează cele 3 motoare** din `management/motoare/README.md` (copy-paste, ~3 min fiecare) SAU permite în sesiune acțiunea `create_automation` și le creez eu, oprite, ca să le pornești tu | filtrul de siguranță al sesiunii a blocat crearea lor prin API; scripturile sunt gata și verificate pe structura bazei | Airtable → Automations | 10 min |
+| 14 | **Schimbarea modelului.** Pachetul de predare e în repo (`CLAUDE.md` se citește singur la pornire). Prima comandă pentru noua instanță: **„Citește CLAUDE.md și spune-mi starea într-un rând."** | evită recitirea a 8 MB de transcript; noua instanță pornește cu toate ID-urile, regulile și capcanele | Claude Code → model → mesajul de mai sus | când vrei |
 | 13 | Testul `/c`: trimite botului `/c Test Client | 0700000000 | Pitesti | 1` | confirmă că `Introdus prin` și `Data Comanda` se scriu corect; apoi șterg rândul | 20 s | când poți |
 
 ## Făcute (se mută aici, cu data)
