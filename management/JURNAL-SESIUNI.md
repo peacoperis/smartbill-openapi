@@ -86,6 +86,28 @@ ce e verificat, ce nu. Seara, sesiunea de evaluare citește doar acest fișier +
   produsese încă la ora acestei intrări.
   PUNTE 3 de azi 14:30 UTC nu se produsese încă la ora acestei intrări.
 
+### 2026-09-04 · remote · 12:00–14:00 UTC · registrul de clienți
+
+- Făcut: activat tabelul `Clienți` (`tblbwO4rzOvcBhz8x`), care exista din 24.03 cu 72 de rânduri și nu
+  fusese folosit niciodată. 283 de clienți noi creați, 66 reutilizați din cei vechi → **355 în tabel, 349
+  cu oferte**. `🔗 Client` din `Ofertare` completat pe **522/522** (era 89). Regula de identificare și
+  capcanele scrise în `CARTEA-DE-MISCARI.md`, punctul 11; tabelul și câmpurile în `STARE-SISTEM.md`.
+- Verificat (cu ce): `list_records_for_table` cu filtru `isEmpty` pe `🔗 Client` → **0 rânduri**; total
+  `Clienți` = 355; grupurile cu două telefoane proprii diferite → 3, sparte manual pe telefon.
+- Descoperit: un singur telefon (al colaboratorului Cristi) ținea 74 de rânduri cu 67 de nume și 56 de
+  localități. Deduplicarea „un telefon = un client" ar fi contopit 67 de clienți reali într-unul — și
+  chiar asta se întâmplase în importul din martie (7 clienți pe telefonul lui). De aici regula:
+  **`Client` = beneficiarul final, colaboratorul stă în `Responsabil Comanda ` / `Sursa Client`.**
+- Greșit de mine, corectat: am spus întâi că `Id Client operational` e o cheie de client care „funcționează",
+  pe motiv că niciun Id nu apare pe două telefoane. E o tautologie — formula conține chiar telefonul.
+  Nu dovedește nimic. Corectat în `STARE-SISTEM.md`.
+- Nefăcut / deschis: **`PUNTE 4` (captura Telegram) și motorul 0 (PDF) nu completează `🔗 Client`** pe
+  rândurile noi, deci de mâine încolo apar iar oferte fără client. De rezolvat cu o căutare explicită de
+  `recordId` (**fără `typecast` pe câmp link** — creează clienți noi la fiecare scriere diferită a numelui).
+  Rollup-urile pe client (număr de oferte, total, de încasat) nu sunt puse: `💰 Status Financiar REZIDUAL`
+  lipsește pe 61 de rânduri, deci ar da cifre false. Clicurile 15 și 16 (6 rânduri rămase, ~15 nume urâte).
+- Commit-uri: vezi commitul acestei intrări.
+
 ---
 
 ## Evaluarea de seară (protocolul, ~5 minute, read-only)

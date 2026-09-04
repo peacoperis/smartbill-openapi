@@ -17,7 +17,8 @@ schimbă, stările da. Spațiile finale din numele câmpurilor și opțiunilor s
 | `Jurnal Antonia` | `tbl6H1TRCP60uAGUM` | dovezi zilnice (câmpuri: Data, Tip, Rezumat, Link Dovadă) | 1 (test) |
 | `📊 Zile` | `tblJ0IUiG4uQ5VNYM` | snapshot zilnic scris de PUNTE 3 | 2 |
 | `⚙️ Config` | `tbltvlIAmooZTDU0c` | setări motoare (Cheie fldf2FklZGAZCTV5R / Valoare fldpRsEJDGQoLiwyF / Notă fldKdK50vTK4a7IGq) | **16 rânduri = 8 chei × 2** (loturi identice la 05:56 și 09:42 pe 03.09). Motoarele A/B fac `m[Cheie]=Valoare` peste toate rândurile, deci ultima potrivire câștigă: tokenul pus în rândul „greșit" e ignorat tăcut. De șters lotul 05:56 — clicul **0c**. `SB_EMAIL` și `SB_TOKEN` **goale, de completat de Daniel** |
-| `Încasări Clienți`, `Clienți`, `Cheltuieli Operaționale` | — | importate o dată, abandonate; vezi INVENTAR | |
+| `Clienți` | `tblbwO4rzOvcBhz8x` | **registrul de clienți, activat 04.09.** Câmpuri: `Nume Client` fld3aPGgWNtKeWr3F (primar) · `Telefon` fldX4ShwnVyA2X1aO · `Localitate` fldtCd930Yr2RdpjO · `Sursa Client` fld2ykHEr3Pc0QtFj (scrie „prin \<Colaborator\>") · `CNP / CUI` fldN6wjt6qwfrOhKV · `Tip Client` fldMtIlG7IbREq7Kt (PF/PJ) · `Ofertare` fldhgVQNh1CNkZ35N (link) | **355** (72 din import 24.03 + 283 create 04.09) |
+| `Încasări Clienți`, `Cheltuieli Operaționale` | — | importate o dată, abandonate; vezi INVENTAR | |
 
 Șterse la 02.09 (documentate în `naftalina/TABELE-ARHIVATE.md`): Loturi/Retururi/Alocări Paleți, Inbox
 Storno, Persoane, SANDBOX. Au rămas 14 coloane moarte `🗑️ STERGE - …` în 6 tabele (clic al lui Daniel).
@@ -34,7 +35,8 @@ Storno, Persoane, SANDBOX. Au rămas 14 coloane moarte `🗑️ STERGE - …` î
 | `Data Ofertarii` / `Data Comanda` / `Data Livrare` | fldDjffRJC8tcCU65 / fldEcDByQHberYRxA / fld23cUd7xFBK90l4 | date |
 | `Responsabil Comanda` | fldgplWaCwuK3dibw | singleSelect = de la ce colaborator vine comanda (NU cine a tastat) |
 | `Introdus prin` | fldz7XPlJ9i0LYxiO | singleSelect: `Telegram — Daniel`, `Telegram — Antonia`, `Airtable` (scris de PUNTE 4) |
-| `Id client` (autoNumber) / `Id Client operational` | fldU92MWCNDRmzXNj / fldBP8DZbS44fXLTO | formula `UPPER(LEFT(nume,3) & RIGHT(cifre tel,5))`, ex. `HOD0001x` |
+| `Id client` (autoNumber) / `Id Client operational` | fldU92MWCNDRmzXNj / fldBP8DZbS44fXLTO | formula `UPPER(LEFT(nume,3) & RIGHT(cifre tel,5))`, ex. `HOD0001x`. **NU e cheie de client**: conține chiar telefonul, deci „niciun Id pe două telefoane" e o tautologie. Se sparge când numele e scris altfel (28 de telefoane aveau >1 Id) |
+| `🔗 Client` | fldxWczC0mb5QreHk | link către `Clienți`. **522/522 completat la 04.09.** Clientul e ÎNTOTDEAUNA beneficiarul final; colaboratorul stă în `Responsabil Comanda ` / `Sursa Client` |
 | `ultima modificare` | fldPMCWKlwA2GSFtR | lastModifiedTime (toate câmpurile) |
 | `Factura_Furnizor_OK` | fldc4hpRPyr4Z95Gr | checkbox; 0/518 bifate; citit de rapoarte și de `Etapă comandă` |
 | `💰 Status Financiar REZIDUAL` | fld8ffrdbRM13AI4b | singleSelect; relevante: `De emis factura` selDWlarmYreITlr6, `🔴 Încasat - Nefacturat (Urgent Factură)` selDCcYGXQAi5uLol, `🔴 Facturat - Neîncasat )`, `NEINCASAT `, `🟢 Încasat …` |

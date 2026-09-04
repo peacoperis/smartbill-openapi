@@ -133,3 +133,37 @@ Dovezile, din aceeași zi:
 Celelalte citesc. Dacă nu ești sigur că ești tu aceea, întreabă-l pe Daniel înainte de prima scriere, nu după.
 Baza `appdbikkM2awYhpoM` e folosită și din celălalt hub (`itc-hub`, veriga „B4 · TRANSMISIE"), deci întrebarea
 nu e retorică.
+
+## 11. Identificarea clientului — regula și capcanele (04.09)
+
+**Regula, dictată de date, nu de teorie:** `🔗 Client` din `Ofertare` e **întotdeauna beneficiarul final**.
+Colaboratorul NU e client; el stă în `Responsabil Comanda ` (select: Cristi, Marian Porti, Crimar, Flavius,
+Mugurel, Dumitru Marian, Ilie Florin, Dobresti Gard, Mihai Tragoviste, DOMAVE, Serban Targoviste — restul,
+Daniel/Antonia, e personal propriu) și în `Sursa Client` = „colaborator" (221 de rânduri).
+
+**De ce contează:** un singur telefon, al lui Cristi, apărea pe 74 de rânduri cu 67 de nume și 56 de
+localități. Deduplicarea naivă „un telefon = un client" ar fi contopit 67 de clienți reali într-unul.
+În vechiul tabel `Clienți` (import 24.03) asta chiar se întâmplase: 7 clienți diferiți pe telefonul lui.
+
+**Cum se face gruparea (scriptul e reproductibil, nu ghicit):**
+1. Normalizează telefonul: doar cifre, `+40`/`40` → `0`, păstrează doar `07xxxxxxxx` cu 10 cifre.
+2. Curăță numele de etichete de proces: `Cristi Colab`, `(colaborator)`, `completare`, `dublura`.
+   („gard" NU se curăță — face parte din nume reale ca `Dobresti Gard`.)
+3. Cheia telefonului colaboratorului = telefonul cel mai frecvent pe rândurile unde el e `Responsabil`.
+4. Unește rândurile pe **nume normalizat** (tokeni sortați ȘI varianta fără spații — altfel „Cri mar" și
+   „Crimar" rămân doi clienți) și pe **telefon**, dar telefonul unifică doar dacă NU e al unui colaborator
+   — excepție: când numele rândului se potrivește cu numele colaboratorului, adică el e chiar clientul
+   (Crimar, Marian Porti, Domave cumpără și pentru ei).
+5. Verificare obligatorie înainte de scriere: grupurile cu **două telefoane proprii diferite** sunt suspecte
+   → sparge-le pe telefon. La 522 de rânduri au fost 3.
+
+**Rezultat 04.09:** 522 rânduri → **349 de clienți** (+ 6 rânduri vechi rămase nelegate). 283 creați, 66
+reutilizați din cei 72 vechi. `🔗 Client` completat pe 522/522.
+
+**Capcane:**
+- `create_records_for_table` / `update_records_for_table` acceptă **max 50 de înregistrări** per apel.
+- **Nu folosi `typecast: true` pe un câmp link.** Airtable creează un client nou la fiecare scriere
+  diferită a numelui și te întorci la 522 de „clienți". Se trimite `recordId`-ul, obținut prin căutare.
+- Clientul adus de colaborator **nu primește telefonul colaboratorului**; rămâne gol, cu
+  `Sursa Client` = „prin \<Colaborator\>". Altfel căutarea după telefon dă zeci de potriviri.
+- `Id Client operational` nu e cheie: e formulă din nume + telefon (vezi STARE-SISTEM).
