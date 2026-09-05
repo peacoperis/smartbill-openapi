@@ -21,6 +21,7 @@ Capabilitățile se schimbă lunar. Ce știi din antrenament e o fotografie vech
   - *Gemini:* preferințe globale (soft) + Gems (reguli imperative) + memorie importată.
   - *Perplexity:* Profil AI — **un singur câmp compact**, o salvare — + memorie + Spaces (instrucțiuni imperative, fișiere, task-uri programate) + conectori de plan (Gmail, Drive, Notion).
   - Altul: identifică echivalentele înainte de a scrie o literă.
+- **Verifică planul plătit înainte de a proiecta arhitectura, și verifică-l în cont, nu prin deducție.** Jumătate din capabilitățile pe care se sprijină un plan de aliniere sunt gratuite doar pe hârtie. La ITC, planul Perplexity a fost dedus dintr-o memorie veche formulată la trecut — și dedus greșit; conectorii, task-urile programate și limitele de fișiere depindeau integral de el.
 - **Documentarea se termină înainte de a începe scrisul.** Alinierea Perplexity a fost ratată o dată exact aici: pachetul a fost scris pe analogia cu Gemini, fără documentare proprie, și a ieșit în formatul greșit — intrări scurte pentru un câmp care e unul singur. Costul reparației e mai mare decât al documentării.
 
 ## Pasul 2 — Bucla în doi: pune-l să se inventarieze din interiorul contului
@@ -35,6 +36,8 @@ aplicații conectate și active, opțiuni de personalizare, limite afișate.
 Ce provine din cunoștințele tale generale pune într-o secțiune separată,
 marcat [MEMORIE — POSIBIL DATAT]. Unde nu ești sigur, scrii NESIGUR.
 ```
+
+**Excepția care contează: asistentul e cel mai slab exact acolo unde se descrie pe sine.** Perplexity, care citase impecabil zeci de surse despre piață, a umplut șase din cincisprezece rânduri despre propriile setări cu bloguri terțe — în același răspuns în care i se ceruse explicit doar documentație oficială. Motivul e structural: documentația proprie a unui furnizor de AI e subțire și prost indexată, iar modelul completează cu ce găsește. Consecință practică: **ce spune despre lume se verifică prin surse; ce spune despre propriile funcții se verifică în interfață, cu ochii omului.** Un asistent fără agent în browser nu-și vede setările deloc — dacă îl întrebi ce ai bifat în cont, inventează.
 
 Ce iese de aici este singura sursă de adevăr despre cont. La Gemini, bucla a scos că Drive și Maps nu erau conectate — invizibil din exterior.
 
